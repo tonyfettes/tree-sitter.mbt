@@ -1,0 +1,31 @@
+package tonyfettes/tree-sitter
+
+// Values
+
+// Types and methods
+type TSLanguage
+
+type TSNode
+impl TSNode {
+  named_child(Self, Int) -> Self
+  type_(Self) -> String
+}
+
+type TSParser
+impl TSParser {
+  delete(Self) -> Unit
+  new() -> Self
+  parse_string(Self, TSTree?, String) -> Unit
+  set_language(Self, TSLanguage) -> Unit
+}
+
+type TSTree
+impl TSTree {
+  delete(Self) -> Unit
+  root_node(Self) -> TSNode
+}
+
+// Type aliases
+
+// Traits
+

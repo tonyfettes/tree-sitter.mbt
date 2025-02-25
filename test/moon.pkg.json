@@ -1,0 +1,14 @@
+{
+  "is-main": true,
+  "import": [
+    {
+      "path": "tonyfettes/tree-sitter",
+      "alias": "ts"
+    }
+  ],
+  "link": {
+    "native": {
+      "cc-flags": "../tree-sitter-json/src/parser.c ../src/tree-sitter.c ../tree-sitter/libtree-sitter.a -I../tree-sitter/lib/include -fsanitize=address"
+    }
+  }
+}
