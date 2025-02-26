@@ -1,6 +1,7 @@
 ///|
 extern type Language
 
+///|
 pub extern "c" fn json() -> Language = "tree_sitter_json"
 
 ///|
@@ -66,9 +67,7 @@ pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_n
 pub extern "c" fn Tree::delete(self : Tree) = "moonbit_ts_tree_delete"
 
 ///|
-struct Node {
-  tree: Tree
-}
+type Node Bytes
 
 ///|
 pub extern "c" fn Node::named_child(self : Node, child_index : Int) -> Node = "moonbit_ts_node_named_child"

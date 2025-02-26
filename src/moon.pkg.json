@@ -4,7 +4,7 @@
   ],
   "link": {
     "native": {
-      "cc-flags": "tree-sitter-json/src/parser.c src/tree-sitter.c tree-sitter/libtree-sitter.a -Itree-sitter/lib/include -fsanitize=address"
+      "cc": "echo"
     }
   }
 }
