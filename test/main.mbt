@@ -11,6 +11,11 @@ fn main {
   println(root_node.type_())
   println(array_node.type_())
   println(number_node.type_())
+  println(root_node.child_count())
+  println(array_node.child_count());
+  println(array_node.named_child_count());
+  println(number_node.child_count());
+
   tree.delete()
   parser.delete()
 }

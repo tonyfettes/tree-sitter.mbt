@@ -8,6 +8,8 @@ TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   void *handle = dlopen((const char *)pathname, RTLD_NOW);
   TSLanguage *(*load)(void) = dlsym(handle, (const char *)symbol);
+  moonbit_decref(pathname);
+  moonbit_decref(symbol);
   return load();
 }
 
@@ -33,7 +35,9 @@ moonbit_ts_parser_parse_string(
   moonbit_bytes_t bytes
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  return ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  TSTree *tree = ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  moonbit_decref(bytes);
+  return tree;
 }
 
 void
@@ -54,6 +58,20 @@ moonbit_ts_node_named_child(TSNode *self, uint32_t child_index) {
   *node = ts_node_named_child(*self, child_index);
   moonbit_decref(self);
   return node;
+}
+
+int
+moonbit_ts_node_child_count(TSNode *self) {
+  int count = ts_node_child_count(*self);
+  moonbit_decref(self);
+  return count;
+}
+
+int
+moonbit_ts_node_named_child_count(TSNode *self) {
+  int count = ts_node_named_child_count(*self);
+  moonbit_decref(self);
+  return count;
 }
 
 moonbit_bytes_t
