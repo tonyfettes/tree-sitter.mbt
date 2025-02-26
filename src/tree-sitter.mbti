@@ -3,29 +3,52 @@ package tonyfettes/tree-sitter
 // Values
 
 // Types and methods
-type TSLanguage
+pub(all) enum InputEncoding {
+  UTF8
+  UTF16LE
+  UTF16BE
+  Custom
+}
 
-type TSNode
-impl TSNode {
+type Language
+impl Language {
+  load(String, String) -> Self
+}
+
+type Node
+impl Node {
+  child_count(Self) -> Int
   named_child(Self, Int) -> Self
+  named_child_count(Self) -> Int
+  string(Self) -> String
   type_(Self) -> String
 }
 
-type TSParser
-impl TSParser {
+type Parser
+impl Parser {
   delete(Self) -> Unit
   new() -> Self
-  parse_string(Self, TSTree?, String) -> Unit
-  set_language(Self, TSLanguage) -> Unit
+  parse[Input : Input, Encoding : DecodeFunction](Self, Input, Encoding) -> Tree
+  parse_string(Self, Tree?, String) -> Tree
+  set_language(Self, Language) -> Unit
 }
 
-type TSTree
-impl TSTree {
+type Point
+
+type Tree
+impl Tree {
   delete(Self) -> Unit
-  root_node(Self) -> TSNode
+  root_node(Self) -> Node
 }
 
 // Type aliases
 
 // Traits
+pub(open) trait DecodeFunction {
+  input_encoding(Self) -> InputEncoding
+  decode(Bytes, Int) -> Int
+}
+impl DecodeFunction::input_encoding
+
+trait Input
 

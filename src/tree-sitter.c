@@ -4,6 +4,11 @@
 #include <string.h>
 #include <tree_sitter/api.h>
 
+void *
+moonbit_c_null() {
+  return NULL;
+}
+
 TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   void *handle = dlopen((const char *)pathname, RTLD_NOW);
@@ -72,6 +77,17 @@ moonbit_ts_node_named_child_count(TSNode *self) {
   int count = ts_node_named_child_count(*self);
   moonbit_decref(self);
   return count;
+}
+
+moonbit_bytes_t
+moonbit_ts_node_string(TSNode *self) {
+  char *string = ts_node_string(*self);
+  moonbit_decref(self);
+  size_t length = strlen(string);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, string, length);
+  free(string);
+  return bytes;
 }
 
 moonbit_bytes_t

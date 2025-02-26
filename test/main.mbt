@@ -15,6 +15,7 @@ fn main {
   println(array_node.child_count());
   println(array_node.named_child_count());
   println(number_node.child_count());
+  println("Syntax tree: \{root_node.string()}")
 
   tree.delete()
   parser.delete()
