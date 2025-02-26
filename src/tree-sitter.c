@@ -1,7 +1,15 @@
+#include <dlfcn.h>
 #include <moonbit.h>
 #include <stdbool.h>
 #include <string.h>
 #include <tree_sitter/api.h>
+
+TSLanguage *
+moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
+  void *handle = dlopen((const char *)pathname, RTLD_NOW);
+  TSLanguage *(*load)(void) = dlsym(handle, (const char *)symbol);
+  return load();
+}
 
 TSParser *
 moonbit_ts_parser_new() {
