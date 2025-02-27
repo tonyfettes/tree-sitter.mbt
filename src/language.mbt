@@ -2,10 +2,13 @@
 extern type Language
 
 ///|
-extern "c" fn Language::_load(pathname : Bytes, symbol : Bytes) -> Language = "moonbit_ts_language_load"
+extern "c" fn Language::_load(
+  pathname : Bytes,
+  symbol : Bytes
+) -> Nullable[Language] = "moonbit_ts_language_load"
 
 ///|
-pub fn Language::load(path : String, name : String) -> Language {
+pub fn Language::load(path : String, name : String) -> Language? {
   let pathname = @buffer.new()
   pathname.write_bytes(@encoding.encode(UTF8, path))
   pathname.write_byte(0)
@@ -13,7 +16,7 @@ pub fn Language::load(path : String, name : String) -> Language {
   symbol.write_bytes(b"tree_sitter_")
   symbol.write_bytes(@encoding.encode(UTF8, name))
   symbol.write_byte(0)
-  Language::_load(pathname.contents(), symbol.contents())
+  Language::_load(pathname.contents(), symbol.contents()).to()
 }
 
 ///|

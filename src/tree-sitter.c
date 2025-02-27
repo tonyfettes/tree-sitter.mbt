@@ -18,9 +18,18 @@ moonbit_c_is_null(void *ptr) {
 TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   void *handle = dlopen((const char *)pathname, RTLD_NOW);
+  if (!handle) {
+    moonbit_decref(pathname);
+    moonbit_decref(symbol);
+    return NULL;
+  }
   TSLanguage *(*load)(void) = dlsym(handle, (const char *)symbol);
   moonbit_decref(pathname);
   moonbit_decref(symbol);
+  if (!load) {
+    dlclose(handle);
+    return NULL;
+  }
   return load();
 }
 
