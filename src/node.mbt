@@ -45,6 +45,19 @@ extern "c" fn Node::_next_sibling(self : Node) -> Node = "moonbit_ts_node_next_s
 extern "c" fn Node::_prev_sibling(self : Node) -> Node = "moonbit_ts_node_prev_sibling"
 
 ///|
+extern "c" fn Node::_child(self : Node, index : UInt) -> Node = "moonbit_ts_node_child"
+
+///|
+pub fn Node::child(self : Node, index : UInt) -> Node? {
+  let child = self._child(index)
+  if child.is_null() {
+    None
+  } else {
+    Some(child)
+  }
+}
+
+///|
 extern "c" fn Node::_next_named_sibling(self : Node) -> Node = "moonbit_ts_node_next_named_sibling"
 
 ///|
@@ -88,6 +101,19 @@ pub fn Node::child_by_field_name(self : Node, name : String) -> Node? {
   name_bytes.write_bytes(@encoding.encode(UTF8, name))
   name_bytes.write_byte(0)
   let child = self._child_by_field_name(name_bytes.contents())
+  if child.is_null() {
+    None
+  } else {
+    Some(child)
+  }
+}
+
+///|
+extern "c" fn Node::_child_by_field_id(self : Node, id : FieldId) -> Node = "moonbit_ts_node_child_by_field_id"
+
+///|
+pub fn Node::child_by_field_id(self : Node, id : FieldId) -> Node? {
+  let child = self._child_by_field_id(id)
   if child.is_null() {
     None
   } else {

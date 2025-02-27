@@ -19,6 +19,24 @@ moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   return load();
 }
 
+moonbit_bytes_t
+moonbit_ts_field_name_for_id(TSLanguage *self, TSFieldId id) {
+  const char *name = ts_language_field_name_for_id(self, id);
+  size_t length = strlen(name);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, name, length);
+  return bytes;
+}
+
+TSFieldId
+moonbit_ts_language_field_id_for_name(TSLanguage *self, moonbit_bytes_t name) {
+  uint32_t length = Moonbit_array_length(name);
+  TSFieldId id =
+    ts_language_field_id_for_name(self, (const char *)name, length);
+  moonbit_decref(name);
+  return id;
+}
+
 TSParser *
 moonbit_ts_parser_new() {
   return ts_parser_new();
@@ -56,6 +74,14 @@ TSNode *
 moonbit_ts_tree_root_node(TSTree *tree) {
   TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
   *node = ts_tree_root_node(tree);
+  return node;
+}
+
+TSNode *
+moonbit_ts_node_child(TSNode *self, uint32_t child_index) {
+  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
+  *node = ts_node_child(*self, child_index);
+  moonbit_decref(self);
   return node;
 }
 
@@ -192,5 +218,13 @@ moonbit_ts_node_child_by_field_name(TSNode *self, moonbit_bytes_t name) {
   *node = ts_node_child_by_field_name(*self, (const char *)name, length);
   moonbit_decref(self);
   moonbit_decref(name);
+  return node;
+}
+
+TSNode *
+moonbit_ts_node_child_by_field_id(TSNode *self, TSFieldId field_id) {
+  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
+  *node = ts_node_child_by_field_id(*self, field_id);
+  moonbit_decref(self);
   return node;
 }
