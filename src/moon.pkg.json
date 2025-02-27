@@ -6,5 +6,8 @@
     "native": {
       "cc": "echo"
     }
-  }
+  },
+  "supported-targets": [
+    "native"
+  ]
 }
