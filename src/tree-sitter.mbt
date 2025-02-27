@@ -44,43 +44,6 @@ extern "c" fn Parser::_parse(
 ) -> Tree = "moonbit_ts_parser_parse"
 
 ///|
-priv extern type Nullable[_]
-
-///|
-fn Nullable::some[T](value : T) -> Nullable[T] = "%identity"
-
-///|
-fn Nullable::of[T](option : T?) -> Nullable[T] {
-  match option {
-    Some(value) => Nullable::some(value)
-    None => Nullable::none()
-  }
-}
-
-///|
-fn Nullable::cast[T, U](self : Nullable[T]) -> Nullable[U] = "%identity"
-
-///|
-extern "c" fn Nullable::null() -> Nullable[Unit] = "moonbit_c_null"
-
-///|
-fn Nullable::none[T]() -> Nullable[T] {
-  Nullable::null().cast()
-}
-
-///|
-fn Nullable::unwrap[T](self : Nullable[T]) -> T = "%identity"
-
-///|
-extern type Tree
-
-///|
-pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
-
-///|
-pub extern "c" fn Tree::delete(self : Tree) = "moonbit_ts_tree_delete"
-
-///|
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding
   decode(Bytes, Int) -> Int
