@@ -6,44 +6,6 @@ fn string_to_ntbs(string : String) -> Bytes {
 }
 
 ///|
-extern type Parser
-
-///|
-pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
-
-///|
-pub extern "c" fn Parser::delete(self : Parser) = "moonbit_ts_parser_delete"
-
-///|
-pub extern "c" fn Parser::set_language(
-  self : Parser,
-  language : Language
-) -> Unit = "moonbit_ts_parser_set_language"
-
-///|
-pub fn Parser::parse_string(
-  self : Parser,
-  old_tree : Tree?,
-  string : String
-) -> Tree {
-  self._parse_bytes(Nullable::of(old_tree), @encoding.encode(UTF8, string))
-}
-
-///|
-extern "c" fn Parser::_parse_bytes(
-  self : Parser,
-  old_tree : Nullable[Tree],
-  string : Bytes
-) -> Tree = "moonbit_ts_parser_parse_string"
-
-///|
-extern "c" fn Parser::_parse(
-  self : Parser,
-  old_tree : Nullable[Tree],
-  input : Input_
-) -> Tree = "moonbit_ts_parser_parse"
-
-///|
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding
   decode(Bytes, Int) -> Int
