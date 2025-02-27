@@ -323,3 +323,70 @@ moonbit_ts_tree_cursor_current_field_id(TSTreeCursor *self) {
   moonbit_decref(self);
   return id;
 }
+
+TSQuery *
+moonbit_ts_query_new(
+  TSLanguage *language,
+  moonbit_bytes_t source,
+  uint32_t *error
+) {
+  uint32_t length = Moonbit_array_length(source);
+  TSQuery *query =
+    ts_query_new(language, (const char *)source, length, error, error + 1);
+  moonbit_decref(source);
+  return query;
+}
+
+uint32_t
+moonbit_ts_query_match_id(TSQueryMatch *self) {
+  uint32_t id = self->id;
+  moonbit_decref(self);
+  return id;
+}
+
+uint16_t
+moonbit_ts_query_match_pattern_index(TSQueryMatch *self) {
+  uint16_t index = self->pattern_index;
+  moonbit_decref(self);
+  return index;
+}
+
+uint16_t
+moonbit_ts_query_match_capture_count(TSQueryMatch *self) {
+  uint16_t count = self->capture_count;
+  moonbit_decref(self);
+  return count;
+}
+
+TSNode *
+moonbit_ts_query_match_captures_get_node(TSQueryMatch *self, uint32_t index) {
+  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
+  *node = self->captures[index].node;
+  moonbit_decref(self);
+  return node;
+}
+
+uint32_t
+moonbit_ts_query_match_captures_get_index(TSQueryMatch *self, uint32_t index) {
+  uint32_t i = self->captures[index].index;
+  moonbit_decref(self);
+  return i;
+}
+
+TSQueryMatch *
+moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
+  TSQueryMatch *match =
+    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
+  bool has_match = !ts_query_cursor_next_match(self, match);
+  moonbit_decref(self);
+  if (has_match) {
+    return match;
+  } else {
+    return NULL;
+  }
+}
+
+void
+moonbit_ts_query_cursor_delete(TSQueryCursor *self) {
+  ts_query_cursor_delete(self);
+}
