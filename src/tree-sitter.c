@@ -40,7 +40,8 @@ moonbit_ts_parser_parse_string(
   moonbit_bytes_t bytes
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  TSTree *tree = ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  TSTree *tree =
+    ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
   moonbit_decref(bytes);
   return tree;
 }
@@ -97,4 +98,18 @@ moonbit_ts_node_type(TSNode *self) {
   moonbit_bytes_t bytes = moonbit_make_bytes(strlen(type), 0);
   memcpy(bytes, type, strlen(type));
   return bytes;
+}
+
+uint32_t
+moonbit_ts_node_start_byte(TSNode *self) {
+  uint32_t byte = ts_node_start_byte(*self);
+  moonbit_decref(self);
+  return byte;
+}
+
+uint32_t
+moonbit_ts_node_end_byte(TSNode *self) {
+  uint32_t byte = ts_node_end_byte(*self);
+  moonbit_decref(self);
+  return byte;
 }
