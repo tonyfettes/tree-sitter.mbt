@@ -1,8 +1,15 @@
 ///|
 fn main {
   let args = @sys.get_cli_args()
+  if args.length() != 2 {
+    println("Usage: parse_json <path>")
+    return
+  }
   let path = args[1]
-  let json = @ts.Language::load(path, "json")
+  guard @ts.Language::load(path, "json") is Some(json) else {
+    println("Failed to load language")
+    return
+  }
   let parser = @ts.Parser::new()
   parser.set_language(json)
   let source_code = "[1, null]"
