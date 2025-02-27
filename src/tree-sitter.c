@@ -10,6 +10,11 @@ moonbit_c_null() {
   return NULL;
 }
 
+bool
+moonbit_c_is_null(void *ptr) {
+  return ptr == NULL;
+}
+
 TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   void *handle = dlopen((const char *)pathname, RTLD_NOW);
