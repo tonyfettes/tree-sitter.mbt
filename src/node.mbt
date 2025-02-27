@@ -27,16 +27,16 @@ pub fn Node::type_(self : Node) -> String {
 }
 
 ///|
-extern "c" fn Node::start_byte(self : Node) -> UInt = "moonbit_ts_node_start_byte"
+pub extern "c" fn Node::start_byte(self : Node) -> UInt = "moonbit_ts_node_start_byte"
 
 ///|
-extern "c" fn Node::end_byte(self : Node) -> UInt = "moonbit_ts_node_end_byte"
+pub extern "c" fn Node::end_byte(self : Node) -> UInt = "moonbit_ts_node_end_byte"
 
 ///|
-extern "c" fn Node::start_point(self : Node) -> Point = "moonbit_ts_node_start_point"
+pub extern "c" fn Node::start_point(self : Node) -> Point = "moonbit_ts_node_start_point"
 
 ///|
-extern "c" fn Node::end_point(self : Node) -> Point = "moonbit_ts_node_end_point"
+pub extern "c" fn Node::end_point(self : Node) -> Point = "moonbit_ts_node_end_point"
 
 ///|
 extern "c" fn Node::_next_sibling(self : Node) -> Node = "moonbit_ts_node_next_sibling"
