@@ -87,8 +87,8 @@ fn InputEncoding::to_int(self : InputEncoding) -> Int {
 
 ///|
 struct Point {
-  row : Int
-  column : Int
+  row : UInt
+  column : UInt
 }
 
 ///|

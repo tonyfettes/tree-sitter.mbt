@@ -66,6 +66,12 @@ moonbit_ts_parser_parse_string(
 }
 
 void
+moonbit_ts_tree_edit(TSTree *tree, TSInputEdit *edit) {
+  ts_tree_edit(tree, edit);
+  moonbit_decref(edit);
+}
+
+void
 moonbit_ts_tree_delete(TSTree *tree) {
   ts_tree_delete(tree);
 }
@@ -227,4 +233,11 @@ moonbit_ts_node_child_by_field_id(TSNode *self, TSFieldId field_id) {
   *node = ts_node_child_by_field_id(*self, field_id);
   moonbit_decref(self);
   return node;
+}
+
+void
+moonbit_ts_node_edit(TSNode *self, TSInputEdit *edit) {
+  ts_node_edit(self, edit);
+  moonbit_decref(self);
+  moonbit_decref(edit);
 }

@@ -120,3 +120,6 @@ pub fn Node::child_by_field_id(self : Node, id : FieldId) -> Node? {
     Some(child)
   }
 }
+
+///|
+pub extern "c" fn Node::edit(self : Node, edit : InputEdit) -> Unit = "moonbit_ts_node_edit"
