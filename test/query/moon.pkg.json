@@ -10,6 +10,7 @@
   ],
   "link": {
     "native": {
+      "cc": "/opt/homebrew/opt/llvm/bin/clang",
       "cc-flags": "-g ../src/tree-sitter.c ../tree-sitter/libtree-sitter.a -I../tree-sitter/lib/include -fsanitize=address"
     }
   }

@@ -324,6 +324,12 @@ moonbit_ts_tree_cursor_current_field_id(TSTreeCursor *self) {
   return id;
 }
 
+void
+moonbit_ts_tree_cursor_delete(TSTreeCursor *self) {
+  ts_tree_cursor_delete(self);
+  moonbit_decref(self);
+}
+
 TSQuery *
 moonbit_ts_query_new(
   TSLanguage *language,
@@ -335,6 +341,46 @@ moonbit_ts_query_new(
     ts_query_new(language, (const char *)source, length, error, error + 1);
   moonbit_decref(source);
   return query;
+}
+
+void
+moonbit_ts_query_delete(TSQuery *self) {
+  ts_query_delete(self);
+}
+
+TSQueryCursor *
+moonbit_ts_query_cursor_new() {
+  return ts_query_cursor_new();
+}
+
+void
+moonbit_ts_query_cursor_exec(
+  TSQueryCursor *self,
+  TSQuery *query,
+  TSNode *node
+) {
+  ts_query_cursor_exec(self, query, *node);
+  moonbit_decref(node);
+}
+
+void
+moonbit_ts_query_cursor_set_byte_range(
+  TSQueryCursor *self,
+  uint32_t start_byte,
+  uint32_t end_byte
+) {
+  ts_query_cursor_set_byte_range(self, start_byte, end_byte);
+}
+
+void
+moonbit_ts_query_cursor_set_point_range(
+  TSQueryCursor *self,
+  TSPoint *start_point,
+  TSPoint *end_point
+) {
+  ts_query_cursor_set_point_range(self, *start_point, *end_point);
+  moonbit_decref(start_point);
+  moonbit_decref(end_point);
 }
 
 uint32_t
@@ -377,8 +423,7 @@ TSQueryMatch *
 moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
   TSQueryMatch *match =
     (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
-  bool has_match = !ts_query_cursor_next_match(self, match);
-  moonbit_decref(self);
+  bool has_match = ts_query_cursor_next_match(self, match);
   if (has_match) {
     return match;
   } else {

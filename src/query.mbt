@@ -7,7 +7,7 @@ type! QueryError {
   NodeType(UInt)
   Field(UInt)
   Capture(UInt)
-}
+} derive(Show)
 
 ///|
 fn QueryError::offset(self : QueryError) -> UInt {
@@ -40,7 +40,7 @@ extern "c" fn Query::_new(
 ///|
 pub fn Query::new(language : Language, source : String) -> Query!QueryError {
   let error = FixedArray::make(2, 0U)
-  let source = string_to_ntbs(source)
+  let source = @encoding.encode(UTF8, source)
   let query = Query::_new(language, source, error)
   if error[1] == 0 {
     query
@@ -59,7 +59,7 @@ pub extern "c" fn QueryCursor::new() -> QueryCursor = "moonbit_ts_query_cursor_n
 pub extern "c" fn QueryCursor::exec(
   self : QueryCursor,
   query : Query,
-  tree : Tree
+  node : Node
 ) = "moonbit_ts_query_cursor_exec"
 
 ///|
@@ -110,7 +110,7 @@ extern "c" fn QueryCursor::_next_match(
 ) -> Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_match"
 
 ///|
-fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
+pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
   let match_ = QueryCursor::_next_match(self)
   if match_.is_none() {
     return None

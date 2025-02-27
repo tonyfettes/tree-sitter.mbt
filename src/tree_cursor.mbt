@@ -21,3 +21,6 @@ pub extern "c" fn TreeCursor::current_field_name(self : TreeCursor) -> Bytes = "
 
 ///|
 pub extern "c" fn TreeCursor::current_field_id(self : TreeCursor) -> FieldId = "moonbit_ts_tree_cursor_current_field_id"
+
+///|
+pub extern "c" fn TreeCursor::delete(self : TreeCursor) = "moonbit_ts_tree_cursor_delete"

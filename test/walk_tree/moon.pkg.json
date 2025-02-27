@@ -5,8 +5,7 @@
       "path": "tonyfettes/tree-sitter",
       "alias": "ts"
     },
-    "moonbitlang/x/sys",
-    "moonbitlang/x/fs"
+    "moonbitlang/x/sys"
   ],
   "link": {
     "native": {

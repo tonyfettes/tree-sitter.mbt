@@ -1,10 +1,3 @@
-fn string_to_ntbs(string : String) -> Bytes {
-  let buf = @buffer.new()
-  buf.write_bytes(@encoding.encode(UTF8, string))
-  buf.write_byte(0)
-  buf.contents()
-}
-
 ///|
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding

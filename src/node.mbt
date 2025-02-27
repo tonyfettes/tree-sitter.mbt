@@ -97,10 +97,8 @@ extern "c" fn Node::_child_by_field_name(self : Node, name : Bytes) -> Node = "m
 
 ///|
 pub fn Node::child_by_field_name(self : Node, name : String) -> Node? {
-  let name_bytes = @buffer.new()
-  name_bytes.write_bytes(@encoding.encode(UTF8, name))
-  name_bytes.write_byte(0)
-  let child = self._child_by_field_name(name_bytes.contents())
+  let name_bytes = @encoding.encode(UTF8, name)
+  let child = self._child_by_field_name(name_bytes)
   if child.is_null() {
     None
   } else {
