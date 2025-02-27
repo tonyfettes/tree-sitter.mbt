@@ -66,6 +66,14 @@ moonbit_ts_parser_parse_string(
 }
 
 void
+moonbit_ts_parser_set_included_ranges(TSParser *parser, TSRange *ranges) {
+  size_t length = Moonbit_array_length(ranges);
+  ts_parser_set_included_ranges(
+    parser, ranges, length * sizeof(uint32_t) / sizeof(TSRange)
+  );
+}
+
+void
 moonbit_ts_tree_edit(TSTree *tree, TSInputEdit *edit) {
   ts_tree_edit(tree, edit);
   moonbit_decref(edit);
