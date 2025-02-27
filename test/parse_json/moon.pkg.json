@@ -1,0 +1,15 @@
+{
+  "is-main": true,
+  "import": [
+    {
+      "path": "tonyfettes/tree-sitter",
+      "alias": "ts"
+    },
+    "moonbitlang/x/sys"
+  ],
+  "link": {
+    "native": {
+      "cc-flags": "-g ../src/tree-sitter.c ../tree-sitter/libtree-sitter.a -I../tree-sitter/lib/include -fsanitize=address"
+    }
+  }
+}

@@ -4,7 +4,8 @@
   "deps": {
     "tonyfettes/tree-sitter": {
       "path": ".."
-    }
+    },
+    "moonbitlang/x": "0.4.20"
   },
   "readme": "README.md",
   "repository": "",

@@ -1,6 +1,8 @@
 ///|
 fn main {
-  let json = @ts.Language::load("../tree-sitter-json/json.so", "json")
+  let args = @sys.get_cli_args()
+  let path = args[1]
+  let json = @ts.Language::load(path, "json")
   let parser = @ts.Parser::new()
   parser.set_language(json)
   let source_code = "[1, null]"
@@ -12,11 +14,10 @@ fn main {
   println(array_node.type_())
   println(number_node.type_())
   println(root_node.child_count())
-  println(array_node.child_count());
-  println(array_node.named_child_count());
-  println(number_node.child_count());
+  println(array_node.child_count())
+  println(array_node.named_child_count())
+  println(number_node.child_count())
   println("Syntax tree: \{root_node.string()}")
-
   tree.delete()
   parser.delete()
 }
