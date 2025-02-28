@@ -123,6 +123,8 @@ moonbit_ts_language_symbol_name(TSLanguage *self, TSSymbol symbol) {
   return bytes;
 }
 
+static_assert_type_equal(TSSymbolType, uint32_t);
+
 TSSymbolType
 moonbit_ts_language_symbol_type(TSLanguage *self, TSSymbol symbol) {
   return ts_language_symbol_type(self, symbol);

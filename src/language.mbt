@@ -94,7 +94,7 @@ enum SymbolType {
 }
 
 ///|
-pub fn SymbolType::of_int(value : Int) -> SymbolType {
+pub fn SymbolType::of_int(value : UInt) -> SymbolType {
   match value {
     0 => SymbolType::Regular
     1 => SymbolType::Anonymous
@@ -105,7 +105,7 @@ pub fn SymbolType::of_int(value : Int) -> SymbolType {
 }
 
 ///|
-pub fn SymbolType::to_int(self : SymbolType) -> Int {
+pub fn SymbolType::to_int(self : SymbolType) -> UInt {
   match self {
     SymbolType::Regular => 0
     SymbolType::Anonymous => 1
@@ -115,10 +115,12 @@ pub fn SymbolType::to_int(self : SymbolType) -> Int {
 }
 
 ///|
-pub extern "c" fn Language::symbol_type(
-  self : Language,
-  symbol : Symbol
-) -> SymbolType = "moonbit_ts_language_symbol_type"
+extern "c" fn Language::symbol_type_(self : Language, symbol : Symbol) -> UInt = "moonbit_ts_language_symbol_type"
+
+///|
+pub fn Language::symbol_type(self : Language, symbol : Symbol) -> SymbolType {
+  return SymbolType::of_int(Language::symbol_type_(self, symbol))
+}
 
 ///|
 pub extern "c" fn Language::version(self : Language) -> UInt = "moonbit_ts_language_version"
