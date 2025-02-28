@@ -1,13 +1,9 @@
 {
-  "import": [
-    "moonbitlang/x/encoding"
-  ],
+  "import": ["moonbitlang/x/encoding", "tonyfettes/tree-sitter/grammar"],
   "link": {
     "native": {
       "cc": "echo"
     }
   },
-  "supported-targets": [
-    "native"
-  ]
+  "supported-targets": ["native"]
 }
