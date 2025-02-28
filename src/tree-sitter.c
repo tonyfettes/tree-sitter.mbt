@@ -1,9 +1,14 @@
+#include <assert.h>
 #include <dlfcn.h>
 #include <moonbit.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <tree_sitter/api.h>
+
+#define static_assert_type_equal(type, expected) \
+  static_assert(_Generic((type)0, expected: 1, default: 0), #type " is not " #expected)
 
 void *
 moonbit_c_null() {
@@ -33,8 +38,48 @@ moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   return load();
 }
 
+const TSLanguage *
+moonbit_ts_language_copy(TSLanguage *self) {
+  return ts_language_copy(self);
+}
+
+void
+moonbit_ts_language_delete(TSLanguage *self) {
+  ts_language_delete(self);
+}
+
+uint32_t
+moonbit_ts_language_symbol_count(TSLanguage *self) {
+  return ts_language_symbol_count(self);
+}
+
+uint32_t
+moonbit_ts_language_state_count(TSLanguage *self) {
+  return ts_language_state_count(self);
+}
+
+static_assert_type_equal(TSSymbol, uint16_t);
+
+TSSymbol
+moonbit_ts_language_symbol_for_name(
+  TSLanguage *self,
+  moonbit_bytes_t name,
+  bool is_named
+) {
+  uint32_t length = Moonbit_array_length(name);
+  TSSymbol symbol =
+    ts_language_symbol_for_name(self, (const char *)name, length, is_named);
+  moonbit_decref(name);
+  return symbol;
+}
+
+uint32_t
+moonbit_ts_language_field_count(TSLanguage *self) {
+  return ts_language_field_count(self);
+}
+
 moonbit_bytes_t
-moonbit_ts_field_name_for_id(TSLanguage *self, TSFieldId id) {
+moonbit_ts_language_field_name_for_id(TSLanguage *self, TSFieldId id) {
   const char *name = ts_language_field_name_for_id(self, id);
   size_t length = strlen(name);
   moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
@@ -49,6 +94,78 @@ moonbit_ts_language_field_id_for_name(TSLanguage *self, moonbit_bytes_t name) {
     ts_language_field_id_for_name(self, (const char *)name, length);
   moonbit_decref(name);
   return id;
+}
+
+TSSymbol *
+moonbit_ts_language_supertypes(TSLanguage *self) {
+  uint32_t length;
+  const TSSymbol *supertypes = ts_language_supertypes(self, &length);
+  TSSymbol *copy = (TSSymbol *)moonbit_malloc(length * sizeof(TSSymbol));
+  memcpy(copy, supertypes, length * sizeof(TSSymbol));
+  return copy;
+}
+
+TSSymbol *
+moonbit_ts_language_subtypes(TSLanguage *self, TSSymbol supertype) {
+  uint32_t length;
+  const TSSymbol *subtypes = ts_language_subtypes(self, supertype, &length);
+  TSSymbol *copy = (TSSymbol *)moonbit_malloc(length * sizeof(TSSymbol));
+  memcpy(copy, subtypes, length * sizeof(TSSymbol));
+  return copy;
+}
+
+moonbit_bytes_t
+moonbit_ts_language_symbol_name(TSLanguage *self, TSSymbol symbol) {
+  const char *name = ts_language_symbol_name(self, symbol);
+  size_t length = strlen(name);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, name, length);
+  return bytes;
+}
+
+TSSymbolType
+moonbit_ts_language_symbol_type(TSLanguage *self, TSSymbol symbol) {
+  return ts_language_symbol_type(self, symbol);
+}
+
+uint32_t
+moonbit_ts_language_version(TSLanguage *self) {
+  return ts_language_version(self);
+}
+
+uint32_t
+moonbit_ts_language_abi_version(TSLanguage *self) {
+  return ts_language_abi_version(self);
+}
+
+moonbit_bytes_t
+moonbit_ts_language_metadata(TSLanguage *self) {
+  const TSLanguageMetadata *metadata = ts_language_metadata(self);
+  moonbit_bytes_t bytes = moonbit_make_bytes(3, 0);
+  bytes[0] = metadata->major_version;
+  bytes[1] = metadata->minor_version;
+  bytes[2] = metadata->patch_version;
+  return bytes;
+}
+
+static_assert_type_equal(TSStateId, uint16_t);
+
+TSStateId
+moonbit_ts_language_next_state(
+  TSLanguage *self,
+  TSStateId state,
+  TSSymbol symbol
+) {
+  return ts_language_next_state(self, state, symbol);
+}
+
+moonbit_bytes_t
+moonbit_ts_language_name(TSLanguage *self) {
+  const char *name = ts_language_name(self);
+  size_t length = strlen(name);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, name, length);
+  return bytes;
 }
 
 TSParser *
