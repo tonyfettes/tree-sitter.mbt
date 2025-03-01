@@ -59,7 +59,7 @@ impl ToJson for Pattern with to_json(self) {
 ///|
 enum Rule {
   Blank
-  Symbol(String)
+  Symbol(String, mut rule~ : Rule?)
   String(String)
   Repeat(Rule)
   Repeat1(Rule)
@@ -100,7 +100,8 @@ impl @json.FromJson for Rule with from_json(
 ) -> Rule!@json.JsonDecodeError {
   match json {
     { "type": "BLANK", .. } => Rule::Blank
-    { "type": "SYMBOL", "name": String(name), .. } => Rule::Symbol(name)
+    { "type": "SYMBOL", "name": String(name), .. } =>
+      Rule::Symbol(name, rule=None)
     { "type": "STRING", "value": String(value), .. } => Rule::String(value)
     { "type": "CHOICE", "members": Array(members_json), .. } => {
       let members_json_path = json_path.add_key("members")
@@ -201,7 +202,7 @@ impl ToJson for Rule with to_json(self : Rule) -> Json {
     Repeat1(rule) => { "type": "REPEAT1", "content": rule.to_json() }
     Repeat(rule) => { "type": "REPEAT", "content": rule.to_json() }
     String(value) => { "type": "STRING", "value": String(value) }
-    Symbol(name) => { "type": "SYMBOL", "name": String(name) }
+    Symbol(name, ..) => { "type": "SYMBOL", "name": String(name) }
     Blank => { "type": "BLANK" }
     Pattern(value~) => { "type": "PATTERN", "value": value.to_json() }
   }
@@ -231,7 +232,7 @@ impl ToJson for RuleName with to_json(self : RuleName) -> Json {
 }
 
 ///|
-struct Grammar {
+pub struct Grammar {
   name : String
   rules : Map[String, Rule]
   extras : Array[Rule]
@@ -259,14 +260,24 @@ pub fn Grammar::from_json(json : Json) -> Grammar!GrammarParseError {
   }
   for _, rule in grammar.rules {
     let visitor = fn(rule : Rule) -> Unit!GrammarParseError {
-      guard rule is (Pattern(value~) as pattern) else { return }
-      guard value is String(s) else { return }
-      let compiled = try {
-        @regexp.compile!(s)
-      } catch {
-        error => raise RegExpParseError(error)
+      match rule {
+        Symbol(name, rule=None) as symbol => {
+          guard grammar.rules[name] is Some(rule) else {
+            raise RuleNotFound(name)
+          }
+          symbol.rule = Some(rule)
+        }
+        Pattern(value~) as pattern => {
+          guard value is String(s) else { return }
+          let compiled = try {
+            @regexp.compile!(s)
+          } catch {
+            error => raise RegExpParseError(error)
+          }
+          pattern.value = RegExp(compiled)
+        }
+        _ => return
       }
-      pattern.value = RegExp(compiled)
     }
     rule.visit_rule!(visitor)
   }
