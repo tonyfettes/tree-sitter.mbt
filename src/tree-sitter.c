@@ -1,5 +1,4 @@
 #include "tree-sitter/lib/src/lib.c"
-#include "tree_sitter/api.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <moonbit.h>

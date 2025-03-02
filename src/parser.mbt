@@ -190,31 +190,20 @@ fn LogType::of_uint(value : UInt) -> LogType {
 }
 
 ///|
-extern "c" fn Parser::_set_logger(
-  self : Parser,
-  logger : (UInt, Bytes) -> Unit
-) = "moonbit_ts_parser_set_logger"
+type Logger (UInt, Bytes) -> Unit
 
 ///|
-pub fn Parser::set_logger(
-  self : Parser,
-  logger : (LogType, String) -> Unit
-) -> Unit {
-  self._set_logger(fn(log_type, message) {
-    logger(
+fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
+  fn(log_type, message) {
+    log(
       LogType::of_uint(log_type),
       @encoding.decode_lossy(UTF8, message).to_string(),
     )
-  })
-}
-
-///|
-pub extern "c" fn Parser::_logger(self : Parser) -> (UInt, Bytes) -> Unit = "moonbit_ts_parser_logger"
-
-///|
-pub fn Parser::logger(self : Parser) -> (LogType, String) -> Unit {
-  fn(log_type, message) {
-    let logger = self._logger()
-    logger(log_type.to_uint(), @encoding.encode(UTF8, message))
   }
 }
+
+///|
+pub extern "c" fn Parser::set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
+
+///|
+pub extern "c" fn Parser::logger(self : Parser) -> Logger = "moonbit_ts_parser_logger"
