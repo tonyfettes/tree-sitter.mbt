@@ -31,7 +31,7 @@ impl DecodeFunction for InputEncoding with decode(bytes, byte_index) -> Int {
 }
 
 ///|
-fn InputEncoding::to_int(self : InputEncoding) -> Int {
+fn InputEncoding::to_uint(self : InputEncoding) -> UInt {
   match self {
     UTF8 => 0
     UTF16LE => 1
@@ -44,14 +44,4 @@ fn InputEncoding::to_int(self : InputEncoding) -> Int {
 struct Point {
   row : UInt
   column : UInt
-}
-
-///|
-pub fn Parser::parse[Input : Input, Encoding : DecodeFunction](
-  self : Parser,
-  input : Input,
-  encoding : Encoding
-) -> Tree {
-  let input_ = Input_::new(input, encoding)
-  self._parse(Nullable::none(), input_)
 }

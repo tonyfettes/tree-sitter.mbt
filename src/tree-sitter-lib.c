@@ -1,16 +1,3 @@
-void __assert_rtn(const char *, const char *, int, const char *) __attribute__((__noreturn__))  ;
-typedef struct dl_info {
-        const char      *dli_fname;
-        void            *dli_fbase;
-        const char      *dli_sname;
-        void            *dli_saddr;
-} Dl_info;
-extern int dladdr(const void *, Dl_info *);
-extern int dlclose(void * __handle) ;
-extern char * dlerror(void) ;
-extern void * dlopen(const char * __path, int __mode) ;
-extern void * dlsym(void * __handle, const char * __symbol);
-extern _Bool dlopen_preflight(const char* __path)  ;
 typedef signed char           __int8_t;
 typedef unsigned char           __uint8_t;
 typedef short                   __int16_t;
@@ -131,311 +118,8 @@ typedef u_int64_t               user_ulong_t;
 typedef int64_t                 user_time_t;
 typedef int64_t                 user_off_t;
 typedef u_int64_t               syscall_arg_t;
-typedef __darwin_ptrdiff_t ptrdiff_t;
-typedef __darwin_size_t        rsize_t;
-typedef __darwin_size_t        size_t;
-typedef __darwin_wchar_t wchar_t;
-typedef __darwin_wint_t wint_t;
-typedef long double max_align_t;
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-typedef int8_t           int_least8_t;
-typedef int16_t         int_least16_t;
-typedef int32_t         int_least32_t;
-typedef int64_t         int_least64_t;
-typedef uint8_t         uint_least8_t;
-typedef uint16_t       uint_least16_t;
-typedef uint32_t       uint_least32_t;
-typedef uint64_t       uint_least64_t;
-typedef int8_t            int_fast8_t;
-typedef int16_t          int_fast16_t;
-typedef int32_t          int_fast32_t;
-typedef int64_t          int_fast64_t;
-typedef uint8_t          uint_fast8_t;
-typedef uint16_t        uint_fast16_t;
-typedef uint32_t        uint_fast32_t;
-typedef uint64_t        uint_fast64_t;
-typedef long int intmax_t;
-typedef long unsigned int uintmax_t;
-    typedef float float_t;
-    typedef double double_t;
-extern int __math_errhandling(void);
-extern int __fpclassifyf(float);
-extern int __fpclassifyd(double);
-extern int __fpclassifyl(long double);
-extern int __isnormalf(float);
-extern int __isnormald(double);
-extern int __isnormall(long double);
-extern int __isfinitef(float);
-extern int __isfinited(double);
-extern int __isfinitel(long double);
-extern int __isinff(float);
-extern int __isinfd(double);
-extern int __isinfl(long double);
-extern int __isnanf(float);
-extern int __isnand(double);
-extern int __isnanl(long double);
-extern int __signbitf(float);
-extern int __signbitd(double);
-extern int __signbitl(long double);
-extern float acosf(float);
-extern double acos(double);
-extern long double acosl(long double);
-extern float asinf(float);
-extern double asin(double);
-extern long double asinl(long double);
-extern float atanf(float);
-extern double atan(double);
-extern long double atanl(long double);
-extern float atan2f(float, float);
-extern double atan2(double, double);
-extern long double atan2l(long double, long double);
-extern float cosf(float);
-extern double cos(double);
-extern long double cosl(long double);
-extern float sinf(float);
-extern double sin(double);
-extern long double sinl(long double);
-extern float tanf(float);
-extern double tan(double);
-extern long double tanl(long double);
-extern float acoshf(float);
-extern double acosh(double);
-extern long double acoshl(long double);
-extern float asinhf(float);
-extern double asinh(double);
-extern long double asinhl(long double);
-extern float atanhf(float);
-extern double atanh(double);
-extern long double atanhl(long double);
-extern float coshf(float);
-extern double cosh(double);
-extern long double coshl(long double);
-extern float sinhf(float);
-extern double sinh(double);
-extern long double sinhl(long double);
-extern float tanhf(float);
-extern double tanh(double);
-extern long double tanhl(long double);
-extern float expf(float);
-extern double exp(double);
-extern long double expl(long double);
-extern float exp2f(float);
-extern double exp2(double);
-extern long double exp2l(long double);
-extern float expm1f(float);
-extern double expm1(double);
-extern long double expm1l(long double);
-extern float logf(float);
-extern double log(double);
-extern long double logl(long double);
-extern float log10f(float);
-extern double log10(double);
-extern long double log10l(long double);
-extern float log2f(float);
-extern double log2(double);
-extern long double log2l(long double);
-extern float log1pf(float);
-extern double log1p(double);
-extern long double log1pl(long double);
-extern float logbf(float);
-extern double logb(double);
-extern long double logbl(long double);
-extern float modff(float, float *);
-extern double modf(double, double *);
-extern long double modfl(long double, long double *);
-extern float ldexpf(float, int);
-extern double ldexp(double, int);
-extern long double ldexpl(long double, int);
-extern float frexpf(float, int *);
-extern double frexp(double, int *);
-extern long double frexpl(long double, int *);
-extern int ilogbf(float);
-extern int ilogb(double);
-extern int ilogbl(long double);
-extern float scalbnf(float, int);
-extern double scalbn(double, int);
-extern long double scalbnl(long double, int);
-extern float scalblnf(float, long int);
-extern double scalbln(double, long int);
-extern long double scalblnl(long double, long int);
-extern float fabsf(float);
-extern double fabs(double);
-extern long double fabsl(long double);
-extern float cbrtf(float);
-extern double cbrt(double);
-extern long double cbrtl(long double);
-extern float hypotf(float, float);
-extern double hypot(double, double);
-extern long double hypotl(long double, long double);
-extern float powf(float, float);
-extern double pow(double, double);
-extern long double powl(long double, long double);
-extern float sqrtf(float);
-extern double sqrt(double);
-extern long double sqrtl(long double);
-extern float erff(float);
-extern double erf(double);
-extern long double erfl(long double);
-extern float erfcf(float);
-extern double erfc(double);
-extern long double erfcl(long double);
-extern float lgammaf(float);
-extern double lgamma(double);
-extern long double lgammal(long double);
-extern float tgammaf(float);
-extern double tgamma(double);
-extern long double tgammal(long double);
-extern float ceilf(float);
-extern double ceil(double);
-extern long double ceill(long double);
-extern float floorf(float);
-extern double floor(double);
-extern long double floorl(long double);
-extern float nearbyintf(float);
-extern double nearbyint(double);
-extern long double nearbyintl(long double);
-extern float rintf(float);
-extern double rint(double);
-extern long double rintl(long double);
-extern long int lrintf(float);
-extern long int lrint(double);
-extern long int lrintl(long double);
-extern float roundf(float);
-extern double round(double);
-extern long double roundl(long double);
-extern long int lroundf(float);
-extern long int lround(double);
-extern long int lroundl(long double);
-extern long long int llrintf(float);
-extern long long int llrint(double);
-extern long long int llrintl(long double);
-extern long long int llroundf(float);
-extern long long int llround(double);
-extern long long int llroundl(long double);
-extern float truncf(float);
-extern double trunc(double);
-extern long double truncl(long double);
-extern float fmodf(float, float);
-extern double fmod(double, double);
-extern long double fmodl(long double, long double);
-extern float remainderf(float, float);
-extern double remainder(double, double);
-extern long double remainderl(long double, long double);
-extern float remquof(float, float, int *);
-extern double remquo(double, double, int *);
-extern long double remquol(long double, long double, int *);
-extern float copysignf(float, float);
-extern double copysign(double, double);
-extern long double copysignl(long double, long double);
-extern float nanf(const char *);
-extern double nan(const char *);
-extern long double nanl(const char *);
-extern float nextafterf(float, float);
-extern double nextafter(double, double);
-extern long double nextafterl(long double, long double);
-extern double nexttoward(double, long double);
-extern float nexttowardf(float, long double);
-extern long double nexttowardl(long double, long double);
-extern float fdimf(float, float);
-extern double fdim(double, double);
-extern long double fdiml(long double, long double);
-extern float fmaxf(float, float);
-extern double fmax(double, double);
-extern long double fmaxl(long double, long double);
-extern float fminf(float, float);
-extern double fmin(double, double);
-extern long double fminl(long double, long double);
-extern float fmaf(float, float, float);
-extern double fma(double, double, double);
-extern long double fmal(long double, long double, long double);
-extern float __exp10f(float) ;
-extern double __exp10(double) ;
-extern __inline __attribute__ ((__always_inline__)) void __sincosf(float __x, float *__sinp, float *__cosp);
-extern __inline __attribute__ ((__always_inline__)) void __sincos(double __x, double *__sinp, double *__cosp);
-extern float __cospif(float) ;
-extern double __cospi(double) ;
-extern float __sinpif(float) ;
-extern double __sinpi(double) ;
-extern float __tanpif(float) ;
-extern double __tanpi(double) ;
-extern _Float16 __fabsf16(_Float16) ;
-extern _Float16 __hypotf16(_Float16, _Float16) ;
-extern _Float16 __sqrtf16(_Float16) ;
-extern _Float16 __ceilf16(_Float16) ;
-extern _Float16 __floorf16(_Float16) ;
-extern _Float16 __rintf16(_Float16) ;
-extern _Float16 __roundf16(_Float16) ;
-extern _Float16 __truncf16(_Float16) ;
-extern _Float16 __copysignf16(_Float16, _Float16) ;
-extern _Float16 __nextafterf16(_Float16, _Float16) ;
-extern _Float16 __fmaxf16(_Float16, _Float16) ;
-extern _Float16 __fminf16(_Float16, _Float16) ;
-extern _Float16 __fmaf16(_Float16, _Float16, _Float16) ;
-extern __inline __attribute__ ((__always_inline__)) void __sincospif(float __x, float *__sinp, float *__cosp);
-extern __inline __attribute__ ((__always_inline__)) void __sincospi(double __x, double *__sinp, double *__cosp);
-struct __float2 { float __sinval; float __cosval; };
-struct __double2 { double __sinval; double __cosval; };
-extern struct __float2 __sincosf_stret(float);
-extern struct __double2 __sincos_stret(double);
-extern struct __float2 __sincospif_stret(float);
-extern struct __double2 __sincospi_stret(double);
-extern __inline __attribute__ ((__always_inline__)) void __sincosf(float __x, float *__sinp, float *__cosp) {
-    const struct __float2 __stret = __sincosf_stret(__x);
-    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
-}
-extern __inline __attribute__ ((__always_inline__)) void __sincos(double __x, double *__sinp, double *__cosp) {
-    const struct __double2 __stret = __sincos_stret(__x);
-    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
-}
-extern __inline __attribute__ ((__always_inline__)) void __sincospif(float __x, float *__sinp, float *__cosp) {
-    const struct __float2 __stret = __sincospif_stret(__x);
-    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
-}
-extern __inline __attribute__ ((__always_inline__)) void __sincospi(double __x, double *__sinp, double *__cosp) {
-    const struct __double2 __stret = __sincospi_stret(__x);
-    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
-}
-extern double j0(double) ;
-extern double j1(double) ;
-extern double jn(int, double) ;
-extern double y0(double) ;
-extern double y1(double) ;
-extern double yn(int, double) ;
-extern double scalb(double, double);
-extern int signgam;
-struct exception {
-    int type;
-    char *name;
-    double arg1;
-    double arg2;
-    double retval;
-};
-enum moonbit_block_kind {
-  moonbit_BLOCK_KIND_REGULAR = 0,
-  moonbit_BLOCK_KIND_REF_ARRAY = 1,
-  moonbit_BLOCK_KIND_VAL_ARRAY = 2
-};
-struct moonbit_object {
-  int32_t rc;
-  uint32_t meta;
-};
-void *moonbit_malloc(size_t size);
-void moonbit_incref(void *obj);
-void moonbit_decref(void *obj);
-typedef uint16_t *moonbit_string_t;
-typedef uint8_t *moonbit_bytes_t;
-moonbit_string_t moonbit_make_string(int32_t size, uint16_t value);
-moonbit_bytes_t moonbit_make_bytes(int32_t size, int value);
-int32_t *moonbit_make_int32_array(int32_t len, int32_t value);
-void **moonbit_make_ref_array(int32_t len, void *value);
-int64_t *moonbit_make_int64_array(int32_t len, int64_t value);
-double *moonbit_make_double_array(int32_t len, double value);
-float *moonbit_make_float_array(int32_t len, float value);
-void **moonbit_make_extern_ref_array(int32_t len, void *value);
 typedef __darwin_va_list va_list;
+typedef __darwin_size_t        size_t;
 int     renameat(int, const char *, int, const char *) ;
 int renamex_np(const char *, const char *, unsigned int)    ;
 int renameatx_np(int, const char *, int, const char *, unsigned int)    ;
@@ -571,65 +255,6 @@ FILE	*funopen(const void *,
 				 int (* )(void *, const char *, int),
 				 fpos_t (* )(void *, fpos_t, int),
 				 int (* )(void *));
-void	*memchr(const void *__s, int __c, size_t __n);
-int	 memcmp(const void *__s1, const void *__s2, size_t __n);
-void	*memcpy(void *__dst, const void *__src, size_t __n);
-void	*memmove(void *__dst, const void *__src, size_t __len);
-void	*memset(void *__b, int __c, size_t __len);
-char	*strcat(char *__s1, const char *__s2);
-char	*strchr(const char *__s, int __c);
-int	 strcmp(const char *__s1, const char *__s2);
-int	 strcoll(const char *__s1, const char *__s2);
-char	*strcpy(char *__dst, const char *__src);
-size_t	 strcspn(const char *__s, const char *__charset);
-char	*strerror(int __errnum) __asm("_" "strerror" );
-size_t	 strlen(const char *__s);
-char	*strncat(char *__s1, const char *__s2, size_t __n);
-int	 strncmp(const char *__s1, const char *__s2, size_t __n);
-char	*strncpy(char *__dst, const char *__src, size_t __n);
-char	*strpbrk(const char *__s, const char *__charset);
-char	*strrchr(const char *__s, int __c);
-size_t	 strspn(const char *__s, const char *__charset);
-char	*strstr(const char *__big, const char *__little);
-char	*strtok(char *__str, const char *__sep);
-size_t	 strxfrm(char *__s1, const char *__s2, size_t __n);
-char	*strtok_r(char *__str, const char *__sep, char **__lasts);
-int	 strerror_r(int __errnum, char *__strerrbuf, size_t __buflen);
-char	*strdup(const char *__s1);
-void	*memccpy(void *__dst, const void *__src, int __c, size_t __n);
-char	*stpcpy(char *__dst, const char *__src);
-char    *stpncpy(char *__dst, const char *__src, size_t __n) ;
-char	*strndup(const char *__s1, size_t __n) ;
-size_t   strnlen(const char *__s1, size_t __n) ;
-char	*strsignal(int __sig);
-typedef int                    errno_t;
-errno_t	memset_s(void *__s, rsize_t __smax, int __c, rsize_t __n) ;
-void	*memmem(const void *__big, size_t __big_len, const void *__little, size_t __little_len) ;
-void     memset_pattern4(void *__b, const void *__pattern4, size_t __len) ;
-void     memset_pattern8(void *__b, const void *__pattern8, size_t __len) ;
-void     memset_pattern16(void *__b, const void *__pattern16, size_t __len) ;
-char	*strcasestr(const char *__big, const char *__little);
-char	*strnstr(const char *__big, const char *__little, size_t __len);
-size_t	 strlcat(char *__dst, const char *__source, size_t __size);
-size_t	 strlcpy(char *__dst, const char *__source, size_t __size);
-void	 strmode(int __mode, char *__bp);
-char	*strsep(char **__stringp, const char *__delim);
-void	 swab(const void * restrict, void * restrict, ssize_t);
-int	timingsafe_bcmp(const void *__b1, const void *__b2, size_t __len);
-int 	 strsignal_r(int __sig, char *__strsignalbuf, size_t __buflen);
-int	 bcmp(const void *, const void *, size_t) ;
-void	 bcopy(const void *, void *, size_t) ;
-void	 bzero(void *, size_t) ;
-char	*index(const char *, int) ;
-char	*rindex(const char *, int) ;
-int	 ffs(int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
-int	 ffsl(long) ;
-int	 ffsll(long long) ;
-int	 fls(int) ;
-int	 flsl(long) ;
-int	 flsll(long long) ;
 typedef enum {
 	P_ALL,
 	P_PID,
@@ -804,6 +429,28 @@ struct  sigstack {
 	int     ss_onstack;
 };
 void(*signal(int, void (*)(int)))(int);
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+typedef int8_t           int_least8_t;
+typedef int16_t         int_least16_t;
+typedef int32_t         int_least32_t;
+typedef int64_t         int_least64_t;
+typedef uint8_t         uint_least8_t;
+typedef uint16_t       uint_least16_t;
+typedef uint32_t       uint_least32_t;
+typedef uint64_t       uint_least64_t;
+typedef int8_t            int_fast8_t;
+typedef int16_t          int_fast16_t;
+typedef int32_t          int_fast32_t;
+typedef int64_t          int_fast64_t;
+typedef uint8_t          uint_fast8_t;
+typedef uint16_t        uint_fast16_t;
+typedef uint32_t        uint_fast32_t;
+typedef uint64_t        uint_fast64_t;
+typedef long int intmax_t;
+typedef long unsigned int uintmax_t;
 struct timeval
 {
 	__darwin_time_t         tv_sec;
@@ -1111,6 +758,7 @@ pid_t   wait4(pid_t, int *, int, struct rusage *);
 void	*alloca(size_t);
 typedef __darwin_ct_rune_t ct_rune_t;
 typedef __darwin_rune_t rune_t;
+typedef __darwin_wchar_t wchar_t;
 typedef struct {
 	int quot;
 	int rem;
@@ -1772,6 +1420,67 @@ static inline Length length_saturating_sub(Length len1, Length len2) {
     return length_zero();
   }
 }
+void __assert_rtn(const char *, const char *, int, const char *) __attribute__((__noreturn__))  ;
+void	*memchr(const void *__s, int __c, size_t __n);
+int	 memcmp(const void *__s1, const void *__s2, size_t __n);
+void	*memcpy(void *__dst, const void *__src, size_t __n);
+void	*memmove(void *__dst, const void *__src, size_t __len);
+void	*memset(void *__b, int __c, size_t __len);
+char	*strcat(char *__s1, const char *__s2);
+char	*strchr(const char *__s, int __c);
+int	 strcmp(const char *__s1, const char *__s2);
+int	 strcoll(const char *__s1, const char *__s2);
+char	*strcpy(char *__dst, const char *__src);
+size_t	 strcspn(const char *__s, const char *__charset);
+char	*strerror(int __errnum) __asm("_" "strerror" );
+size_t	 strlen(const char *__s);
+char	*strncat(char *__s1, const char *__s2, size_t __n);
+int	 strncmp(const char *__s1, const char *__s2, size_t __n);
+char	*strncpy(char *__dst, const char *__src, size_t __n);
+char	*strpbrk(const char *__s, const char *__charset);
+char	*strrchr(const char *__s, int __c);
+size_t	 strspn(const char *__s, const char *__charset);
+char	*strstr(const char *__big, const char *__little);
+char	*strtok(char *__str, const char *__sep);
+size_t	 strxfrm(char *__s1, const char *__s2, size_t __n);
+char	*strtok_r(char *__str, const char *__sep, char **__lasts);
+int	 strerror_r(int __errnum, char *__strerrbuf, size_t __buflen);
+char	*strdup(const char *__s1);
+void	*memccpy(void *__dst, const void *__src, int __c, size_t __n);
+char	*stpcpy(char *__dst, const char *__src);
+char    *stpncpy(char *__dst, const char *__src, size_t __n) ;
+char	*strndup(const char *__s1, size_t __n) ;
+size_t   strnlen(const char *__s1, size_t __n) ;
+char	*strsignal(int __sig);
+typedef __darwin_size_t        rsize_t;
+typedef int                    errno_t;
+errno_t	memset_s(void *__s, rsize_t __smax, int __c, rsize_t __n) ;
+void	*memmem(const void *__big, size_t __big_len, const void *__little, size_t __little_len) ;
+void     memset_pattern4(void *__b, const void *__pattern4, size_t __len) ;
+void     memset_pattern8(void *__b, const void *__pattern8, size_t __len) ;
+void     memset_pattern16(void *__b, const void *__pattern16, size_t __len) ;
+char	*strcasestr(const char *__big, const char *__little);
+char	*strnstr(const char *__big, const char *__little, size_t __len);
+size_t	 strlcat(char *__dst, const char *__source, size_t __size);
+size_t	 strlcpy(char *__dst, const char *__source, size_t __size);
+void	 strmode(int __mode, char *__bp);
+char	*strsep(char **__stringp, const char *__delim);
+void	 swab(const void * restrict, void * restrict, ssize_t);
+int	timingsafe_bcmp(const void *__b1, const void *__b2, size_t __len);
+int 	 strsignal_r(int __sig, char *__strsignalbuf, size_t __buflen);
+int	 bcmp(const void *, const void *, size_t) ;
+void	 bcopy(const void *, void *, size_t) ;
+void	 bzero(void *, size_t) ;
+char	*index(const char *, int) ;
+char	*rindex(const char *, int) ;
+int	 ffs(int);
+int	 strcasecmp(const char *, const char *);
+int	 strncasecmp(const char *, const char *, size_t);
+int	 ffsl(long) ;
+int	 ffsll(long long) ;
+int	 fls(int) ;
+int	 flsl(long) ;
+int	 flsll(long long) ;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 typedef struct { void *contents; uint32_t size; uint32_t capacity; } Array;
@@ -3189,6 +2898,9 @@ void ts_lexer_finish(Lexer *self, uint32_t *lookahead_end_byte);
 void ts_lexer_mark_end(Lexer *self);
 _Bool ts_lexer_set_included_ranges(Lexer *self, const TSRange *ranges, uint32_t count);
 TSRange *ts_lexer_included_ranges(const Lexer *self, uint32_t *count);
+typedef __darwin_ptrdiff_t ptrdiff_t;
+typedef __darwin_wint_t wint_t;
+typedef long double max_align_t;
 typedef int8_t UBool;
     typedef uint16_t UChar;
     typedef uint16_t OldUChar;
@@ -12329,6 +12041,294 @@ void ts_wasm_language_retain(const TSLanguage *self) {
 void ts_wasm_language_release(const TSLanguage *self) {
   (void)self;
 }
+typedef struct dl_info {
+        const char      *dli_fname;
+        void            *dli_fbase;
+        const char      *dli_sname;
+        void            *dli_saddr;
+} Dl_info;
+extern int dladdr(const void *, Dl_info *);
+extern int dlclose(void * __handle) ;
+extern char * dlerror(void) ;
+extern void * dlopen(const char * __path, int __mode) ;
+extern void * dlsym(void * __handle, const char * __symbol);
+extern _Bool dlopen_preflight(const char* __path)  ;
+    typedef float float_t;
+    typedef double double_t;
+extern int __math_errhandling(void);
+extern int __fpclassifyf(float);
+extern int __fpclassifyd(double);
+extern int __fpclassifyl(long double);
+extern int __isnormalf(float);
+extern int __isnormald(double);
+extern int __isnormall(long double);
+extern int __isfinitef(float);
+extern int __isfinited(double);
+extern int __isfinitel(long double);
+extern int __isinff(float);
+extern int __isinfd(double);
+extern int __isinfl(long double);
+extern int __isnanf(float);
+extern int __isnand(double);
+extern int __isnanl(long double);
+extern int __signbitf(float);
+extern int __signbitd(double);
+extern int __signbitl(long double);
+extern float acosf(float);
+extern double acos(double);
+extern long double acosl(long double);
+extern float asinf(float);
+extern double asin(double);
+extern long double asinl(long double);
+extern float atanf(float);
+extern double atan(double);
+extern long double atanl(long double);
+extern float atan2f(float, float);
+extern double atan2(double, double);
+extern long double atan2l(long double, long double);
+extern float cosf(float);
+extern double cos(double);
+extern long double cosl(long double);
+extern float sinf(float);
+extern double sin(double);
+extern long double sinl(long double);
+extern float tanf(float);
+extern double tan(double);
+extern long double tanl(long double);
+extern float acoshf(float);
+extern double acosh(double);
+extern long double acoshl(long double);
+extern float asinhf(float);
+extern double asinh(double);
+extern long double asinhl(long double);
+extern float atanhf(float);
+extern double atanh(double);
+extern long double atanhl(long double);
+extern float coshf(float);
+extern double cosh(double);
+extern long double coshl(long double);
+extern float sinhf(float);
+extern double sinh(double);
+extern long double sinhl(long double);
+extern float tanhf(float);
+extern double tanh(double);
+extern long double tanhl(long double);
+extern float expf(float);
+extern double exp(double);
+extern long double expl(long double);
+extern float exp2f(float);
+extern double exp2(double);
+extern long double exp2l(long double);
+extern float expm1f(float);
+extern double expm1(double);
+extern long double expm1l(long double);
+extern float logf(float);
+extern double log(double);
+extern long double logl(long double);
+extern float log10f(float);
+extern double log10(double);
+extern long double log10l(long double);
+extern float log2f(float);
+extern double log2(double);
+extern long double log2l(long double);
+extern float log1pf(float);
+extern double log1p(double);
+extern long double log1pl(long double);
+extern float logbf(float);
+extern double logb(double);
+extern long double logbl(long double);
+extern float modff(float, float *);
+extern double modf(double, double *);
+extern long double modfl(long double, long double *);
+extern float ldexpf(float, int);
+extern double ldexp(double, int);
+extern long double ldexpl(long double, int);
+extern float frexpf(float, int *);
+extern double frexp(double, int *);
+extern long double frexpl(long double, int *);
+extern int ilogbf(float);
+extern int ilogb(double);
+extern int ilogbl(long double);
+extern float scalbnf(float, int);
+extern double scalbn(double, int);
+extern long double scalbnl(long double, int);
+extern float scalblnf(float, long int);
+extern double scalbln(double, long int);
+extern long double scalblnl(long double, long int);
+extern float fabsf(float);
+extern double fabs(double);
+extern long double fabsl(long double);
+extern float cbrtf(float);
+extern double cbrt(double);
+extern long double cbrtl(long double);
+extern float hypotf(float, float);
+extern double hypot(double, double);
+extern long double hypotl(long double, long double);
+extern float powf(float, float);
+extern double pow(double, double);
+extern long double powl(long double, long double);
+extern float sqrtf(float);
+extern double sqrt(double);
+extern long double sqrtl(long double);
+extern float erff(float);
+extern double erf(double);
+extern long double erfl(long double);
+extern float erfcf(float);
+extern double erfc(double);
+extern long double erfcl(long double);
+extern float lgammaf(float);
+extern double lgamma(double);
+extern long double lgammal(long double);
+extern float tgammaf(float);
+extern double tgamma(double);
+extern long double tgammal(long double);
+extern float ceilf(float);
+extern double ceil(double);
+extern long double ceill(long double);
+extern float floorf(float);
+extern double floor(double);
+extern long double floorl(long double);
+extern float nearbyintf(float);
+extern double nearbyint(double);
+extern long double nearbyintl(long double);
+extern float rintf(float);
+extern double rint(double);
+extern long double rintl(long double);
+extern long int lrintf(float);
+extern long int lrint(double);
+extern long int lrintl(long double);
+extern float roundf(float);
+extern double round(double);
+extern long double roundl(long double);
+extern long int lroundf(float);
+extern long int lround(double);
+extern long int lroundl(long double);
+extern long long int llrintf(float);
+extern long long int llrint(double);
+extern long long int llrintl(long double);
+extern long long int llroundf(float);
+extern long long int llround(double);
+extern long long int llroundl(long double);
+extern float truncf(float);
+extern double trunc(double);
+extern long double truncl(long double);
+extern float fmodf(float, float);
+extern double fmod(double, double);
+extern long double fmodl(long double, long double);
+extern float remainderf(float, float);
+extern double remainder(double, double);
+extern long double remainderl(long double, long double);
+extern float remquof(float, float, int *);
+extern double remquo(double, double, int *);
+extern long double remquol(long double, long double, int *);
+extern float copysignf(float, float);
+extern double copysign(double, double);
+extern long double copysignl(long double, long double);
+extern float nanf(const char *);
+extern double nan(const char *);
+extern long double nanl(const char *);
+extern float nextafterf(float, float);
+extern double nextafter(double, double);
+extern long double nextafterl(long double, long double);
+extern double nexttoward(double, long double);
+extern float nexttowardf(float, long double);
+extern long double nexttowardl(long double, long double);
+extern float fdimf(float, float);
+extern double fdim(double, double);
+extern long double fdiml(long double, long double);
+extern float fmaxf(float, float);
+extern double fmax(double, double);
+extern long double fmaxl(long double, long double);
+extern float fminf(float, float);
+extern double fmin(double, double);
+extern long double fminl(long double, long double);
+extern float fmaf(float, float, float);
+extern double fma(double, double, double);
+extern long double fmal(long double, long double, long double);
+extern float __exp10f(float) ;
+extern double __exp10(double) ;
+extern __inline __attribute__ ((__always_inline__)) void __sincosf(float __x, float *__sinp, float *__cosp);
+extern __inline __attribute__ ((__always_inline__)) void __sincos(double __x, double *__sinp, double *__cosp);
+extern float __cospif(float) ;
+extern double __cospi(double) ;
+extern float __sinpif(float) ;
+extern double __sinpi(double) ;
+extern float __tanpif(float) ;
+extern double __tanpi(double) ;
+extern _Float16 __fabsf16(_Float16) ;
+extern _Float16 __hypotf16(_Float16, _Float16) ;
+extern _Float16 __sqrtf16(_Float16) ;
+extern _Float16 __ceilf16(_Float16) ;
+extern _Float16 __floorf16(_Float16) ;
+extern _Float16 __rintf16(_Float16) ;
+extern _Float16 __roundf16(_Float16) ;
+extern _Float16 __truncf16(_Float16) ;
+extern _Float16 __copysignf16(_Float16, _Float16) ;
+extern _Float16 __nextafterf16(_Float16, _Float16) ;
+extern _Float16 __fmaxf16(_Float16, _Float16) ;
+extern _Float16 __fminf16(_Float16, _Float16) ;
+extern _Float16 __fmaf16(_Float16, _Float16, _Float16) ;
+extern __inline __attribute__ ((__always_inline__)) void __sincospif(float __x, float *__sinp, float *__cosp);
+extern __inline __attribute__ ((__always_inline__)) void __sincospi(double __x, double *__sinp, double *__cosp);
+struct __float2 { float __sinval; float __cosval; };
+struct __double2 { double __sinval; double __cosval; };
+extern struct __float2 __sincosf_stret(float);
+extern struct __double2 __sincos_stret(double);
+extern struct __float2 __sincospif_stret(float);
+extern struct __double2 __sincospi_stret(double);
+extern __inline __attribute__ ((__always_inline__)) void __sincosf(float __x, float *__sinp, float *__cosp) {
+    const struct __float2 __stret = __sincosf_stret(__x);
+    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
+}
+extern __inline __attribute__ ((__always_inline__)) void __sincos(double __x, double *__sinp, double *__cosp) {
+    const struct __double2 __stret = __sincos_stret(__x);
+    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
+}
+extern __inline __attribute__ ((__always_inline__)) void __sincospif(float __x, float *__sinp, float *__cosp) {
+    const struct __float2 __stret = __sincospif_stret(__x);
+    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
+}
+extern __inline __attribute__ ((__always_inline__)) void __sincospi(double __x, double *__sinp, double *__cosp) {
+    const struct __double2 __stret = __sincospi_stret(__x);
+    *__sinp = __stret.__sinval; *__cosp = __stret.__cosval;
+}
+extern double j0(double) ;
+extern double j1(double) ;
+extern double jn(int, double) ;
+extern double y0(double) ;
+extern double y1(double) ;
+extern double yn(int, double) ;
+extern double scalb(double, double);
+extern int signgam;
+struct exception {
+    int type;
+    char *name;
+    double arg1;
+    double arg2;
+    double retval;
+};
+enum moonbit_block_kind {
+  moonbit_BLOCK_KIND_REGULAR = 0,
+  moonbit_BLOCK_KIND_REF_ARRAY = 1,
+  moonbit_BLOCK_KIND_VAL_ARRAY = 2
+};
+struct moonbit_object {
+  int32_t rc;
+  uint32_t meta;
+};
+void *moonbit_malloc(size_t size);
+void moonbit_incref(void *obj);
+void moonbit_decref(void *obj);
+typedef uint16_t *moonbit_string_t;
+typedef uint8_t *moonbit_bytes_t;
+moonbit_string_t moonbit_make_string(int32_t size, uint16_t value);
+moonbit_bytes_t moonbit_make_bytes(int32_t size, int value);
+int32_t *moonbit_make_int32_array(int32_t len, int32_t value);
+void **moonbit_make_ref_array(int32_t len, void *value);
+int64_t *moonbit_make_int64_array(int32_t len, int64_t value);
+double *moonbit_make_double_array(int32_t len, double value);
+float *moonbit_make_float_array(int32_t len, float value);
+void **moonbit_make_extern_ref_array(int32_t len, void *value);
 void *
 moonbit_c_null() {
   return ((void *)0);
@@ -12370,7 +12370,7 @@ uint32_t
 moonbit_ts_language_state_count(TSLanguage *self) {
   return ts_language_state_count(self);
 }
-_Static_assert(_Generic((TSSymbol)0, uint16_t: 1, default: 0), "TSSymbol" " is not " "uint16_t");
+_Static_assert( _Generic((TSSymbol)0, uint16_t: 1, default: 0), "TSSymbol" " is not " "uint16_t" );
 TSSymbol
 moonbit_ts_language_symbol_for_name(
   TSLanguage *self,
@@ -12427,7 +12427,7 @@ moonbit_ts_language_symbol_name(TSLanguage *self, TSSymbol symbol) {
   memcpy(bytes, name, length);
   return bytes;
 }
-_Static_assert(_Generic((TSSymbolType)0, uint32_t: 1, default: 0), "TSSymbolType" " is not " "uint32_t");
+_Static_assert( _Generic((TSSymbolType)0, uint32_t: 1, default: 0), "TSSymbolType" " is not " "uint32_t" );
 TSSymbolType
 moonbit_ts_language_symbol_type(TSLanguage *self, TSSymbol symbol) {
   return ts_language_symbol_type(self, symbol);
@@ -12449,7 +12449,7 @@ moonbit_ts_language_metadata(TSLanguage *self) {
   bytes[2] = metadata->patch_version;
   return bytes;
 }
-_Static_assert(_Generic((TSStateId)0, uint16_t: 1, default: 0), "TSStateId" " is not " "uint16_t");
+_Static_assert( _Generic((TSStateId)0, uint16_t: 1, default: 0), "TSStateId" " is not " "uint16_t" );
 TSStateId
 moonbit_ts_language_next_state(
   TSLanguage *self,
@@ -12474,9 +12474,101 @@ void
 moonbit_ts_parser_delete(TSParser *parser) {
   ts_parser_delete(parser);
 }
+const TSLanguage *
+moonbit_ts_parser_language(const TSParser *parser) {
+  return ts_parser_language(parser);
+}
 _Bool
 moonbit_ts_parser_set_language(TSParser *parser, TSLanguage *language) {
   return ts_parser_set_language(parser, language);
+}
+void
+moonbit_ts_parser_set_included_ranges(TSParser *parser, TSRange *ranges) {
+  size_t length = (((struct moonbit_object*)(ranges) - 1)->meta & (((uint32_t)1 << 28) - 1));
+  ts_parser_set_included_ranges(
+    parser, ranges, length * sizeof(uint32_t) / sizeof(TSRange)
+  );
+}
+TSRange *
+moonbit_ts_parser_included_ranges(const TSParser *self) {
+  uint32_t count = 0;
+  const TSRange *ranges = ts_parser_included_ranges(self, &count);
+  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  memcpy(copy, ranges, count * sizeof(TSRange));
+  return copy;
+}
+struct MoonBitTSInputRead {
+  moonbit_bytes_t (*read)(
+    struct MoonBitTSInputRead *payload,
+    uint32_t byte,
+    TSPoint *position
+  );
+};
+const char *
+moonbit_ts_input_read(
+  void *payload,
+  uint32_t byte,
+  TSPoint position,
+  uint32_t *bytes_read
+) {
+  struct MoonBitTSInputRead *input = (struct MoonBitTSInputRead *)payload;
+  TSPoint *point = (TSPoint *)moonbit_malloc(sizeof(struct TSPoint));
+  *point = position;
+  moonbit_bytes_t bytes = input->read(input, byte, point);
+  *bytes_read = (((struct moonbit_object*)(bytes) - 1)->meta & (((uint32_t)1 << 28) - 1));
+  return (const char *)bytes;
+}
+TSTree *
+moonbit_ts_parser_parse(
+  TSParser *self,
+  TSTree *old_tree,
+  struct MoonBitTSInputRead *input,
+  TSInputEncoding encoding,
+  DecodeFunction decode
+) {
+  TSInput ts_input = {
+    .payload = input,
+    .read = moonbit_ts_input_read,
+    .encoding = encoding,
+    .decode = decode
+  };
+  return ts_parser_parse(self, old_tree, ts_input);
+}
+struct MoonBitTSParseOptionsProgressCallback {
+  _Bool (*progress_callback)(
+    struct MoonBitTSParseOptionsProgressCallback *callback,
+    uint32_t current_byte_offset,
+    _Bool has_error
+  );
+};
+_Bool
+moonbit_ts_parse_options_progress_callback(TSParseState *state) {
+  struct MoonBitTSParseOptionsProgressCallback *callback =
+    (struct MoonBitTSParseOptionsProgressCallback *)state->payload;
+  return callback->progress_callback(
+    callback, state->current_byte_offset, state->has_error
+  );
+}
+TSTree *
+moonbit_ts_parser_parse_with_options(
+  TSParser *self,
+  TSTree *old_tree,
+  struct MoonBitTSInputRead *input,
+  TSInputEncoding encoding,
+  DecodeFunction decode,
+  struct MoonBitTSParseOptionsProgressCallback *callback
+) {
+  TSInput ts_input = {
+    .payload = input,
+    .read = moonbit_ts_input_read,
+    .encoding = encoding,
+    .decode = decode
+  };
+  TSParseOptions options = {
+    .payload = callback,
+    .progress_callback = moonbit_ts_parse_options_progress_callback
+  };
+  return ts_parser_parse_with_options(self, old_tree, ts_input, options);
 }
 TSTree *
 moonbit_ts_parser_parse_string(
@@ -12490,12 +12582,47 @@ moonbit_ts_parser_parse_string(
   moonbit_decref(bytes);
   return tree;
 }
+TSTree *
+moonbit_ts_parser_parse_string_encoding(
+  TSParser *parser,
+  TSTree *old_tree,
+  moonbit_bytes_t bytes,
+  TSInputEncoding encoding
+) {
+  uint32_t length = (((struct moonbit_object*)(bytes) - 1)->meta & (((uint32_t)1 << 28) - 1));
+  TSTree *tree =
+    ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  moonbit_decref(bytes);
+  return tree;
+}
 void
-moonbit_ts_parser_set_included_ranges(TSParser *parser, TSRange *ranges) {
-  size_t length = (((struct moonbit_object*)(ranges) - 1)->meta & (((uint32_t)1 << 28) - 1));
-  ts_parser_set_included_ranges(
-    parser, ranges, length * sizeof(uint32_t) / sizeof(TSRange)
+moonbit_ts_parser_reset(TSParser *self) {
+  ts_parser_reset(self);
+}
+struct MoonBitTSLogger {
+  void (*log)(
+    struct MoonBitTSLogger *payload,
+    TSLogType log_type,
+    moonbit_bytes_t buffer
   );
+};
+void
+moonbit_ts_logger_log(void *payload, TSLogType log_type, const char *buffer) {
+  struct MoonBitTSLogger *logger = (struct MoonBitTSLogger *)payload;
+  size_t length = strlen(buffer);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, buffer, length);
+  logger->log(logger, log_type, bytes);
+}
+void
+moonbit_ts_parser_set_logger(TSParser *self, struct MoonBitTSLogger *logger) {
+  TSLogger ts_logger = {.payload = logger, .log = moonbit_ts_logger_log};
+  ts_parser_set_logger(self, ts_logger);
+}
+struct MoonBitTSLogger *
+moonbit_ts_parser_logger(const TSParser *self) {
+  TSLogger logger = ts_parser_logger(self);
+  return logger.payload;
 }
 void
 moonbit_ts_tree_edit(TSTree *tree, TSInputEdit *edit) {
