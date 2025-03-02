@@ -1,5 +1,5 @@
 ///|
-type Language @tree_sitter_language.Language
+pub(all) type Language @tree_sitter_language.Language
 
 ///|
 extern "c" fn Language::_load(

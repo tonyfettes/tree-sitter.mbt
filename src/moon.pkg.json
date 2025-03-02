@@ -5,10 +5,6 @@
     "tonyfettes/tree_sitter/node_types",
     "tonyfettes/tree_sitter_language"
   ],
-  "link": {
-    "native": {
-      "cc": "echo"
-    }
-  },
+  "native-stub": ["tree-sitter.c"],
   "supported-targets": ["native"]
 }
