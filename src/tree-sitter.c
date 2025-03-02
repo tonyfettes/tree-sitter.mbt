@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "../tree-sitter/lib/include/tree_sitter/api.h"
+#include "tree-sitter/lib/src/lib.c"
 
 #define static_assert_type_equal(type, expected) \
   static_assert(_Generic((type)0, expected: 1, default: 0), #type " is not " #expected)

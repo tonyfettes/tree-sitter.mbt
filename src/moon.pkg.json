@@ -1,9 +1,9 @@
 {
   "pre-build": [
     {
-      "input": [],
-      "output": "tree-sitter/libtree-sitter.a",
-      "command": "make -C tree-sitter"
+      "input": ["tree-sitter.c"],
+      "output": ["tree-sitter-lib.c"],
+      "command": "python3 src/preprocess.py"
     }
   ],
   "import": [
@@ -12,6 +12,6 @@
     "tonyfettes/tree_sitter/node_types",
     "tonyfettes/tree_sitter_language"
   ],
-  "native-stub": ["tree-sitter.c"],
-  "supported-targets": ["native"]
+  "native-stub": ["tree-sitter-lib.c"],
+  "supported-targets": ["native", "wasm-gc"]
 }
