@@ -63,16 +63,40 @@ impl Node {
   child_by_field_id(Self, FieldId) -> Self?
   child_by_field_name(Self, String) -> Self?
   child_count(Self) -> UInt
+  child_with_descendant(Self, Self) -> Self?
+  descendant_count(Self) -> UInt
+  descendant_for_byte_range(Self, UInt, UInt) -> Self?
+  descendant_for_point_range(Self, Point, Point) -> Self?
   edit(Self, InputEdit) -> Unit
   end_byte(Self) -> UInt
   end_point(Self) -> Point
-  named_child(Self, UInt) -> Self
+  eq(Self, Self) -> Bool
+  field_name_for_child(Self, UInt) -> String
+  field_name_for_named_child(Self, UInt) -> String
+  first_child_for_byte(Self, UInt) -> Self?
+  first_named_child_for_byte(Self, UInt) -> Self?
+  grammar_symbol(Self) -> Symbol
+  grammar_type(Self) -> String
+  has_changes(Self) -> Bool
+  has_error(Self) -> Bool
+  is_error(Self) -> Bool
+  is_extra(Self) -> Bool
+  is_missing(Self) -> Bool
+  is_named(Self) -> Bool
+  language(Self) -> Language
+  named_child(Self, UInt) -> Self?
   named_child_count(Self) -> UInt
+  next_named_sibling(Self) -> Self?
+  next_parse_state(Self) -> StateId
   next_sibling(Self) -> Self?
+  parent(Self) -> Self?
+  parse_state(Self) -> StateId
+  prev_named_sibling(Self) -> Self?
   prev_sibling(Self) -> Self?
   start_byte(Self) -> UInt
   start_point(Self) -> Point
   string(Self) -> String
+  symbol(Self) -> Symbol
   type_(Self) -> String
 }
 
@@ -88,7 +112,6 @@ pub struct ParseState {
 
 type Parser
 impl Parser {
-  _set_included_ranges(Self, FixedArray[UInt]) -> Unit
   delete(Self) -> Unit
   included_ranges(Self) -> Array[Range]
   logger(Self) -> Logger

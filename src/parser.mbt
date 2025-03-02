@@ -14,7 +14,7 @@ pub extern "c" fn Parser::set_language(
 ) -> Unit = "moonbit_ts_parser_set_language"
 
 ///|
-pub extern "c" fn Parser::_set_included_ranges(
+extern "c" fn Parser::_set_included_ranges(
   self : Parser,
   ranges : FixedArray[UInt]
 ) -> Unit = "moonbit_ts_parser_set_included_ranges"
