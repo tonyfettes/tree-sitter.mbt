@@ -1,4 +1,5 @@
 #include "tree-sitter/lib/src/lib.c"
+#include "tree_sitter/api.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <moonbit.h>
@@ -349,10 +350,9 @@ moonbit_ts_parser_logger(const TSParser *self) {
   return logger.payload;
 }
 
-void
-moonbit_ts_tree_edit(TSTree *tree, TSInputEdit *edit) {
-  ts_tree_edit(tree, edit);
-  moonbit_decref(edit);
+TSTree *
+moonbit_ts_tree_copy(TSTree *self) {
+  return ts_tree_copy(self);
 }
 
 void
@@ -367,9 +367,48 @@ moonbit_ts_tree_root_node(TSTree *tree) {
   return node;
 }
 
-TSTree *
-moonbit_ts_tree_copy(TSTree *self) {
-  return ts_tree_copy(self);
+TSNode *
+moonbit_ts_tree_root_node_with_offset(
+  TSTree *tree,
+  uint32_t offset_bytes,
+  TSPoint *offset_extent
+) {
+  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
+  *node = ts_tree_root_node_with_offset(tree, offset_bytes, *offset_extent);
+  moonbit_decref(offset_extent);
+  return node;
+}
+
+const TSLanguage *
+moonbit_ts_tree_language(TSTree *tree) {
+  return ts_tree_language(tree);
+}
+
+TSRange *
+moonbit_ts_tree_included_ranges(TSTree *tree) {
+  uint32_t count = 0;
+  const TSRange *ranges = ts_tree_included_ranges(tree, &count);
+  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  memcpy(copy, ranges, count * sizeof(TSRange));
+  return copy;
+}
+
+void
+moonbit_ts_tree_edit(TSTree *tree, TSInputEdit *edit) {
+  ts_tree_edit(tree, edit);
+  moonbit_decref(edit);
+}
+
+TSRange *
+moonbit_ts_tree_get_changed_ranges(
+  const TSTree *old_tree,
+  const TSTree *new_tree
+) {
+  uint32_t count = 0;
+  TSRange *ranges = ts_tree_get_changed_ranges(old_tree, new_tree, &count);
+  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  memcpy(copy, ranges, count * sizeof(TSRange));
+  return copy;
 }
 
 TSNode *

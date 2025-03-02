@@ -1,11 +1,17 @@
 package tonyfettes/tree_sitter
 
+alias @moonbitlang/core/builtin as @builtin
 alias @tonyfettes/tree_sitter_language as @tree_sitter_language
 
 // Values
 
 // Types and methods
 type FieldId
+
+type Input[DecodeFunction]
+impl Input {
+  new[DecodeFunction]((UInt, Point) -> Bytes, DecodeFunction) -> Self[DecodeFunction]
+}
 
 type InputEdit
 impl InputEdit {
@@ -44,6 +50,13 @@ impl LanguageMetadata {
   patch_version(Self) -> Byte
 }
 
+pub enum LogType {
+  Parse
+  Lex
+}
+
+type Logger
+
 type Node
 impl Node {
   child(Self, UInt) -> Self?
@@ -63,18 +76,38 @@ impl Node {
   type_(Self) -> String
 }
 
+type ParseOptions
+impl ParseOptions {
+  new((ParseState) -> Bool) -> Self
+}
+
+pub struct ParseState {
+  current_byte_offset : UInt
+  has_error : Bool
+}
+
 type Parser
 impl Parser {
   _set_included_ranges(Self, FixedArray[UInt]) -> Unit
   delete(Self) -> Unit
+  included_ranges(Self) -> Array[Range]
+  logger(Self) -> Logger
   new() -> Self
-  parse[Input : Input, Encoding : DecodeFunction](Self, Input, Encoding) -> Tree
+  parse[Encoding : DecodeFunction](Self, Tree?, Input[Encoding], options? : ParseOptions) -> Tree
+  parse_bytes(Self, Tree?, Bytes, InputEncoding?) -> Tree
   parse_string(Self, Tree?, String) -> Tree
+  reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Unit
   set_language(Self, Language) -> Unit
+  set_logger(Self, Logger) -> Unit
 }
 
 type Point
+impl Point {
+  column(Self) -> UInt
+  new(UInt, UInt) -> Self
+  row(Self) -> UInt
+}
 
 type Query
 impl Query {
@@ -120,10 +153,13 @@ impl SymbolType {
 
 type Tree
 impl Tree {
+  changed_ranges(Self, Self) -> Array[Range]
   copy(Self) -> Self
   delete(Self) -> Unit
   edit(Self, InputEdit) -> Self
+  language(Self) -> Language
   root_node(Self) -> Node
+  root_node_with_offset(Self, UInt) -> Node
 }
 
 type TreeCursor
@@ -149,6 +185,4 @@ pub(open) trait DecodeFunction {
   decode(Bytes, Int) -> Int
 }
 impl DecodeFunction::input_encoding
-
-trait Input
 
