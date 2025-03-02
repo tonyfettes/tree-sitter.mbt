@@ -1,0 +1,154 @@
+package tonyfettes/tree_sitter
+
+alias @tonyfettes/tree_sitter_language as @tree_sitter_language
+
+// Values
+
+// Types and methods
+type FieldId
+
+type InputEdit
+impl InputEdit {
+  new(UInt, UInt, UInt, Point, Point, Point) -> Self
+}
+
+pub(all) enum InputEncoding {
+  UTF8
+  UTF16LE
+  UTF16BE
+  Custom
+}
+
+pub(all) type Language @tree_sitter_language.Language
+impl Language {
+  abi_version(Self) -> UInt
+  copy(Self) -> Self
+  delete(Self) -> Unit
+  field_id_for_name(Self, String) -> UInt
+  load(String, String) -> Self?
+  name(Self) -> String
+  state_count(Self) -> UInt
+  subtypes(Self) -> Array[Symbol]
+  supertypes(Self) -> Array[Symbol]
+  symbol_count(Self) -> UInt
+  symbol_for_name(Self, String) -> Symbol
+  symbol_name(Self, Symbol) -> String
+  symbol_type(Self, Symbol) -> SymbolType
+  version(Self) -> UInt
+}
+
+type LanguageMetadata
+impl LanguageMetadata {
+  major_version(Self) -> Byte
+  minor_version(Self) -> Byte
+  patch_version(Self) -> Byte
+}
+
+type Node
+impl Node {
+  child(Self, UInt) -> Self?
+  child_by_field_id(Self, FieldId) -> Self?
+  child_by_field_name(Self, String) -> Self?
+  child_count(Self) -> UInt
+  edit(Self, InputEdit) -> Unit
+  end_byte(Self) -> UInt
+  end_point(Self) -> Point
+  named_child(Self, UInt) -> Self
+  named_child_count(Self) -> UInt
+  next_sibling(Self) -> Self?
+  prev_sibling(Self) -> Self?
+  start_byte(Self) -> UInt
+  start_point(Self) -> Point
+  string(Self) -> String
+  type_(Self) -> String
+}
+
+type Parser
+impl Parser {
+  _set_included_ranges(Self, FixedArray[UInt]) -> Unit
+  delete(Self) -> Unit
+  new() -> Self
+  parse[Input : Input, Encoding : DecodeFunction](Self, Input, Encoding) -> Tree
+  parse_string(Self, Tree?, String) -> Tree
+  set_included_ranges(Self, Array[Range]) -> Unit
+  set_language(Self, Language) -> Unit
+}
+
+type Point
+
+type Query
+impl Query {
+  new(Language, String) -> Self!QueryError
+}
+
+pub struct QueryCapture {
+  node : Node
+  index : UInt
+}
+
+type QueryCursor
+impl QueryCursor {
+  delete(Self) -> Unit
+  exec(Self, Query, Node) -> Unit
+  new() -> Self
+  next_match(Self) -> QueryMatch?
+}
+
+type QueryError
+impl Show for QueryError
+
+pub struct QueryMatch {
+  id : UInt
+  pattern_index : UInt
+  captures : FixedArray[QueryCapture]
+}
+
+type Range
+impl Range {
+  new(Point, Point, UInt, UInt) -> Self
+}
+
+type StateId
+
+type Symbol
+
+type SymbolType
+impl SymbolType {
+  of_int(UInt) -> Self
+  to_int(Self) -> UInt
+}
+
+type Tree
+impl Tree {
+  copy(Self) -> Self
+  delete(Self) -> Unit
+  edit(Self, InputEdit) -> Self
+  root_node(Self) -> Node
+}
+
+type TreeCursor
+impl TreeCursor {
+  current_field_id(Self) -> FieldId
+  current_field_name(Self) -> Bytes
+  current_node(Self) -> Node
+  delete(Self) -> Unit
+  goto_first_child(Self) -> Bool
+  goto_next_sibling(Self) -> Bool
+  goto_parent(Self) -> Bool
+  new(Node) -> Self
+}
+
+// Type aliases
+pub typealias Grammar = @tonyfettes/tree_sitter/grammar.Grammar
+
+pub typealias NodeTypes = @tonyfettes/tree_sitter/node_types.NodeTypes
+
+// Traits
+pub(open) trait DecodeFunction {
+  input_encoding(Self) -> InputEncoding
+  decode(Bytes, Int) -> Int
+}
+impl DecodeFunction::input_encoding
+
+trait Input
+
