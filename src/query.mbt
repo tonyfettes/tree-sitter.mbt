@@ -76,7 +76,7 @@ pub struct QueryMatch {
 }
 
 ///|
-type QueryMatch_ Bytes
+priv type QueryMatch_ Bytes
 
 ///|
 fn init {
