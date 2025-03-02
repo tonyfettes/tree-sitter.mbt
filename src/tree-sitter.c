@@ -14,7 +14,7 @@
   )
 
 void *
-mnonbit_c_null() {
+moonbit_c_null() {
   return NULL;
 }
 
