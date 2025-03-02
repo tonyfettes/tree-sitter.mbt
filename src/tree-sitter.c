@@ -1,5 +1,5 @@
-#include "tree-sitter/lib/src/lib.c"
 #include "tree_sitter/api.h"
+#include "tree-sitter/lib/src/lib.c"
 #include <assert.h>
 #include <dlfcn.h>
 #include <moonbit.h>
@@ -14,7 +14,7 @@
   )
 
 void *
-moonbit_c_null() {
+mnonbit_c_null() {
   return NULL;
 }
 
