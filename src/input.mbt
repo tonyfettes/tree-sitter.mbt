@@ -28,12 +28,12 @@ pub fn InputEdit::new(
     start_byte,
     old_end_byte,
     new_end_byte,
-    start_point.row,
-    start_point.column,
-    old_end_point.row,
-    old_end_point.column,
-    new_end_point.row,
-    new_end_point.column,
+    start_point.row(),
+    start_point.column(),
+    old_end_point.row(),
+    old_end_point.column(),
+    new_end_point.row(),
+    new_end_point.column(),
   ]
 }
 

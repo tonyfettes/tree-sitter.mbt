@@ -44,11 +44,8 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
   let flatten_ranges = self._included_ranges()
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::new(
-      Point::{ row: flatten_ranges[i * 6], column: flatten_ranges[i * 6 + 1] },
-      Point::{
-        row: flatten_ranges[i * 6 + 2],
-        column: flatten_ranges[i * 6 + 3],
-      },
+      Point::new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
+      Point::new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
       flatten_ranges[i * 6 + 4],
       flatten_ranges[i * 6 + 5],
     )

@@ -9,10 +9,10 @@ pub fn Range::new(
   end_byte : UInt
 ) -> Range {
   [
-    start_point.row,
-    start_point.column,
-    end_point.row,
-    end_point.column,
+    start_point.row(),
+    start_point.column(),
+    end_point.row(),
+    end_point.column(),
     start_byte,
     end_byte,
   ]
