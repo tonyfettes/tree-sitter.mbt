@@ -1,5 +1,5 @@
 ///|
-extern type Language
+type Language @tree_sitter_language.Language
 
 ///|
 extern "c" fn Language::_load(
@@ -160,10 +160,10 @@ extern "c" fn Language::next_state(
 ) -> StateId = "moonbit_ts_language_next_state"
 
 ///|
-fn Language::name_(self : Language) -> Bytes = "moonbit_ts_language_name"
+fn Language::name_(self : @tree_sitter_language.Language) -> Bytes = "moonbit_ts_language_name"
 
 ///|
 pub fn Language::name(self : Language) -> String {
-  let name_bytes = Language::name_(self)
+  let name_bytes = Language::name_(self._)
   return @encoding.decode_lossy(UTF8, name_bytes).to_string()
 }

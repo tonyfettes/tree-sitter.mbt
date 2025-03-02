@@ -2,7 +2,10 @@
   "name": "tonyfettes/tree_sitter",
   "version": "0.1.1",
   "deps": {
-    "moonbitlang/x": "0.4.20"
+    "moonbitlang/x": "0.4.20",
+    "tonyfettes/tree_sitter_language": {
+      "path": "src/language"
+    }
   },
   "readme": "README.md",
   "repository": "",
