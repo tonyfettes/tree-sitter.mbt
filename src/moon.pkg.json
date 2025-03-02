@@ -1,4 +1,11 @@
 {
+  "pre-build": [
+    {
+      "input": [],
+      "output": "tree-sitter/libtree-sitter.a",
+      "command": "make -C tree-sitter"
+    }
+  ],
   "import": [
     "moonbitlang/x/encoding",
     "tonyfettes/tree_sitter/grammar",
