@@ -919,6 +919,107 @@ moonbit_ts_query_delete(TSQuery *self) {
   ts_query_delete(self);
 }
 
+uint32_t
+moonbit_ts_query_pattern_count(TSQuery *self) {
+  return ts_query_pattern_count(self);
+}
+
+uint32_t
+moonbit_ts_query_capture_count(TSQuery *self) {
+  return ts_query_capture_count(self);
+}
+
+uint32_t
+moonbit_ts_query_string_count(TSQuery *self) {
+  return ts_query_string_count(self);
+}
+
+uint32_t
+moonbit_ts_query_start_byte_for_pattern(TSQuery *self, uint32_t pattern_index) {
+  return ts_query_start_byte_for_pattern(self, pattern_index);
+}
+
+uint32_t
+moonbit_ts_query_end_byte_for_pattern(TSQuery *self, uint32_t pattern_index) {
+  return ts_query_end_byte_for_pattern(self, pattern_index);
+}
+
+static_assert_type_equal(TSQueryPredicateStepType, uint32_t);
+
+uint32_t *
+moonbit_ts_query_predicates_for_pattern(TSQuery *self, uint32_t pattern_index) {
+  uint32_t step_count = 0;
+  const TSQueryPredicateStep *predicates =
+    ts_query_predicates_for_pattern(self, pattern_index, &step_count);
+  uint32_t *copy =
+    (uint32_t *)moonbit_malloc(step_count * 2 * sizeof(uint32_t));
+  for (uint32_t i = 0; i < step_count; i++) {
+    copy[i * 2] = predicates[i].type;
+    copy[i * 2 + 1] = predicates[i].value_id;
+  }
+  return copy;
+}
+
+bool
+moonbit_ts_query_is_pattern_rooted(TSQuery *self, uint32_t pattern_index) {
+  return ts_query_is_pattern_rooted(self, pattern_index);
+}
+
+bool
+moonbit_ts_query_is_pattern_non_local(TSQuery *self, uint32_t pattern_index) {
+  return ts_query_is_pattern_non_local(self, pattern_index);
+}
+
+bool
+moonbit_ts_query_is_pattern_guaranteed_at_step(
+  TSQuery *self,
+  uint32_t byte_offset
+) {
+  return ts_query_is_pattern_guaranteed_at_step(self, byte_offset);
+}
+
+moonbit_bytes_t
+moonbit_ts_query_capture_name_for_id(TSQuery *self, uint32_t index) {
+  uint32_t length;
+  const char *name = ts_query_capture_name_for_id(self, index, &length);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, name, length);
+  return bytes;
+}
+
+static_assert_type_equal(TSQuantifier, uint32_t);
+
+TSQuantifier
+moonbit_ts_query_capture_quantifier_for_id(
+  TSQuery *self,
+  uint32_t pattern_index,
+  uint32_t capture_index
+) {
+  return ts_query_capture_quantifier_for_id(self, pattern_index, capture_index);
+}
+
+moonbit_bytes_t
+moonbit_ts_query_string_value_for_id(TSQuery *self, uint32_t index) {
+  uint32_t length;
+  const char *value = ts_query_string_value_for_id(self, index, &length);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, value, length);
+  return bytes;
+}
+
+void
+moonbit_ts_query_disable_capture(TSQuery *self, moonbit_bytes_t name) {
+  ts_query_disable_capture(
+    self, (const char *)name, Moonbit_array_length(name)
+  );
+  moonbit_decref(name);
+}
+
+void
+moonbit_ts_query_disable_pattern(TSQuery *self, uint32_t pattern_index) {
+  ts_query_disable_pattern(self, pattern_index);
+}
+
 TSQueryCursor *
 moonbit_ts_query_cursor_new() {
   return ts_query_cursor_new();
