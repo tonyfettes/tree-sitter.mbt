@@ -1,5 +1,5 @@
-#include "tree_sitter/api.h"
 #include "tree-sitter/lib/src/lib.c"
+#include "tree_sitter/api.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <moonbit.h>
@@ -1026,6 +1026,11 @@ moonbit_ts_query_cursor_new() {
 }
 
 void
+moonbit_ts_query_cursor_delete(TSQueryCursor *self) {
+  ts_query_cursor_delete(self);
+}
+
+void
 moonbit_ts_query_cursor_exec(
   TSQueryCursor *self,
   TSQuery *query,
@@ -1033,6 +1038,50 @@ moonbit_ts_query_cursor_exec(
 ) {
   ts_query_cursor_exec(self, query, *node);
   moonbit_decref(node);
+}
+
+typedef struct MoonBitTSQueryCursorProgressCallback {
+  bool (*progress_callback)(
+    struct MoonBitTSQueryCursorProgressCallback *callback,
+    uint32_t current_byte_offset
+  );
+} MoonBitTSQueryCursorProgressCallback;
+
+bool
+moonbit_ts_query_cursor_progress_callback(TSQueryCursorState *state) {
+  MoonBitTSQueryCursorProgressCallback *callback =
+    (MoonBitTSQueryCursorProgressCallback *)state->payload;
+  return callback->progress_callback(callback, state->current_byte_offset);
+}
+
+void
+moonbit_ts_query_cursor_exec_with_options(
+  TSQueryCursor *self,
+  TSQuery *query,
+  TSNode *node,
+  MoonBitTSQueryCursorProgressCallback *callback
+) {
+  TSQueryCursorOptions options = {
+    .payload = callback,
+    .progress_callback = moonbit_ts_query_cursor_progress_callback
+  };
+  ts_query_cursor_exec_with_options(self, query, *node, &options);
+  moonbit_decref(node);
+}
+
+bool
+moonbit_ts_query_cursor_did_exceed_match_limit(TSQueryCursor *self) {
+  return ts_query_cursor_did_exceed_match_limit(self);
+}
+
+uint32_t
+moonbit_ts_query_cursor_match_limit(TSQueryCursor *self) {
+  return ts_query_cursor_match_limit(self);
+}
+
+void
+moonbit_ts_query_cursor_set_match_limit(TSQueryCursor *self, uint32_t limit) {
+  ts_query_cursor_set_match_limit(self, limit);
 }
 
 void
@@ -1053,6 +1102,40 @@ moonbit_ts_query_cursor_set_point_range(
   ts_query_cursor_set_point_range(self, *start_point, *end_point);
   moonbit_decref(start_point);
   moonbit_decref(end_point);
+}
+
+TSQueryMatch *
+moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
+  TSQueryMatch *match =
+    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
+  bool has_match = ts_query_cursor_next_match(self, match);
+  if (has_match) {
+    return match;
+  } else {
+    return NULL;
+  }
+}
+
+void
+moonbit_ts_query_cursor_remove_match(TSQueryCursor *self, uint32_t match_id) {
+  ts_query_cursor_remove_match(self, match_id);
+}
+
+TSQueryMatch *
+moonbit_ts_query_cursor_next_capture(TSQueryCursor *self, uint32_t *match_id) {
+  TSQueryMatch *match =
+    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
+  bool has_match = ts_query_cursor_next_capture(self, match, match_id);
+  if (has_match) {
+    return match;
+  } else {
+    return NULL;
+  }
+}
+
+void
+moonbit_ts_query_cursor_set_max_start_depth(TSQueryCursor *self, uint32_t max_start_depth) {
+  ts_query_cursor_set_max_start_depth(self, max_start_depth);
 }
 
 uint32_t
@@ -1089,21 +1172,4 @@ moonbit_ts_query_match_captures_get_index(TSQueryMatch *self, uint32_t index) {
   uint32_t i = self->captures[index].index;
   moonbit_decref(self);
   return i;
-}
-
-TSQueryMatch *
-moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
-  TSQueryMatch *match =
-    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
-  bool has_match = ts_query_cursor_next_match(self, match);
-  if (has_match) {
-    return match;
-  } else {
-    return NULL;
-  }
-}
-
-void
-moonbit_ts_query_cursor_delete(TSQueryCursor *self) {
-  ts_query_cursor_delete(self);
 }

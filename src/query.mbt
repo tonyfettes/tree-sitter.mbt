@@ -216,11 +216,78 @@ extern type QueryCursor
 pub extern "c" fn QueryCursor::new() -> QueryCursor = "moonbit_ts_query_cursor_new"
 
 ///|
-pub extern "c" fn QueryCursor::exec(
+pub extern "c" fn QueryCursor::delete(self : QueryCursor) = "moonbit_ts_query_cursor_delete"
+
+///|
+extern "c" fn QueryCursor::_exec(
   self : QueryCursor,
   query : Query,
   node : Node
 ) = "moonbit_ts_query_cursor_exec"
+
+///|
+extern "c" fn QueryCursor::_exec_with_options(
+  self : QueryCursor,
+  query : Query,
+  node : Node,
+  progress_callback : (UInt) -> Unit
+) = "moonbit_ts_query_cursor_exec_with_options"
+
+///|
+pub struct QueryCursorState {
+  current_byte_offset : UInt
+}
+
+///|
+pub(all) struct QueryCursorOptions {
+  progress_callback : (QueryCursorState) -> Unit
+}
+
+///|
+pub fn QueryCursor::exec(
+  self : QueryCursor,
+  query : Query,
+  node : Node,
+  options? : QueryCursorOptions
+) -> Unit {
+  match options {
+    None => QueryCursor::_exec(self, query, node)
+    Some(options) =>
+      QueryCursor::_exec_with_options(self, query, node, fn(
+        current_byte_offset
+      ) {
+        (options.progress_callback)(QueryCursorState::{ current_byte_offset, })
+      })
+  }
+}
+
+///|
+pub extern "c" fn QueryCursor::did_exceed_match_limit(
+  self : QueryCursor
+) -> Bool = "moonbit_ts_query_cursor_did_exceed_match_limit"
+
+///|
+pub extern "c" fn QueryCursor::match_limit(self : QueryCursor) -> UInt = "moonbit_ts_query_cursor_match_limit"
+
+///|
+pub extern "c" fn QueryCursor::set_match_limit(
+  self : QueryCursor,
+  limit : UInt
+) = "moonbit_ts_query_cursor_set_match_limit"
+
+///|
+pub extern "c" fn QueryCursor::set_byte_range(
+  self : QueryCursor,
+  start_byte : UInt,
+  end_byte : UInt
+) = "moonbit_ts_query_cursor_set_byte_range"
+
+///|
+pub extern "c" fn QueryCursor::set_point_range(
+  self : QueryCursor,
+  start_point : Point,
+  end_point : Point
+) = "moonbit_ts_query_cursor_set_point_range"
 
 ///|
 pub struct QueryCapture {
@@ -291,4 +358,32 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
 }
 
 ///|
-pub extern "c" fn QueryCursor::delete(self : QueryCursor) = "moonbit_ts_query_cursor_delete"
+pub extern "c" fn QueryCursor::remove_match(
+  self : QueryCursor,
+  match_id : UInt
+) = "moonbit_ts_query_cursor_remove_match"
+
+///|
+extern "c" fn QueryCursor::_next_capture(
+  self : QueryCursor,
+  match_id : FixedArray[UInt]
+) -> Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_capture"
+
+///|
+pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
+  let match_id = FixedArray::make(1, 0U)
+  let match_ = QueryCursor::_next_capture(self, match_id)
+  if match_.is_none() {
+    return None
+  }
+  let match_ = match_.unwrap()
+  let node = QueryMatch_::captures_get_node(match_, 0)
+  let index = QueryMatch_::captures_get_index(match_, 0)
+  Some(QueryCapture::{ node, index })
+}
+
+///|
+pub extern "c" fn QueryCursor::set_max_start_depth(
+  self : QueryCursor,
+  max_start_depth : UInt
+) = "moonbit_ts_query_cursor_set_max_start_depth"
