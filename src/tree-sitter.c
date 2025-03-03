@@ -775,25 +775,24 @@ moonbit_ts_tree_cursor_new(TSNode *node) {
   return cursor;
 }
 
-bool
-moonbit_ts_tree_cursor_goto_parent(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_parent(self);
+void
+moonbit_ts_tree_cursor_delete(TSTreeCursor *self) {
+  ts_tree_cursor_delete(self);
   moonbit_decref(self);
-  return result;
 }
 
-bool
-moonbit_ts_tree_cursor_goto_next_sibling(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_next_sibling(self);
+void
+moonbit_ts_tree_cursor_reset(TSTreeCursor *self, TSNode *node) {
+  ts_tree_cursor_reset(self, *node);
+  moonbit_decref(node);
   moonbit_decref(self);
-  return result;
 }
 
-bool
-moonbit_ts_tree_cursor_goto_first_child(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_first_child(self);
-  moonbit_decref(self);
-  return result;
+void
+moonbit_ts_tree_cursor_reset_to(TSTreeCursor *dst, TSTreeCursor *src) {
+  ts_tree_cursor_reset_to(dst, src);
+  moonbit_decref(src);
+  moonbit_decref(dst);
 }
 
 TSNode *
@@ -821,10 +820,85 @@ moonbit_ts_tree_cursor_current_field_id(TSTreeCursor *self) {
   return id;
 }
 
-void
-moonbit_ts_tree_cursor_delete(TSTreeCursor *self) {
-  ts_tree_cursor_delete(self);
+bool
+moonbit_ts_tree_cursor_goto_parent(TSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_parent(self);
   moonbit_decref(self);
+  return result;
+}
+
+bool
+moonbit_ts_tree_cursor_goto_next_sibling(TSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_next_sibling(self);
+  moonbit_decref(self);
+  return result;
+}
+
+bool
+moonbit_ts_tree_cursor_goto_first_child(TSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_first_child(self);
+  moonbit_decref(self);
+  return result;
+}
+
+bool
+moonbit_ts_tree_cursor_goto_last_child(TSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_last_child(self);
+  moonbit_decref(self);
+  return result;
+}
+
+void
+moonbit_ts_tree_cursor_goto_descendant(
+  TSTreeCursor *self,
+  uint32_t goal_descendant_index
+) {
+  ts_tree_cursor_goto_descendant(self, goal_descendant_index);
+  moonbit_decref(self);
+}
+
+uint32_t
+moonbit_ts_tree_cursor_current_descendant_index(TSTreeCursor *self) {
+  uint32_t index = ts_tree_cursor_current_descendant_index(self);
+  moonbit_decref(self);
+  return index;
+}
+
+uint32_t
+moonbit_ts_tree_cursor_current_depth(TSTreeCursor *self) {
+  uint32_t depth = ts_tree_cursor_current_depth(self);
+  moonbit_decref(self);
+  return depth;
+}
+
+int64_t
+moonbit_ts_tree_cursor_goto_first_child_for_byte(
+  TSTreeCursor *self,
+  uint32_t goal_byte
+) {
+  int64_t result = ts_tree_cursor_goto_first_child_for_byte(self, goal_byte);
+  moonbit_decref(self);
+  return result;
+}
+
+int64_t
+moonbit_ts_tree_cursor_goto_first_child_for_point(
+  TSTreeCursor *self,
+  TSPoint *goal_point
+) {
+  int64_t result = ts_tree_cursor_goto_first_child_for_point(self, *goal_point);
+  moonbit_decref(self);
+  moonbit_decref(goal_point);
+  return result;
+}
+
+TSTreeCursor *
+moonbit_ts_tree_cursor_copy(TSTreeCursor *cursor) {
+  TSTreeCursor *copy =
+    (TSTreeCursor *)moonbit_malloc(sizeof(struct TSTreeCursor));
+  *copy = ts_tree_cursor_copy(cursor);
+  moonbit_decref(cursor);
+  return copy;
 }
 
 TSQuery *
