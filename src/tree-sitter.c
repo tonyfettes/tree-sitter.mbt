@@ -1134,7 +1134,10 @@ moonbit_ts_query_cursor_next_capture(TSQueryCursor *self, uint32_t *match_id) {
 }
 
 void
-moonbit_ts_query_cursor_set_max_start_depth(TSQueryCursor *self, uint32_t max_start_depth) {
+moonbit_ts_query_cursor_set_max_start_depth(
+  TSQueryCursor *self,
+  uint32_t max_start_depth
+) {
   ts_query_cursor_set_max_start_depth(self, max_start_depth);
 }
 
@@ -1172,4 +1175,57 @@ moonbit_ts_query_match_captures_get_index(TSQueryMatch *self, uint32_t index) {
   uint32_t i = self->captures[index].index;
   moonbit_decref(self);
   return i;
+}
+
+TSLookaheadIterator *
+moonbit_ts_lookahead_iterator_new(TSLanguage *language, TSStateId state) {
+  return ts_lookahead_iterator_new(language, state);
+}
+
+void
+moonbit_ts_lookahead_iterator_delete(TSLookaheadIterator *self) {
+  ts_lookahead_iterator_delete(self);
+}
+
+bool
+moonbit_ts_lookahead_iterator_reset_state(
+  TSLookaheadIterator *self,
+  TSStateId state
+) {
+  return ts_lookahead_iterator_reset_state(self, state);
+}
+
+bool
+moonbit_ts_lookahead_iterator_reset(
+  TSLookaheadIterator *self,
+  TSLanguage *language,
+  TSStateId state
+) {
+  return ts_lookahead_iterator_reset(self, language, state);
+}
+
+const TSLanguage *
+moonbit_ts_lookahead_iterator_language(const TSLookaheadIterator *self) {
+  return ts_lookahead_iterator_language(self);
+}
+
+bool
+moonbit_ts_lookahead_iterator_next(TSLookaheadIterator *self) {
+  return ts_lookahead_iterator_next(self);
+}
+
+TSSymbol
+moonbit_ts_lookahead_iterator_current_symbol(const TSLookaheadIterator *self) {
+  return ts_lookahead_iterator_current_symbol(self);
+}
+
+moonbit_bytes_t
+moonbit_ts_lookahead_iterator_current_symbol_name(
+  const TSLookaheadIterator *self
+) {
+  const char *name = ts_lookahead_iterator_current_symbol_name(self);
+  size_t length = strlen(name);
+  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  memcpy(bytes, name, length);
+  return bytes;
 }
