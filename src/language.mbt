@@ -82,7 +82,7 @@ extern "c" fn Language::symbol_name_(self : Language, symbol : Symbol) -> Bytes 
 ///|
 pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String {
   let name_bytes = Language::symbol_name_(self, symbol)
-  return @encoding.decode_lossy(UTF8, name_bytes).to_string()
+  return @encoding.decoder(UTF8).decode_lossy(name_bytes)
 }
 
 ///|
@@ -165,5 +165,5 @@ fn Language::name_(self : @tree_sitter_language.Language) -> Bytes = "moonbit_ts
 ///|
 pub fn Language::name(self : Language) -> String {
   let name_bytes = Language::name_(self._)
-  return @encoding.decode_lossy(UTF8, name_bytes).to_string()
+  return @encoding.decoder(UTF8).decode_lossy(name_bytes)
 }

@@ -194,7 +194,7 @@ fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
   fn(log_type, message) {
     log(
       LogType::of_uint(log_type),
-      @encoding.decode_lossy(UTF8, message).to_string(),
+      @encoding.decoder(UTF8).decode_lossy(message),
     )
   }
 }

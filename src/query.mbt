@@ -143,7 +143,7 @@ extern "c" fn Query::_capture_name_for_id(
 ///|
 pub fn Query::capture_name_for_id(self : Query, capture_id : UInt) -> String {
   let name = Query::_capture_name_for_id(self, capture_id)
-  @encoding.decode_strict(UTF8, name).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(name)
 }
 
 ///|
@@ -194,7 +194,7 @@ extern "c" fn Query::_string_value_for_id(
 ///|
 pub fn Query::string_value_for_id(self : Query, string_id : UInt) -> String {
   let value = Query::_string_value_for_id(self, string_id)
-  @encoding.decode_strict(UTF8, value).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(value)
 }
 
 ///|

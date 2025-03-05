@@ -6,7 +6,7 @@ extern "c" fn Node::_type(self : Node) -> Bytes = "moonbit_ts_node_type"
 
 ///|
 pub fn Node::type_(self : Node) -> String {
-  @encoding.decode_strict(UTF8, self._type()).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(self._type())
 }
 
 ///|
@@ -20,7 +20,7 @@ extern "c" fn Node::_grammar_type(self : Node) -> Bytes = "moonbit_ts_node_gramm
 
 ///|
 pub fn Node::grammar_type(self : Node) -> String {
-  @encoding.decode_strict(UTF8, self._grammar_type()).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(self._grammar_type())
 }
 
 ///|
@@ -40,7 +40,7 @@ extern "c" fn Node::_string(self : Node) -> Bytes = "moonbit_ts_node_string"
 
 ///|
 pub fn Node::string(self : Node) -> String {
-  @encoding.decode_strict(UTF8, self._string()).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(self._string())
 }
 
 ///|
@@ -123,9 +123,7 @@ extern "c" fn Node::_field_name_for_child(
 
 ///|
 pub fn Node::field_name_for_child(self : Node, child_index : UInt) -> String {
-  @encoding.decode_strict(UTF8, self._field_name_for_child(child_index))
-  .to_string?()
-  .unwrap()
+  @encoding.decoder(UTF8).decode_lossy(self._field_name_for_child(child_index))
 }
 
 ///|
@@ -139,9 +137,7 @@ pub fn Node::field_name_for_named_child(
   self : Node,
   child_index : UInt
 ) -> String {
-  @encoding.decode_strict(UTF8, self._field_name_for_named_child(child_index))
-  .to_string?()
-  .unwrap()
+  @encoding.decoder(UTF8).decode_lossy(self._field_name_for_named_child(child_index))
 }
 
 ///|

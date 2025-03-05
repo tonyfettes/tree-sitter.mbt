@@ -46,5 +46,5 @@ pub fn LookaheadIterator::current_symbol_name(
   self : LookaheadIterator
 ) -> String {
   let bytes = LookaheadIterator::_current_symbol_name(self)
-  @encoding.decode_strict(UTF8, bytes).to_string?().unwrap()
+  @encoding.decoder(UTF8).decode_lossy(bytes)
 }
