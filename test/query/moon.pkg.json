@@ -2,16 +2,10 @@
   "is-main": true,
   "import": [
     {
-      "path": "tonyfettes/tree-sitter",
+      "path": "tonyfettes/tree_sitter",
       "alias": "ts"
     },
     "moonbitlang/x/sys",
     "moonbitlang/x/fs"
-  ],
-  "link": {
-    "native": {
-      "cc": "/opt/homebrew/opt/llvm/bin/clang",
-      "cc-flags": "-g ../src/tree-sitter.c ../tree-sitter/libtree-sitter.a -I../tree-sitter/lib/include -fsanitize=address"
-    }
-  }
+  ]
 }

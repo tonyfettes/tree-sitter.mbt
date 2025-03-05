@@ -2,10 +2,12 @@
   "name": "tonyfettes/tree-sitter/test",
   "version": "0.1.0",
   "deps": {
-    "tonyfettes/tree-sitter": {
+    "tonyfettes/tree_sitter": {
       "path": ".."
     },
-    "moonbitlang/x": "0.4.20"
+    "moonbitlang/x": "0.4.21",
+    "tonyfettes/tree_sitter_moonbit": "0.1.1",
+    "tonyfettes/tree_sitter_json": "0.1.1"
   },
   "readme": "README.md",
   "repository": "",

@@ -35,7 +35,7 @@ fn main {
           ),
         )
       } else {
-        let code_node = node.named_child(0)
+        let code_node = node.named_child(0).unwrap()
         ruby_ranges.push(
           @ts.Range::new(
             code_node.start_point(),
