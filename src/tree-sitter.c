@@ -14,6 +14,11 @@
   )
 
 void *
+moonbit_ffi_make_closure(void *function, void *payload) {
+  return payload;
+}
+
+void *
 moonbit_c_null() {
   return NULL;
 }
