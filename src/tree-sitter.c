@@ -96,7 +96,7 @@ TSSymbol *
 moonbit_ts_language_supertypes(const TSLanguage *self) {
   uint32_t length;
   const TSSymbol *supertypes = ts_language_supertypes(self, &length);
-  TSSymbol *copy = (TSSymbol *)moonbit_malloc(length * sizeof(TSSymbol));
+  TSSymbol *copy = (TSSymbol *)moonbit_make_string(length, 0);
   memcpy(copy, supertypes, length * sizeof(TSSymbol));
   return copy;
 }
@@ -105,7 +105,7 @@ TSSymbol *
 moonbit_ts_language_subtypes(const TSLanguage *self, TSSymbol supertype) {
   uint32_t length;
   const TSSymbol *subtypes = ts_language_subtypes(self, supertype, &length);
-  TSSymbol *copy = (TSSymbol *)moonbit_malloc(length * sizeof(TSSymbol));
+  TSSymbol *copy = (TSSymbol *)moonbit_make_string(length, 0);
   memcpy(copy, subtypes, length * sizeof(TSSymbol));
   return copy;
 }
@@ -198,7 +198,7 @@ TSRange *
 moonbit_ts_parser_included_ranges(const TSParser *self) {
   uint32_t count = 0;
   const TSRange *ranges = ts_parser_included_ranges(self, &count);
-  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -219,7 +219,7 @@ moonbit_ts_input_read(
   uint32_t *bytes_read
 ) {
   struct MoonBitTSInputRead *input = (struct MoonBitTSInputRead *)payload;
-  TSPoint *point = (TSPoint *)moonbit_malloc(sizeof(struct TSPoint));
+  TSPoint *point = (TSPoint *)moonbit_make_int32_array(sizeof(TSPoint) / sizeof(int32_t), 0);
   *point = position;
   moonbit_bytes_t bytes = input->read(input, byte, point);
   *bytes_read = Moonbit_array_length(bytes);
@@ -381,7 +381,7 @@ TSRange *
 moonbit_ts_tree_included_ranges(TSTree *tree) {
   uint32_t count = 0;
   const TSRange *ranges = ts_tree_included_ranges(tree, &count);
-  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -399,7 +399,7 @@ moonbit_ts_tree_get_changed_ranges(
 ) {
   uint32_t count = 0;
   TSRange *ranges = ts_tree_get_changed_ranges(old_tree, new_tree, &count);
-  TSRange *copy = (TSRange *)moonbit_malloc(count * sizeof(TSRange));
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -450,7 +450,9 @@ moonbit_ts_node_start_byte(TSNode *self) {
 
 TSPoint *
 moonbit_ts_node_start_point(TSNode *self) {
-  TSPoint *point = (TSPoint *)moonbit_malloc(sizeof(struct TSPoint));
+  TSPoint *point = (TSPoint *)moonbit_make_int32_array(
+    sizeof(struct TSPoint) / sizeof(int32_t), 0
+  );
   *point = ts_node_start_point(*self);
   moonbit_decref(self);
   return point;
@@ -465,7 +467,9 @@ moonbit_ts_node_end_byte(TSNode *self) {
 
 TSPoint *
 moonbit_ts_node_end_point(TSNode *self) {
-  TSPoint *point = (TSPoint *)moonbit_malloc(sizeof(struct TSPoint));
+  TSPoint *point = (TSPoint *)moonbit_make_int32_array(
+    sizeof(struct TSPoint) / sizeof(int32_t), 0
+  );
   *point = ts_node_end_point(*self);
   moonbit_decref(self);
   return point;
@@ -942,7 +946,7 @@ moonbit_ts_query_predicates_for_pattern(TSQuery *self, uint32_t pattern_index) {
   const TSQueryPredicateStep *predicates =
     ts_query_predicates_for_pattern(self, pattern_index, &step_count);
   uint32_t *copy =
-    (uint32_t *)moonbit_malloc(step_count * 2 * sizeof(uint32_t));
+    (uint32_t *)moonbit_make_int32_array(step_count * 2, 0);
   for (uint32_t i = 0; i < step_count; i++) {
     copy[i * 2] = predicates[i].type;
     copy[i * 2 + 1] = predicates[i].value_id;
