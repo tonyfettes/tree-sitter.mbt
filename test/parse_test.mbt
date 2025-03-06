@@ -14,6 +14,25 @@ test "json" {
     root_node.string(),
     content="(document (object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number))))",
   )
+  let root_sexp = @sexp.parse!(root_node.string())
+  @json.inspect!(root_sexp, content=[
+    [
+      "document",
+      [
+        "object",
+        [
+          "pair",
+          { "key": ["string", ["string_content"]] },
+          { "value": ["string", ["string_content"]] },
+        ],
+        [
+          "pair",
+          { "key": ["string", ["string_content"]] },
+          { "value": ["number"] },
+        ],
+      ],
+    ],
+  ])
   let root_node_first_child = root_node.child(0).map(@tree_sitter.Node::string)
   inspect!(
     root_node_first_child,
