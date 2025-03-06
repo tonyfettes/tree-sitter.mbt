@@ -44,6 +44,11 @@ pub fn Node::string(self : Node) -> String {
 }
 
 ///|
+pub impl Show for Node with output(self : Node, logger : &Logger) -> Unit {
+  logger.write_string(self.string())
+}
+
+///|
 pub extern "c" fn Node::end_point(self : Node) -> Point = "moonbit_ts_node_end_point"
 
 ///|
@@ -113,6 +118,19 @@ pub fn Node::child(self : Node, index : UInt) -> Node? {
   } else {
     Some(child)
   }
+}
+
+///|
+pub fn Node::children(self : Node) -> Iter[Node] {
+  Iter::new(fn(yield_) {
+    for i in 0U..<self.child_count() {
+      match yield_(self._child(i)) {
+        IterEnd => return IterEnd
+        IterContinue => continue
+      }
+    }
+    IterContinue
+  })
 }
 
 ///|
