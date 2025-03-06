@@ -31,7 +31,7 @@ type! LexError {
   InvalidNumber(String, @json.ParseError)
   UnterminatedString
   UnrecognizedCharacter(String)
-}
+} derive(Show)
 
 fn parse_number(string : String) -> Double!@json.ParseError {
   guard @json.parse!(string) is Number(number)
@@ -51,7 +51,13 @@ rule token() -> (Token, Position, Position)!LexError {
     '"' as t => {
       let buf = StringBuilder::new()
       buf.write_string(t)
-      let endpos = string!(buf, lexbuf)
+      let endpos = double_quoted_string!(buf, lexbuf)
+      (STRING(buf.to_string()), $startpos(t), endpos)
+    }
+    '\'' as t => {
+      let buf = StringBuilder::new()
+      buf.write_string(t)
+      let endpos = single_quoted_string!(buf, lexbuf)
       (STRING(buf.to_string()), $startpos(t), endpos)
     }
     '(' as t => { (LPAREN, $startpos(t), $endpos(t)) }
@@ -69,7 +75,7 @@ rule token() -> (Token, Position, Position)!LexError {
   }
 }
 
-rule string(buf : StringBuilder) -> Position!LexError {
+rule double_quoted_string(buf : StringBuilder) -> Position!LexError {
   parse {
     '"' as t => {
       buf.write_string(t)
@@ -77,9 +83,30 @@ rule string(buf : StringBuilder) -> Position!LexError {
     }
     ( '\\' '"') as t => {
       buf.write_string(t)
-      string!(buf, lexbuf)
+      double_quoted_string!(buf, lexbuf)
     }
-    _ as t => { raise(UnrecognizedCharacter(t)) }
+    _ as t => {
+      buf.write_string(t)
+      double_quoted_string!(buf, lexbuf)
+    }
+    "" => { raise(UnterminatedString) }
+  }
+}
+
+rule single_quoted_string(buf : StringBuilder) -> Position!LexError {
+  parse {
+    '\'' as t => {
+      buf.write_string(t)
+      $endpos(t)
+    }
+    ( '\\' '\'') as t => {
+      buf.write_string(t)
+      single_quoted_string!(buf, lexbuf)
+    }
+    _ as t => {
+      buf.write_string(t)
+      single_quoted_string!(buf, lexbuf)
+    }
     "" => { raise(UnterminatedString) }
   }
 }
