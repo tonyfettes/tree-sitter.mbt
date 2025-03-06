@@ -8,6 +8,10 @@
     },
     "tonyfettes/c": "0.1.4"
   },
+  "bin-deps": {
+    "moonbitlang/yacc": "0.2.9",
+    "moonbitlang/lex": "0.1.5"
+  },
   "readme": "README.md",
   "repository": "",
   "license": "Apache-2.0",

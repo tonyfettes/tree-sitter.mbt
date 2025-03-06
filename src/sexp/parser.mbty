@@ -1,0 +1,52 @@
+%derive<Show> Token
+%derive<Show> ParseError
+%position<Int>
+
+%token LPAREN "("
+%token RPAREN ")"
+%token LBRACE "{"
+%token RBRACE "}"
+%token LBRACKET "["
+%token RBRACKET "]"
+%token COLON ":"
+
+%token EOF
+
+%token<Double> NUMBER
+%token<String> STRING
+%token<String> SYMBOL
+
+%start start
+
+%type<Array[Sexp]> list
+%type<Sexp> sexp
+%type<Atom> atom
+%type<Array[Sexp]> start
+
+%%
+
+start
+  : s=list EOF { s }
+  ;
+
+sexp
+  : "(" s=list ")" { List(s) }
+  | "[" s=list "]" { List(s) }
+  | "{" s=list "}" { List(s) }
+  | atom=atom      { Atom(atom) }
+  | key=SYMBOL COLON value=sexp
+    { Pair(key, value) }
+  ;
+
+atom
+  : NUMBER { Number($1) }
+  | STRING { String($1) }
+  | SYMBOL { Symbol($1) }
+  ;
+
+list
+  :               { [] }
+  | s=sexp l=list { [s, ..l] }
+  ;
+
+%%
