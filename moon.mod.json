@@ -10,7 +10,7 @@
   },
   "bin-deps": {
     "moonbitlang/yacc": "0.2.9",
-    "moonbitlang/lex": "0.1.5"
+    "moonbitlang/lex": "0.1.6"
   },
   "readme": "README.md",
   "repository": "",
