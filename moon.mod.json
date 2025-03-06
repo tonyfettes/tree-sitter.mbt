@@ -18,5 +18,12 @@
   "keywords": [],
   "description": "",
   "source": "src",
-  "exclude": ["bin", "test"]
+  "exclude": [
+    "bin",
+    "test",
+    "src/language",
+    "src/tree-sitter",
+    "src/tree-sitter.c",
+    "src/preprocess.py"
+  ]
 }
