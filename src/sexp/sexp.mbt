@@ -1,5 +1,5 @@
 ///|
-enum Atom {
+pub enum Atom {
   Number(Double)
   Symbol(String)
   String(String)
@@ -15,7 +15,7 @@ pub impl ToJson for Atom with to_json(self : Atom) -> Json {
 }
 
 ///|
-enum Sexp {
+pub enum Sexp {
   Atom(Atom)
   Pair(String, Sexp)
   List(Array[Sexp])
