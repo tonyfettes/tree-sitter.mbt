@@ -57,6 +57,18 @@ pub enum LogType {
 
 type Logger
 
+type LookaheadIterator
+impl LookaheadIterator {
+  current_symbol(Self) -> Symbol
+  current_symbol_name(Self) -> String
+  delete(Self) -> Unit
+  language(Self) -> Language
+  new(Language, StateId) -> Self
+  next(Self) -> Bool
+  reset(Self, Language, StateId) -> Unit
+  reset_state(Self, StateId) -> Unit
+}
+
 type Node
 impl Node {
   child(Self, UInt) -> Self?
@@ -132,9 +144,32 @@ impl Point {
   row(Self) -> UInt
 }
 
+pub enum Quantifier {
+  Zero
+  ZeroOrOne
+  ZeroOrMore
+  One
+  OneOrMore
+}
+
 type Query
 impl Query {
+  capture_count(Self) -> UInt
+  capture_name_for_id(Self, UInt) -> String
+  capture_quantifier_for_id(Self, UInt, UInt) -> Quantifier
+  delete(Self) -> Unit
+  disable_capture(Self, String) -> Unit
+  disable_pattern(Self, UInt) -> Unit
+  end_byte_for_pattern(Self, UInt) -> UInt
+  is_pattern_guaranteed_at_step(Self, UInt) -> Bool
+  is_pattern_non_local(Self, UInt) -> Bool
+  is_pattern_rooted(Self, UInt) -> Bool
   new(Language, String) -> Self!QueryError
+  pattern_count(Self) -> UInt
+  predicates_for_pattern(Self, UInt) -> Array[QueryPredicateStep]
+  start_byte_for_pattern(Self, UInt) -> UInt
+  string_count(Self) -> UInt
+  string_value_for_id(Self, UInt) -> String
 }
 
 pub struct QueryCapture {
@@ -145,9 +180,25 @@ pub struct QueryCapture {
 type QueryCursor
 impl QueryCursor {
   delete(Self) -> Unit
-  exec(Self, Query, Node) -> Unit
+  did_exceed_match_limit(Self) -> Bool
+  exec(Self, Query, Node, options? : QueryCursorOptions) -> Unit
+  match_limit(Self) -> UInt
   new() -> Self
+  next_capture(Self) -> QueryCapture?
   next_match(Self) -> QueryMatch?
+  remove_match(Self, UInt) -> Unit
+  set_byte_range(Self, UInt, UInt) -> Unit
+  set_match_limit(Self, UInt) -> Unit
+  set_max_start_depth(Self, UInt) -> Unit
+  set_point_range(Self, Point, Point) -> Unit
+}
+
+pub(all) struct QueryCursorOptions {
+  progress_callback : (QueryCursorState) -> Unit
+}
+
+pub struct QueryCursorState {
+  current_byte_offset : UInt
 }
 
 type QueryError
@@ -157,6 +208,17 @@ pub struct QueryMatch {
   id : UInt
   pattern_index : UInt
   captures : FixedArray[QueryCapture]
+}
+
+pub struct QueryPredicateStep {
+  type_ : QueryPredicateStepType
+  value : UInt
+}
+
+pub enum QueryPredicateStepType {
+  Done
+  Capture
+  String
 }
 
 type Range
@@ -187,14 +249,24 @@ impl Tree {
 
 type TreeCursor
 impl TreeCursor {
+  copy(Self) -> Self
+  current_depth(Self) -> UInt
+  current_descendant_index(Self) -> UInt
   current_field_id(Self) -> FieldId
   current_field_name(Self) -> Bytes
   current_node(Self) -> Node
   delete(Self) -> Unit
+  goto_descendant(Self, UInt) -> Unit
   goto_first_child(Self) -> Bool
+  goto_first_child_for_byte(Self, UInt) -> Bool
+  goto_first_child_for_point(Self, Point) -> Bool
+  goto_last_child(Self) -> Bool
   goto_next_sibling(Self) -> Bool
   goto_parent(Self) -> Bool
+  goto_previous_sibling(Self) -> Bool
   new(Node) -> Self
+  reset(Self, Node) -> Unit
+  reset_to(Self, Self) -> Unit
 }
 
 // Type aliases

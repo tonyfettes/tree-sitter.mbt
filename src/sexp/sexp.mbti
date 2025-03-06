@@ -1,0 +1,59 @@
+package tonyfettes/tree_sitter/sexp
+
+// Values
+fn parse(String) -> Array[Sexp]!SexpError
+
+fn start(Array[(Token, Int, Int)], initial_pos? : Int) -> Array[Sexp]!ParseError
+
+// Types and methods
+type Atom
+impl Eq for Atom
+impl Show for Atom
+impl ToJson for Atom
+
+pub(all) struct LexEngine {
+  graph : Array[(Int) -> (Int, Array[Array[Int]])]
+  end_nodes : Array[(Int, Array[((Int, Int), (Int, Int))])?]
+  start_tags : Array[Int]
+  code_blocks_n : Int
+}
+impl LexEngine {
+  run(Self, Lexbuf) -> (Int, Array[(Int, Int)])
+}
+
+type LexError
+
+type Lexbuf
+impl Lexbuf {
+  from_string(String) -> Self
+}
+
+pub type! ParseError {
+  UnexpectedToken(Token, (Int, Int), Array[TokenKind])
+  UnexpectedEndOfInput(Int, Array[TokenKind])
+}
+impl Show for ParseError
+
+type Sexp
+impl Eq for Sexp
+impl Show for Sexp
+impl ToJson for Sexp
+
+pub type! SexpError {
+  LexError(LexError)
+  ParseError(ParseError)
+}
+
+type Token
+impl Eq for Token
+impl Show for Token
+
+type TokenKind
+impl Eq for TokenKind
+impl Show for TokenKind
+
+// Type aliases
+pub typealias Position = Int
+
+// Traits
+
