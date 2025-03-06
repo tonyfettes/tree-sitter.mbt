@@ -7,7 +7,8 @@
     },
     "moonbitlang/x": "0.4.21",
     "tonyfettes/tree_sitter_moonbit": "0.1.1",
-    "tonyfettes/tree_sitter_json": "0.1.1"
+    "tonyfettes/tree_sitter_json": "0.1.5",
+    "tonyfettes/tree_sitter_markdown": "0.1.5"
   },
   "readme": "README.md",
   "repository": "",

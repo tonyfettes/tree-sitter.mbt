@@ -2,7 +2,13 @@
   "test-import": [
     "tonyfettes/tree_sitter",
     "tonyfettes/tree_sitter_moonbit",
+    "tonyfettes/tree_sitter_markdown",
     "tonyfettes/tree_sitter/sexp",
     "tonyfettes/tree_sitter_json"
-  ]
+  ],
+  "link": {
+    "native": {
+      "cc-flags": "-g"
+    }
+  }
 }
