@@ -1,0 +1,7 @@
+{
+  "test-import": [
+    "tonyfettes/tree_sitter",
+    "tonyfettes/tree_sitter_moonbit",
+    "tonyfettes/tree_sitter_json"
+  ]
+}
