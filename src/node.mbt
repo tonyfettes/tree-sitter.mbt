@@ -137,7 +137,9 @@ pub fn Node::field_name_for_named_child(
   self : Node,
   child_index : UInt
 ) -> String {
-  @encoding.decoder(UTF8).decode_lossy(self._field_name_for_named_child(child_index))
+  @encoding.decoder(UTF8).decode_lossy(
+    self._field_name_for_named_child(child_index),
+  )
 }
 
 ///|

@@ -5,7 +5,8 @@
     "moonbitlang/x": "0.4.21",
     "tonyfettes/tree_sitter_language": {
       "path": "src/language"
-    }
+    },
+    "tonyfettes/c": "0.1.4"
   },
   "readme": "README.md",
   "repository": "",

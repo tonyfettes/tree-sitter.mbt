@@ -334,15 +334,12 @@ extern "c" fn QueryMatch_::captures_get_index(
 ///|
 extern "c" fn QueryCursor::_next_match(
   self : QueryCursor
-) -> Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_match"
+) -> @c.Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_match"
 
 ///|
 pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
-  let match_ = QueryCursor::_next_match(self)
-  if match_.is_none() {
-    return None
-  }
-  let match_ = match_.unwrap()
+  let match_ = QueryCursor::_next_match(self).to()
+  guard match_ is Some(match_) else { return None }
   let capture_count = QueryMatch_::capture_count(match_)
   let captures = FixedArray::makei(capture_count.to_int(), fn(i) {
     let i = i.reinterpret_as_uint()
@@ -367,16 +364,13 @@ pub extern "c" fn QueryCursor::remove_match(
 extern "c" fn QueryCursor::_next_capture(
   self : QueryCursor,
   match_id : FixedArray[UInt]
-) -> Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_capture"
+) -> @c.Nullable[QueryMatch_] = "moonbit_ts_query_cursor_next_capture"
 
 ///|
 pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
   let match_id = FixedArray::make(1, 0U)
-  let match_ = QueryCursor::_next_capture(self, match_id)
-  if match_.is_none() {
-    return None
-  }
-  let match_ = match_.unwrap()
+  let match_ = QueryCursor::_next_capture(self, match_id).to()
+  guard match_ is Some(match_) else { return None }
   let node = QueryMatch_::captures_get_node(match_, 0)
   let index = QueryMatch_::captures_get_index(match_, 0)
   Some(QueryCapture::{ node, index })

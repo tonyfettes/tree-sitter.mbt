@@ -5,7 +5,7 @@ pub(all) type Language @tree_sitter_language.Language
 extern "c" fn Language::_load(
   pathname : Bytes,
   symbol : Bytes
-) -> Nullable[Language] = "moonbit_ts_language_load"
+) -> @c.Nullable[Language] = "moonbit_ts_language_load"
 
 ///|
 pub fn Language::load(path : String, name : String) -> Language? {

@@ -55,10 +55,10 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 ///|
 extern "c" fn Parser::_parse(
   self : Parser,
-  old_tree : Nullable[Tree],
+  old_tree : @c.Nullable[Tree],
   input : (UInt, Point) -> Bytes,
   encoding : InputEncoding,
-  decode : Nullable[FuncRef[(Bytes, Int) -> Int]]
+  decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]]
 ) -> Tree = "moonbit_ts_parser_parse"
 
 ///|
@@ -82,10 +82,10 @@ pub fn ParseOptions::new(
 ///|
 extern "c" fn Parser::_parse_with_options(
   self : Parser,
-  old_tree : Nullable[Tree],
+  old_tree : @c.Nullable[Tree],
   input : (UInt, Point) -> Bytes,
   encoding : UInt,
-  decode : Nullable[FuncRef[(Bytes, Int) -> Int]],
+  decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]],
   progress_callback : (UInt, Bool) -> Bool
 ) -> Tree = "moonbit_ts_parser_parse_with_options"
 
@@ -97,21 +97,22 @@ pub fn Parser::parse[Encoding : DecodeFunction](
   options? : ParseOptions
 ) -> Tree {
   let input_encoding = input.decode.input_encoding()
-  let decode : Nullable[FuncRef[(Bytes, Int) -> Int]] = match input_encoding {
+  let decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]] = match
+    input_encoding {
     Custom =>
-      Nullable::some(fn(bytes, offset) { Encoding::decode(bytes, offset) })
-    _ => Nullable::none()
+      @c.Nullable::some(fn(bytes, offset) { Encoding::decode(bytes, offset) })
+    _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
     return self._parse(
-      Nullable::of(old_tree),
+      @c.Nullable::of(old_tree),
       input.read,
       input_encoding,
       decode,
     )
   }
   self._parse_with_options(
-    Nullable::of(old_tree),
+    @c.Nullable::of(old_tree),
     input.read,
     input_encoding.to_uint(),
     decode,
@@ -124,14 +125,14 @@ pub fn Parser::parse[Encoding : DecodeFunction](
 ///|
 extern "c" fn Parser::_parse_bytes(
   self : Parser,
-  old_tree : Nullable[Tree],
+  old_tree : @c.Nullable[Tree],
   string : Bytes
 ) -> Tree = "moonbit_ts_parser_parse_string"
 
 ///|
 extern "c" fn Parser::_parse_bytes_encoding(
   self : Parser,
-  old_tree : Nullable[Tree],
+  old_tree : @c.Nullable[Tree],
   string : Bytes,
   encoding : UInt
 ) -> Tree = "moonbit_ts_parser_parse_string_encoding"
@@ -143,7 +144,7 @@ pub fn Parser::parse_bytes(
   bytes : Bytes,
   encoding : InputEncoding?
 ) -> Tree {
-  let old_tree = Nullable::of(old_tree)
+  let old_tree = @c.Nullable::of(old_tree)
   match encoding {
     None => self._parse_bytes(old_tree, bytes)
     Some(encoding) =>
@@ -157,7 +158,7 @@ pub fn Parser::parse_string(
   old_tree : Tree?,
   string : String
 ) -> Tree {
-  self._parse_bytes(Nullable::of(old_tree), @encoding.encode(UTF8, string))
+  self._parse_bytes(@c.Nullable::of(old_tree), @encoding.encode(UTF8, string))
 }
 
 ///|

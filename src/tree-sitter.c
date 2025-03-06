@@ -13,21 +13,6 @@
     _Generic((type)0, expected: 1, default: 0), #type " is not " #expected     \
   )
 
-void *
-moonbit_ffi_make_closure(void *function, void *payload) {
-  return payload;
-}
-
-void *
-moonbit_c_null() {
-  return NULL;
-}
-
-bool
-moonbit_c_is_null(void *ptr) {
-  return ptr == NULL;
-}
-
 const TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
   void *handle = dlopen((const char *)pathname, RTLD_NOW);
