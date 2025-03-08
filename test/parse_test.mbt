@@ -43,19 +43,6 @@ test "json" {
 }
 
 ///|
-fn visit_comment(
-  node : @tree_sitter.Node,
-  f : (@tree_sitter.Node) -> Unit
-) -> Unit {
-  for child in node.children() {
-    if child.type_() == "comment" {
-      f(child)
-    }
-    visit_comment(child, f)
-  }
-}
-
-///|
 test "moonbit" {
   let moonbit = @tree_sitter_moonbit.language()
   let parser = @tree_sitter.Parser::new()
@@ -78,17 +65,21 @@ test "moonbit" {
   let tree = parser.parse_string(None, source)
   let root_node = tree.root_node()
   let comment_document = []
-  visit_comment(root_node, fn(node) {
-    let start_byte = node.start_byte().reinterpret_as_int()
-    let end_byte = node.end_byte().reinterpret_as_int()
-    let comment_source = source[start_byte:end_byte]
-    match comment_source {
+  let query = @tree_sitter.Query::new!(moonbit, "(comment) @comment")
+  let cursor = @tree_sitter.QueryCursor::new()
+  cursor.exec(query, root_node)
+  while cursor.next_match() is Some(match_) {
+    let comment_node = match_.captures[0].node
+    let start_byte = comment_node.start_byte().reinterpret_as_int()
+    let end_byte = comment_node.end_byte().reinterpret_as_int()
+    let comment = source[start_byte:end_byte]
+    match comment {
       [.. "/// ", .. comment_content] =>
         comment_document.push(comment_content.to_string())
       [.. "///"] => comment_document.push("")
-      _ => return
+      _ => continue
     }
-  })
+  }
   let comment_document = comment_document.join("\n")
   inspect!(
     comment_document.to_string(),
