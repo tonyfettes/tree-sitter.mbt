@@ -43,6 +43,19 @@ test "json" {
 }
 
 ///|
+fn visit_comment(
+  node : @tree_sitter.Node,
+  f : (@tree_sitter.Node) -> Unit
+) -> Unit {
+  for child in node.children() {
+    if child.type_() == "comment" {
+      f(child)
+    }
+    visit_comment(child, f)
+  }
+}
+
+///|
 test "moonbit" {
   let moonbit = @tree_sitter_moonbit.language()
   let parser = @tree_sitter.Parser::new()
@@ -51,11 +64,46 @@ test "moonbit" {
     #|fn main {
     #|  println("Hello, World!")
     #|}
+    #|
+    #|/// # Heading
+    #|///
+    #|/// Paragraph with *italic* and **bold** text.
+    #|fn fib(a : Int) -> Int {
+    #|  if a < 2 {
+    #|    a
+    #|  } else {
+    #|    fib(a - 1) + fib(a - 2)
+    #|  }
+    #|}
   let tree = parser.parse_string(None, source)
   let root_node = tree.root_node()
+  let comment_document = []
+  visit_comment(root_node, fn(node) {
+    let start_byte = node.start_byte().reinterpret_as_int()
+    let end_byte = node.end_byte().reinterpret_as_int()
+    let comment_source = source[start_byte:end_byte]
+    match comment_source {
+      [.. "/// ", .. comment_content] =>
+        comment_document.push(comment_content.to_string())
+      [.. "///"] => comment_document.push("")
+      _ => return
+    }
+  })
+  let comment_document = comment_document.join("\n")
   inspect!(
-    root_node.string(),
-    content="(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))))",
+    comment_document.to_string(),
+    content=
+      #|# Heading
+      #|
+      #|Paragraph with *italic* and **bold** text.
+    ,
+  )
+  parser.set_language(@tree_sitter_markdown.language())
+  let markdown_tree = parser.parse_string(None, comment_document.to_string())
+  let markdown_root_node = markdown_tree.root_node()
+  inspect!(
+    markdown_root_node,
+    content="(document (section (atx_heading (atx_h1_marker) heading_content: (inline)) (paragraph (inline))))",
   )
 }
 
