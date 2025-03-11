@@ -1,0 +1,10 @@
+{
+  "is-main": true,
+  "import": [
+    "moonbitlang/x/sys",
+    "moonbitlang/x/fs",
+    "tonyfettes/tree_sitter",
+    "tonyfettes/tree_sitter_moonbit",
+    "tonyfettes/tree_sitter/sexp"
+  ]
+}
