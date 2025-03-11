@@ -1,16 +1,21 @@
 ///|
 pub enum Atom {
-  Number(Double)
   Symbol(String)
   String(String)
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 pub impl ToJson for Atom with to_json(self : Atom) -> Json {
   match self {
     Symbol(symbol) => symbol.to_json()
-    Number(number) => number.to_json()
     String(string) => string.escape().to_json()
+  }
+}
+
+pub impl Show for Atom with output(self : Atom, logger : &Logger) -> Unit {
+  match self {
+    Symbol(symbol) => logger.write_string(symbol)
+    String(string) => logger.write_string(string.escape())
   }
 }
 

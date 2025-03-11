@@ -12,7 +12,6 @@
 
 %token EOF
 
-%token<Double> NUMBER
 %token<String> STRING
 %token<String> SYMBOL
 
@@ -39,8 +38,7 @@ sexp
   ;
 
 atom
-  : NUMBER { Number($1) }
-  | STRING { String($1) }
+  : STRING { String($1) }
   | SYMBOL { Symbol($1) }
   ;
 

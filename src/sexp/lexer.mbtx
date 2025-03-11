@@ -8,7 +8,6 @@ enum Token {
   RBRACKET
   COLON
   SYMBOL(String)
-  NUMBER(Double)
   STRING(String)
   EOF
 } derive(Eq, Show)
@@ -22,32 +21,19 @@ enum TokenKind {
   TK_RBRACKET
   TK_COLON
   TK_SYMBOL
-  TK_NUMBER
   TK_STRING
   TK_EOF
 } derive (Eq, Show)
 
 type! LexError {
-  InvalidNumber(String, @json.ParseError)
   UnterminatedString
   UnrecognizedCharacter(String)
 } derive(Show)
-
-fn parse_number(string : String) -> Double!@json.ParseError {
-  guard @json.parse!(string) is Number(number)
-  number
-}
 }
 
 rule token() -> (Token, Position, Position)!LexError {
   parse {
     [' ' '\t' '\r' '\n'] => { token!(lexbuf) }
-    ('-'? ('0' | ['1'-'9'] ['0'-'9']* ('.' ['0'-'9']+)?) (['E' 'e'] ['+' '-']? ['0'-'9']+)?) as t => {
-      let number = try parse_number!(t) catch {
-        error => raise(InvalidNumber(t, error))
-      }
-      (NUMBER(number), $startpos(t), $endpos(t))
-    }
     '"' as t => {
       let buf = StringBuilder::new()
       buf.write_string(t)
@@ -67,7 +53,7 @@ rule token() -> (Token, Position, Position)!LexError {
     '[' as t => { (LBRACKET, $startpos(t), $endpos(t)) }
     ']' as t => { (RBRACKET, $startpos(t), $endpos(t)) }
     ':' as t => { (COLON, $startpos(t), $endpos(t)) }
-    (['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*) as t => {
+    (['a'-'z' 'A'-'Z' '0'-'9' '_']+) as t => {
       (SYMBOL(t), $startpos(t), $endpos(t))
     }
     _ as t => { raise(UnrecognizedCharacter(t)) }
