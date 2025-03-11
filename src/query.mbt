@@ -299,7 +299,7 @@ pub extern "c" fn QueryCursor::set_point_range(
 pub struct QueryCapture {
   node : Node
   index : UInt
-}
+} derive(Show)
 
 ///|
 pub struct QueryMatch {
