@@ -180,6 +180,19 @@ pub fn Node::named_child(self : Node, child_index : UInt) -> Node? {
 pub extern "c" fn Node::named_child_count(self : Node) -> UInt = "moonbit_ts_node_named_child_count"
 
 ///|
+pub fn Node::named_children(self : Node) -> Iter[Node] {
+  Iter::new(fn(yield_) {
+    for i in 0U..<self.named_child_count() {
+      match yield_(self._named_child(i)) {
+        IterEnd => return IterEnd
+        IterContinue => continue
+      }
+    }
+    IterContinue
+  })
+}
+
+///|
 extern "c" fn Node::_child_by_field_name(self : Node, name : Bytes) -> Node = "moonbit_ts_node_child_by_field_name"
 
 ///|
