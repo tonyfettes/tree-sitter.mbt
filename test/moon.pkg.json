@@ -4,7 +4,9 @@
     "tonyfettes/tree_sitter_moonbit",
     "tonyfettes/tree_sitter_markdown",
     "tonyfettes/tree_sitter/sexp",
-    "tonyfettes/tree_sitter_json"
+    "tonyfettes/tree_sitter_json",
+    "tonyfettes/tree_sitter/node_types",
+    "moonbitlang/x/fs"
   ],
   "link": {
     "native": {
