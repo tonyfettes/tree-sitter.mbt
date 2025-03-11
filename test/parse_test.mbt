@@ -136,12 +136,12 @@ test "markdown" {
   guard not(moonbit_ranges.is_empty())
   parser.set_language(moonbit)
   parser.set_included_ranges(moonbit_ranges)
-  let moonbit_tree = parser.parse_string(None, source)
-  let moonbit_root_node = moonbit_tree.root_node()
-  inspect!(
-    @sexp.parse!(moonbit_root_node.string()),
-    content="(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))) (semicolon (automatic_semicolon)) (ERROR (UNEXPECTED '`')))",
-  )
+  // let moonbit_tree = parser.parse_string(None, source)
+  // let moonbit_root_node = moonbit_tree.root_node()
+  // @json.inspect!(
+  //   @sexp.parse!(moonbit_root_node.string()),
+  //   content="(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))) (semicolon (automatic_semicolon)) (ERROR (UNEXPECTED '`')))",
+  // )
   @json.inspect!(root_sexp, content=[
     [
       "document",

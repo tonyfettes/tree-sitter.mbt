@@ -60,8 +60,8 @@ test {
     _, [], None => ()
   }
   let replaced = replaced.to_string()
-  @json.inspect!(meta_vars, content={"A":[[0,2],[6,8]]})
-  @json.inspect!(meta_ranges, content={"(0, 2)":"A","(6, 8)":"A"})
+  @json.inspect!(meta_vars, content={ "A": [[0, 2], [6, 8]] })
+  @json.inspect!(meta_ranges, content={ "(0, 2)": "A", "(6, 8)": "A" })
   @json.inspect!(replaced, content="_  == _ ")
   let context =
     $|fn main {
@@ -302,9 +302,8 @@ test {
     }
     let mut satisfied = true
     for _, nodes in meta_var_nodes {
-      let repr = nodes[0]
       for i in 1..<nodes.length() {
-        if not(node_equal(nodes[i], repr)) {
+        if not(node_equal(nodes[i], nodes[0])) {
           satisfied = false
           break
         }
