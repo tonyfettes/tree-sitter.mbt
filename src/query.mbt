@@ -7,6 +7,8 @@ type! QueryError {
   NodeType(UInt)
   Field(UInt)
   Capture(UInt)
+  Structure(UInt)
+  Language(UInt)
 } derive(Show)
 
 ///|
@@ -16,6 +18,8 @@ fn QueryError::offset(self : QueryError) -> UInt {
     QueryError::NodeType(offset) => offset
     QueryError::Field(offset) => offset
     QueryError::Capture(offset) => offset
+    QueryError::Structure(offset) => offset
+    QueryError::Language(offset) => offset
   }
 }
 
@@ -26,6 +30,8 @@ fn QueryError::from(offset : UInt, type_ : UInt) -> QueryError {
     2 => QueryError::NodeType(offset)
     3 => QueryError::Field(offset)
     4 => QueryError::Capture(offset)
+    5 => QueryError::Structure(offset)
+    6 => QueryError::Language(offset)
     type_ => abort("Invalid QueryError type: \{type_}")
   }
 }
