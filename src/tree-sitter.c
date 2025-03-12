@@ -943,6 +943,7 @@ moonbit_ts_query_new(
   TSQuery *query =
     ts_query_new(language, (const char *)source, length, error, error + 1);
   moonbit_decref(source);
+  moonbit_decref(error);
   return query;
 }
 
@@ -1145,6 +1146,7 @@ moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
   if (has_match) {
     return match;
   } else {
+    moonbit_decref(match);
     return NULL;
   }
 }
@@ -1162,6 +1164,7 @@ moonbit_ts_query_cursor_next_capture(TSQueryCursor *self, uint32_t *match_id) {
   if (has_match) {
     return match;
   } else {
+    moonbit_decref(match);
     return NULL;
   }
 }
