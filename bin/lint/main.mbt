@@ -201,6 +201,7 @@ pub fn Pattern::parse(
   }
 
   let query = generate_query(context_root, None)
+  context_tree.delete()
   let query = query + " @pattern"
   capture_name.push("pattern")
   { source: query, capture: capture_name, vars: meta_vars, ranges: meta_ranges }
@@ -238,14 +239,12 @@ fn node_equal(
 pub fn Pattern::search(
   self : Pattern,
   source : String,
-  language : @tree_sitter.Language,
-  parser : @tree_sitter.Parser
+  node : @tree_sitter.Node,
+  language : @tree_sitter.Language
 ) -> Array[@tree_sitter.Node]! {
-  let source_tree = parser.parse_string(None, source)
-  let source_root = source_tree.root_node()
   let query = @tree_sitter.Query::new!(language, self.source)
   let query_cursor = @tree_sitter.QueryCursor::new()
-  query_cursor.exec(query, source_root)
+  query_cursor.exec(query, node)
   let instances = []
   while true {
     guard query_cursor.next_match() is Some(match_) else { break }
@@ -275,6 +274,8 @@ pub fn Pattern::search(
       instances.push(matched)
     }
   }
+  query_cursor.delete()
+  query.delete()
   instances
 }
 
@@ -291,9 +292,11 @@ fn main {
     let parser = @tree_sitter.Parser::new()
     let language = @tree_sitter_moonbit.language()
     parser.set_language(language)
+    let source_tree = parser.parse_string(None, source)
+    let source_root = source_tree.root_node()
     for name, rule in rule_set {
       let pattern = Pattern::parse!(rule._, parser)
-      let instances = pattern.search!(source, language, parser)
+      let instances = pattern.search!(source, source_root, language)
       for instance in instances {
         let start = instance.start_point()
         let end = instance.end_point()
@@ -304,6 +307,8 @@ fn main {
         }
       }
     }
+    source_tree.delete()
+    parser.delete()
   } catch {
     error => {
       if "a" == "a" {
