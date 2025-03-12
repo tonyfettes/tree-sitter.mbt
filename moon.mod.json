@@ -11,17 +11,9 @@
     "moonbitlang/lex": "0.1.6"
   },
   "readme": "README.md",
-  "repository": "",
+  "repository": "https://github.com/tonyfettes/moonbit-tree-sitter",
   "license": "Apache-2.0",
   "keywords": [],
-  "description": "",
-  "source": "src",
-  "exclude": [
-    "bin",
-    "test",
-    "src/language",
-    "src/tree-sitter",
-    "src/tree-sitter.c",
-    "src/preprocess.py"
-  ]
+  "description": "A MoonBit binding to the tree-sitter parsing library",
+  "source": "src"
 }
