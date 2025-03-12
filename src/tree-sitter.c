@@ -8,10 +8,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef __TINYC__
 #define static_assert_type_equal(type, expected)                               \
   static_assert(                                                               \
     _Generic((type)0, expected: 1, default: 0), #type " is not " #expected     \
   )
+#else
+#define static_assert_type_equal(...)
+#endif
 
 const TSLanguage *
 moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
