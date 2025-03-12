@@ -8,11 +8,5 @@
     "tonyfettes/tree_sitter/node_types",
     "moonbitlang/x/fs",
     "tonyfettes/tree_sitter_language"
-  ],
-  "link": {
-    "native": {
-      "cc": "clang",
-      "cc-flags": "-g"
-    }
-  }
+  ]
 }
