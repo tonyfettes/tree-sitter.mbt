@@ -179,7 +179,7 @@ pub fn Node::field_name_for_named_child(
 extern "c" fn Node::_child_count(self : Node) -> UInt = "moonbit_ts_node_child_count"
 
 ///|
-pub fn Node::child_node(self : Node) -> Int {
+pub fn Node::child_count(self : Node) -> Int {
   uint_to_int(self._child_count())
 }
 
