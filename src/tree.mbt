@@ -1,13 +1,20 @@
 ///|
+/// A syntax tree.
 extern type Tree
 
 ///|
+/// Create a shallow copy of the syntax tree. This is very fast.
+///
+/// You need to copy a syntax tree in order to use it on more than one thread at
+/// a time, as syntax trees are not thread safe.
 pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 
 ///|
+/// Delete the syntax tree, freeing all of the memory that it used.
 pub extern "c" fn Tree::delete(self : Tree) = "moonbit_ts_tree_delete"
 
 ///|
+/// Get the root node of the syntax tree.
 pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
 
 ///|

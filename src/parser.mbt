@@ -2,12 +2,20 @@
 extern type Parser
 
 ///|
+/// Create a new parser.
 pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
 
 ///|
+/// Delete the parser, freeing all of the memory that it used.
 pub extern "c" fn Parser::delete(self : Parser) = "moonbit_ts_parser_delete"
 
 ///|
+/// Set the language that the parser should use for parsing.
+///
+/// Returns a boolean indicating whether or not the language was successfully
+/// assigned. True means assignment succeeded. False means there was a version
+/// mismatch: the language was generated with an incompatible version of the
+/// Tree-sitter CLI.
 pub extern "c" fn Parser::set_language(
   self : Parser,
   language : Language
@@ -20,6 +28,12 @@ extern "c" fn Parser::_set_included_ranges(
 ) -> Unit = "moonbit_ts_parser_set_included_ranges"
 
 ///|
+/// Set the ranges of text that the parser should include when parsing.
+///
+/// By default, the parser will always include entire documents. This function
+/// allows you to parse only a *portion* of a document but still return a syntax
+/// tree whose ranges match up with the document as a whole. You can also pass
+/// multiple disjoint ranges.
 pub fn Parser::set_included_ranges(
   self : Parser,
   ranges : Array[Range]
@@ -40,6 +54,10 @@ pub fn Parser::set_included_ranges(
 extern "c" fn Parser::_included_ranges(self : Parser) -> FixedArray[UInt] = "moonbit_ts_parser_included_ranges"
 
 ///|
+/// Get the ranges of text that the parser will include when parsing.
+///
+/// The returned pointer is owned by the parser. The caller should not free it
+/// or write to it.
 pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
   let flatten_ranges = self._included_ranges()
   Array::makei(flatten_ranges.length() / 6, fn(i) {
@@ -90,6 +108,13 @@ extern "c" fn Parser::_parse_with_options(
 ) -> Tree = "moonbit_ts_parser_parse_with_options"
 
 ///|
+/// Use the parser to parse some source code and create a syntax tree.
+///
+/// If you are parsing this document for the first time, pass `None` for the
+/// `old_tree` parameter. Otherwise, if you have already parsed an earlier
+/// version of this document and the document has since been edited, pass the
+/// previous syntax tree so that the unchanged parts of it can be reused.
+/// This will save time and memory.
 pub fn Parser::parse[Encoding : DecodeFunction](
   self : Parser,
   old_tree : Tree?,
@@ -147,6 +172,10 @@ extern "c" fn Parser::_parse_bytes_encoding(
 ) -> Tree = "moonbit_ts_parser_parse_string_encoding"
 
 ///|
+/// Use the parser to parse some source code stored in one contiguous buffer with
+/// a given encoding. The first three parameters work the same as in the
+/// `parse` method. The final parameter indicates whether
+/// the text is encoded as UTF8 or UTF16.
 pub fn Parser::parse_bytes(
   self : Parser,
   old_tree : Tree?,
@@ -162,6 +191,8 @@ pub fn Parser::parse_bytes(
 }
 
 ///|
+/// Use the parser to parse some source code stored in one contiguous string buffer.
+/// The first two parameters are the same as in the `parse` function.
 pub fn Parser::parse_string(
   self : Parser,
   old_tree : Tree?,
@@ -171,6 +202,13 @@ pub fn Parser::parse_string(
 }
 
 ///|
+/// Instruct the parser to start the next parse from the beginning.
+///
+/// If the parser previously failed because of a timeout or a cancellation, then
+/// by default, it will resume where it left off on the next call to
+/// `parse` or other parsing functions. If you don't want to resume,
+/// and instead intend to use this parser to parse some other document, you must
+/// call `reset` first.
 pub extern "c" fn Parser::reset(self : Parser) = "moonbit_ts_parser_reset"
 
 ///|
@@ -210,7 +248,13 @@ fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
 }
 
 ///|
+/// Set the logger that a parser should use during parsing.
+///
+/// The parser does not take ownership over the logger payload. If a logger was
+/// previously assigned, the caller is responsible for releasing any memory
+/// owned by the previous logger.
 pub extern "c" fn Parser::set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
 
 ///|
+/// Get the parser's current logger.
 pub extern "c" fn Parser::logger(self : Parser) -> Logger = "moonbit_ts_parser_logger"
