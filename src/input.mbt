@@ -60,10 +60,18 @@ pub fn InputEdit::new(
   )
 }
 
+pub(all) struct DecodeResult {
+  code_point : Int
+  bytes_read : Int
+}
+
 ///|
+/// This function signature reads one code point from the given bytes,
+/// returning the number of bytes consumed and the code point
+/// to the `code_point` pointer. If the input is valid, return `None`.
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding
-  decode(Bytes, Int) -> Int
+  decode(Bytes) -> DecodeResult?
 }
 
 ///|
@@ -86,10 +94,9 @@ impl DecodeFunction for InputEncoding with input_encoding(self) -> InputEncoding
 }
 
 ///|
-impl DecodeFunction for InputEncoding with decode(bytes, byte_index) -> Int {
+impl DecodeFunction for InputEncoding with decode(bytes) -> DecodeResult? {
   ignore(bytes)
-  ignore(byte_index)
-  -1
+  None
 }
 
 ///|

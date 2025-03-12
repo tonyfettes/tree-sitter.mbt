@@ -58,7 +58,7 @@ extern "c" fn Parser::_parse(
   old_tree : @c.Nullable[Tree],
   input : (UInt, Point) -> Bytes,
   encoding : InputEncoding,
-  decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]]
+  decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]]
 ) -> Tree = "moonbit_ts_parser_parse"
 
 ///|
@@ -85,7 +85,7 @@ extern "c" fn Parser::_parse_with_options(
   old_tree : @c.Nullable[Tree],
   input : (UInt, Point) -> Bytes,
   encoding : UInt,
-  decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]],
+  decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]],
   progress_callback : (UInt, Bool) -> Bool
 ) -> Tree = "moonbit_ts_parser_parse_with_options"
 
@@ -97,10 +97,18 @@ pub fn Parser::parse[Encoding : DecodeFunction](
   options? : ParseOptions
 ) -> Tree {
   let input_encoding = input.decode.input_encoding()
-  let decode : @c.Nullable[FuncRef[(Bytes, Int) -> Int]] = match
+  let decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]] = match
     input_encoding {
     Custom =>
-      @c.Nullable::some(fn(bytes, offset) { Encoding::decode(bytes, offset) })
+      @c.Nullable::some(fn(bytes, code_point) {
+        match Encoding::decode(bytes) {
+          Some(result) => {
+            code_point.store(result.code_point)
+            result.bytes_read
+          }
+          None => -1
+        }
+      })
     _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
