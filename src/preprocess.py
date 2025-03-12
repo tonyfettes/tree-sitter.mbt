@@ -5,16 +5,16 @@ from pathlib import Path
 import re
 
 include_directories = [
-    '.',
-    'tree-sitter/lib/src',
-    'tree-sitter/lib/include',
+    ".",
+    "tree-sitter/lib/src",
+    "tree-sitter/lib/include",
 ]
 
 
 already_included = set()
 
 
-def try_include(file_dir: Path, include_path : str) -> list[str]:
+def try_include(file_dir: Path, include_path: str) -> list[str]:
     for include_dir in include_directories:
         include_file = file_dir / include_dir / include_path
         if include_file.exists():
@@ -48,41 +48,11 @@ def expand_includes(file_path: Path) -> list[str]:
     original_lines = read_file(file_path)
     return process_file(original_lines)
 
+
 def main():
-    preprocess_lines = expand_includes(Path("src/tree-sitter.c"));
+    preprocess_lines = expand_includes(Path("src/tree-sitter.c"))
     preprocess_text = "\n".join(preprocess_lines)
     Path("src/tree-sitter-lib.c").write_text(preprocess_text)
-
-    # MOON_HOME = os.environ.get("MOON_HOME")
-    # if MOON_HOME is None:
-    #     print("MOON_HOME is not set")
-    #     sys.exit(1)
-    # moon_home = Path(MOON_HOME)
-    # subprocess.run(
-    #     [
-    #         moon_home / "bin/internal/tcc",
-    #         "-O3",
-    #         "-Wall",
-    #         "-Wextra",
-    #         "-Wshadow",
-    #         "-Wpedantic",
-    #         "-Werror=incompatible-pointer-types",
-    #         "-std=c11",
-    #         "-fPIC",
-    #         "-fvisibility=hidden",
-    #         "-Isrc/tree-sitter/lib/src",
-    #         "-Isrc/tree-sitter/lib/src/wasm",
-    #         "-Isrc/tree-sitter/lib/include",
-    #         "-Isrc/tinycc/include",
-    #         f"-I{moon_home}/include",
-    #         "-E",
-    #         "-P",
-    #         "src/tree-sitter.c",
-    #         "-o",
-    #         "src/tree-sitter-lib.c",
-    #     ],
-    #     check=True,
-    # )
 
 
 if __name__ == "__main__":

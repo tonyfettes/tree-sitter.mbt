@@ -14,5 +14,5 @@
     "tonyfettes/tree_sitter_language"
   ],
   "native-stub": ["tree-sitter-lib.c"],
-  "supported-targets": ["native", "wasm-gc"]
+  "supported-targets": ["native"]
 }
