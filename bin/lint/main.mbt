@@ -12,8 +12,8 @@ let rule_set : Map[String, Rule] = {
 
 ///|
 type! PatternError {
-  NestedPattern(UInt)
-  MetaVarOutOfPattern(UInt)
+  NestedPattern(Int)
+  MetaVarOutOfPattern(Int)
   UnterminatedPattern
 }
 
@@ -21,8 +21,8 @@ type! PatternError {
 struct Pattern {
   source : String
   capture : Array[String]
-  vars : Map[String, Array[(UInt, UInt)]]
-  ranges : Map[(UInt, UInt), String]
+  vars : Map[String, Array[(Int, Int)]]
+  ranges : Map[(Int, Int), String]
 }
 
 ///|
@@ -32,14 +32,14 @@ pub fn Pattern::parse(
 ) -> Pattern!PatternError {
   struct Context {
     replaced : StringBuilder
-    brackets : Array[UInt]
-    mut start : UInt?
-    mut end : UInt?
-    mut var : (UInt, StringBuilder)?
+    brackets : Array[Int]
+    mut start : Int?
+    mut end : Int?
+    mut var : (Int, StringBuilder)?
   }
-  let meta_vars : Map[String, Array[(UInt, UInt)]] = {}
-  let meta_ranges : Map[(UInt, UInt), String] = {}
-  fn env_add_var(name : String, range : (UInt, UInt)) {
+  let meta_vars : Map[String, Array[(Int, Int)]] = {}
+  let meta_ranges : Map[(Int, Int), String] = {}
+  fn env_add_var(name : String, range : (Int, Int)) {
     meta_ranges[range] = name
     match meta_vars.get(name) {
       None => meta_vars.set(name, [range])
@@ -54,7 +54,7 @@ pub fn Pattern::parse(
     end: None,
     var: None,
   }
-  loop 0U, source[:] {
+  loop 0, source[:] {
     offset, ['$', '[', .. source] => {
       if context.var is Some(_) {
         raise MetaVarOutOfPattern(offset)
@@ -216,17 +216,13 @@ fn node_equal(
     return false
   }
   if node.child_count() is 1 && other.child_count() is 1 {
-    let node_text = source[node.start_byte().reinterpret_as_int():node
-      .end_byte()
-      .reinterpret_as_int()]
-    let other_text = source[other.start_byte().reinterpret_as_int():other
-      .end_byte()
-      .reinterpret_as_int()]
+    let node_text = source[node.start_byte():node.end_byte()]
+    let other_text = source[other.start_byte():other.end_byte()]
     if node_text.to_string() != other_text.to_string() {
       return false
     }
   }
-  for i in 0U..<node.child_count() {
+  for i in 0..<node.child_count() {
     match (node.child(i), other.child(i)) {
       (Some(self_child), Some(other_child)) =>
         if not(node_equal(source, self_child, other_child)) {
@@ -255,7 +251,7 @@ pub fn Pattern::search(
     guard query_cursor.next_match() is Some(match_) else { break }
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
     for capture in match_.captures {
-      let capture_index = capture.index.reinterpret_as_int()
+      let capture_index = capture.index
       let name = self.capture[capture_index]
       match meta_var_nodes.get(name) {
         None => meta_var_nodes.set(name, [capture.node])
@@ -302,11 +298,8 @@ fn main {
         let start = instance.start_point()
         let end = instance.end_point()
         println(name)
-        let start_row = start.row().reinterpret_as_int()
-        for i, line in lines[
-          start.row().reinterpret_as_int():
-          end.row().reinterpret_as_int() + 1
-        ] {
+        let start_row = start.row()
+        for i, line in lines[start.row():end.row() + 1] {
           println("\{start_row + i} | \{line}")
         }
       }
