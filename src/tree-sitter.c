@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef __TINYC__
@@ -45,6 +46,12 @@ moonbit_ts_language_delete(const TSLanguage *self) {
   ts_language_delete(self);
 }
 
+static inline int32_t
+moonbit_uint_to_int(uint32_t value) {
+  assert(value <= INT32_MAX);
+  return (int32_t)value;
+}
+
 uint32_t
 moonbit_ts_language_symbol_count(const TSLanguage *self) {
   return ts_language_symbol_count(self);
@@ -75,11 +82,22 @@ moonbit_ts_language_field_count(const TSLanguage *self) {
   return ts_language_field_count(self);
 }
 
+static inline int32_t
+moonbit_size_to_int(size_t value) {
+  assert(value <= INT32_MAX);
+  return (int32_t)value;
+}
+
+static inline moonbit_bytes_t
+moonbit_make_bytes_sz(size_t size, int value) {
+  return moonbit_make_bytes(moonbit_size_to_int(size), value);
+}
+
 moonbit_bytes_t
 moonbit_ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id) {
   const char *name = ts_language_field_name_for_id(self, id);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
@@ -100,7 +118,7 @@ TSSymbol *
 moonbit_ts_language_supertypes(const TSLanguage *self) {
   uint32_t length;
   const TSSymbol *supertypes = ts_language_supertypes(self, &length);
-  TSSymbol *copy = (TSSymbol *)moonbit_make_string(length, 0);
+  TSSymbol *copy = (TSSymbol *)moonbit_make_bytes_sz(length, 0);
   memcpy(copy, supertypes, length * sizeof(TSSymbol));
   return copy;
 }
@@ -109,7 +127,7 @@ TSSymbol *
 moonbit_ts_language_subtypes(const TSLanguage *self, TSSymbol supertype) {
   uint32_t length;
   const TSSymbol *subtypes = ts_language_subtypes(self, supertype, &length);
-  TSSymbol *copy = (TSSymbol *)moonbit_make_string(length, 0);
+  TSSymbol *copy = (TSSymbol *)moonbit_make_bytes_sz(length, 0);
   memcpy(copy, subtypes, length * sizeof(TSSymbol));
   return copy;
 }
@@ -118,7 +136,7 @@ moonbit_bytes_t
 moonbit_ts_language_symbol_name(const TSLanguage *self, TSSymbol symbol) {
   const char *name = ts_language_symbol_name(self, symbol);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
@@ -165,13 +183,13 @@ moonbit_bytes_t
 moonbit_ts_language_name(const TSLanguage *self) {
   const char *name = ts_language_name(self);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
 
 TSParser *
-moonbit_ts_parser_new() {
+moonbit_ts_parser_new(void) {
   return ts_parser_new();
 }
 
@@ -190,19 +208,27 @@ moonbit_ts_parser_set_language(TSParser *parser, TSLanguage *language) {
   return ts_parser_set_language(parser, language);
 }
 
+static inline uint32_t
+moonbit_size_to_uint(size_t value) {
+  assert(value <= UINT32_MAX);
+  return (uint32_t)value;
+}
+
 void
 moonbit_ts_parser_set_included_ranges(TSParser *parser, TSRange *ranges) {
   size_t length = Moonbit_array_length(ranges);
-  ts_parser_set_included_ranges(
-    parser, ranges, length * sizeof(uint32_t) / sizeof(TSRange)
-  );
+  uint32_t count =
+    moonbit_size_to_uint(length * sizeof(uint32_t) / sizeof(TSRange));
+  ts_parser_set_included_ranges(parser, ranges, count);
 }
 
 TSRange *
 moonbit_ts_parser_included_ranges(const TSParser *self) {
   uint32_t count = 0;
   const TSRange *ranges = ts_parser_included_ranges(self, &count);
-  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(
+    count * sizeof(TSRange) / sizeof(int32_t), 0
+  );
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -215,7 +241,7 @@ struct MoonBitTSInputRead {
   );
 };
 
-const char *
+static inline const char *
 moonbit_ts_input_read(
   void *payload,
   uint32_t byte,
@@ -223,7 +249,8 @@ moonbit_ts_input_read(
   uint32_t *bytes_read
 ) {
   struct MoonBitTSInputRead *input = (struct MoonBitTSInputRead *)payload;
-  TSPoint *point = (TSPoint *)moonbit_make_int32_array(sizeof(TSPoint) / sizeof(int32_t), 0);
+  TSPoint *point =
+    (TSPoint *)moonbit_make_int32_array(sizeof(TSPoint) / sizeof(int32_t), 0);
   *point = position;
   moonbit_bytes_t bytes = input->read(input, byte, point);
   *bytes_read = Moonbit_array_length(bytes);
@@ -255,7 +282,7 @@ struct MoonBitTSParseOptionsProgressCallback {
   );
 };
 
-bool
+static inline bool
 moonbit_ts_parse_options_progress_callback(TSParseState *state) {
   struct MoonBitTSParseOptionsProgressCallback *callback =
     (struct MoonBitTSParseOptionsProgressCallback *)state->payload;
@@ -307,8 +334,9 @@ moonbit_ts_parser_parse_string_encoding(
   TSInputEncoding encoding
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  TSTree *tree =
-    ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  TSTree *tree = ts_parser_parse_string_encoding(
+    parser, old_tree, (const char *)bytes, length, encoding
+  );
   moonbit_decref(bytes);
   return tree;
 }
@@ -330,7 +358,7 @@ void
 moonbit_ts_logger_log(void *payload, TSLogType log_type, const char *buffer) {
   struct MoonBitTSLogger *logger = (struct MoonBitTSLogger *)payload;
   size_t length = strlen(buffer);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, buffer, length);
   logger->log(logger, log_type, bytes);
 }
@@ -385,7 +413,9 @@ TSRange *
 moonbit_ts_tree_included_ranges(TSTree *tree) {
   uint32_t count = 0;
   const TSRange *ranges = ts_tree_included_ranges(tree, &count);
-  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(
+    count * sizeof(TSRange) / sizeof(int32_t), 0
+  );
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -403,7 +433,9 @@ moonbit_ts_tree_get_changed_ranges(
 ) {
   uint32_t count = 0;
   TSRange *ranges = ts_tree_get_changed_ranges(old_tree, new_tree, &count);
-  TSRange *copy = (TSRange *)moonbit_make_int32_array(count * sizeof(TSRange) / sizeof(int32_t), 0);
+  TSRange *copy = (TSRange *)moonbit_make_int32_array(
+    count * sizeof(TSRange) / sizeof(int32_t), 0
+  );
   memcpy(copy, ranges, count * sizeof(TSRange));
   return copy;
 }
@@ -412,8 +444,9 @@ moonbit_bytes_t
 moonbit_ts_node_type(TSNode *self) {
   const char *type = ts_node_type(*self);
   moonbit_decref(self);
-  moonbit_bytes_t bytes = moonbit_make_bytes(strlen(type), 0);
-  memcpy(bytes, type, strlen(type));
+  size_t length = strlen(type);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
+  memcpy(bytes, type, length);
   return bytes;
 }
 
@@ -433,8 +466,9 @@ moonbit_bytes_t
 moonbit_ts_node_grammar_type(TSNode *self) {
   const char *type = ts_node_grammar_type(*self);
   moonbit_decref(self);
-  moonbit_bytes_t bytes = moonbit_make_bytes(strlen(type), 0);
-  memcpy(bytes, type, strlen(type));
+  size_t length = strlen(type);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
+  memcpy(bytes, type, length);
   return bytes;
 }
 
@@ -484,7 +518,7 @@ moonbit_ts_node_string(TSNode *self) {
   char *string = ts_node_string(*self);
   moonbit_decref(self);
   size_t length = strlen(string);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, string, length);
   free(string);
   return bytes;
@@ -583,7 +617,7 @@ moonbit_ts_node_field_name_for_child(TSNode *self, uint32_t child_index) {
   const char *name = ts_node_field_name_for_child(*self, child_index);
   moonbit_decref(self);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
@@ -597,14 +631,14 @@ moonbit_ts_node_field_name_for_named_child(
     ts_node_field_name_for_named_child(*self, named_child_index);
   moonbit_decref(self);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
 
 uint32_t
 moonbit_ts_node_child_count(TSNode *self) {
-  int count = ts_node_child_count(*self);
+  uint32_t count = ts_node_child_count(*self);
   moonbit_decref(self);
   return count;
 }
@@ -619,7 +653,7 @@ moonbit_ts_node_named_child(TSNode *self, uint32_t child_index) {
 
 uint32_t
 moonbit_ts_node_named_child_count(TSNode *self) {
-  int count = ts_node_named_child_count(*self);
+  uint32_t count = ts_node_named_child_count(*self);
   moonbit_decref(self);
   return count;
 }
@@ -805,7 +839,7 @@ moonbit_bytes_t
 moonbit_ts_tree_cursor_current_field_name(TSTreeCursor *self) {
   const char *name = ts_tree_cursor_current_field_name(self);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   moonbit_decref(self);
   return bytes;
@@ -949,8 +983,9 @@ moonbit_ts_query_predicates_for_pattern(TSQuery *self, uint32_t pattern_index) {
   uint32_t step_count = 0;
   const TSQueryPredicateStep *predicates =
     ts_query_predicates_for_pattern(self, pattern_index, &step_count);
-  uint32_t *copy =
-    (uint32_t *)moonbit_make_int32_array(step_count * 2, 0);
+  uint32_t *copy = (uint32_t *)moonbit_make_int32_array(
+    moonbit_uint_to_int(step_count * 2), 0
+  );
   for (uint32_t i = 0; i < step_count; i++) {
     copy[i * 2] = predicates[i].type;
     copy[i * 2 + 1] = predicates[i].value_id;
@@ -980,7 +1015,7 @@ moonbit_bytes_t
 moonbit_ts_query_capture_name_for_id(TSQuery *self, uint32_t index) {
   uint32_t length;
   const char *name = ts_query_capture_name_for_id(self, index, &length);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
@@ -1000,7 +1035,7 @@ moonbit_bytes_t
 moonbit_ts_query_string_value_for_id(TSQuery *self, uint32_t index) {
   uint32_t length;
   const char *value = ts_query_string_value_for_id(self, index, &length);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, value, length);
   return bytes;
 }
@@ -1019,7 +1054,7 @@ moonbit_ts_query_disable_pattern(TSQuery *self, uint32_t pattern_index) {
 }
 
 TSQueryCursor *
-moonbit_ts_query_cursor_new() {
+moonbit_ts_query_cursor_new(void) {
   return ts_query_cursor_new();
 }
 
@@ -1223,7 +1258,7 @@ moonbit_ts_lookahead_iterator_current_symbol_name(
 ) {
   const char *name = ts_lookahead_iterator_current_symbol_name(self);
   size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes(length, 0);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
   memcpy(bytes, name, length);
   return bytes;
 }
