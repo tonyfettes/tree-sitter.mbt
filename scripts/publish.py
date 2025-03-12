@@ -18,6 +18,7 @@ def main():
 
     publish_path.mkdir()
     shutil.copy("moon.mod.json", publish_path / "moon.mod.json")
+    shutil.copy("README.md", publish_path / "README.md")
     shutil.copy("LICENSE", publish_path / "LICENSE")
     shutil.copytree("src", publish_path / "src")
     for path in (publish_path / "src").rglob("moon.pkg.json"):
