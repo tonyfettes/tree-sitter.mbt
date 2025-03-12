@@ -6,17 +6,23 @@ struct Input[DecodeFunction] {
 
 ///|
 pub fn Input::new[DecodeFunction](
-  read : (UInt, Point) -> Bytes,
+  read : (Int, Point) -> Bytes,
   decode : DecodeFunction
 ) -> Input[DecodeFunction] {
-  { read, decode }
+  {
+    read: fn(byte, point) {
+      let byte = uint_to_int(byte)
+      read(byte, point)
+    },
+    decode,
+  }
 }
 
 ///|
 type InputEdit FixedArray[UInt]
 
 ///|
-pub fn InputEdit::new(
+fn InputEdit::_new(
   start_byte : UInt,
   old_end_byte : UInt,
   new_end_byte : UInt,
@@ -28,13 +34,30 @@ pub fn InputEdit::new(
     start_byte,
     old_end_byte,
     new_end_byte,
-    start_point.row(),
-    start_point.column(),
-    old_end_point.row(),
-    old_end_point.column(),
-    new_end_point.row(),
-    new_end_point.column(),
+    start_point._row(),
+    start_point._column(),
+    old_end_point._row(),
+    old_end_point._column(),
+    new_end_point._row(),
+    new_end_point._column(),
   ]
+}
+
+///|
+pub fn InputEdit::new(
+  start_byte : Int,
+  old_end_byte : Int,
+  new_end_byte : Int,
+  start_point : Point,
+  old_end_point : Point,
+  new_end_point : Point
+) -> InputEdit {
+  let start_byte = int_to_uint(start_byte)
+  let old_end_byte = int_to_uint(old_end_byte)
+  let new_end_byte = int_to_uint(new_end_byte)
+  InputEdit::_new(
+    start_byte, old_end_byte, new_end_byte, start_point, old_end_point, new_end_point,
+  )
 }
 
 ///|

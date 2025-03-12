@@ -10,12 +10,12 @@ type FieldId
 
 type Input[DecodeFunction]
 impl Input {
-  new[DecodeFunction]((UInt, Point) -> Bytes, DecodeFunction) -> Self[DecodeFunction]
+  new[DecodeFunction]((Int, Point) -> Bytes, DecodeFunction) -> Self[DecodeFunction]
 }
 
 type InputEdit
 impl InputEdit {
-  new(UInt, UInt, UInt, Point, Point, Point) -> Self
+  new(Int, Int, Int, Point, Point, Point) -> Self
 }
 
 pub(all) enum InputEncoding {
@@ -27,20 +27,20 @@ pub(all) enum InputEncoding {
 
 pub(all) type Language @tree_sitter_language.Language
 impl Language {
-  abi_version(Self) -> UInt
+  abi_version(Self) -> Int
   copy(Self) -> Self
   delete(Self) -> Unit
-  field_id_for_name(Self, String) -> UInt
+  field_id_for_name(Self, String) -> Int
   load(String, String) -> Self?
   name(Self) -> String
-  state_count(Self) -> UInt
+  state_count(Self) -> Int
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
-  symbol_count(Self) -> UInt
+  symbol_count(Self) -> Int
   symbol_for_name(Self, String) -> Symbol
   symbol_name(Self, Symbol) -> String
   symbol_type(Self, Symbol) -> SymbolType
-  version(Self) -> UInt
+  version(Self) -> Int
 }
 
 type LanguageMetadata
@@ -71,22 +71,23 @@ impl LookaheadIterator {
 
 type Node
 impl Node {
-  child(Self, UInt) -> Self?
+  child(Self, Int) -> Self?
   child_by_field_id(Self, FieldId) -> Self?
   child_by_field_name(Self, String) -> Self?
-  child_count(Self) -> UInt
+  child_node(Self) -> Int
   child_with_descendant(Self, Self) -> Self?
-  descendant_count(Self) -> UInt
-  descendant_for_byte_range(Self, UInt, UInt) -> Self?
+  children(Self) -> Iter[Self]
+  descendant_count(Self) -> Int
+  descendant_for_byte_range(Self, Int, Int) -> Self?
   descendant_for_point_range(Self, Point, Point) -> Self?
   edit(Self, InputEdit) -> Unit
-  end_byte(Self) -> UInt
+  end_byte(Self) -> Int
   end_point(Self) -> Point
   eq(Self, Self) -> Bool
-  field_name_for_child(Self, UInt) -> String
-  field_name_for_named_child(Self, UInt) -> String
-  first_child_for_byte(Self, UInt) -> Self?
-  first_named_child_for_byte(Self, UInt) -> Self?
+  field_name_for_child(Self, Int) -> String
+  field_name_for_named_child(Self, Int) -> String
+  first_child_for_byte(Self, Int) -> Self?
+  first_named_child_for_byte(Self, Int) -> Self?
   grammar_symbol(Self) -> Symbol
   grammar_type(Self) -> String
   has_changes(Self) -> Bool
@@ -96,8 +97,9 @@ impl Node {
   is_missing(Self) -> Bool
   is_named(Self) -> Bool
   language(Self) -> Language
-  named_child(Self, UInt) -> Self?
-  named_child_count(Self) -> UInt
+  named_child(Self, Int) -> Self?
+  named_child_count(Self) -> Int
+  named_children(Self) -> Iter[Self]
   next_named_sibling(Self) -> Self?
   next_parse_state(Self) -> StateId
   next_sibling(Self) -> Self?
@@ -105,12 +107,13 @@ impl Node {
   parse_state(Self) -> StateId
   prev_named_sibling(Self) -> Self?
   prev_sibling(Self) -> Self?
-  start_byte(Self) -> UInt
+  start_byte(Self) -> Int
   start_point(Self) -> Point
   string(Self) -> String
   symbol(Self) -> Symbol
   type_(Self) -> String
 }
+impl Show for Node
 
 type ParseOptions
 impl ParseOptions {
@@ -118,7 +121,7 @@ impl ParseOptions {
 }
 
 pub struct ParseState {
-  current_byte_offset : UInt
+  current_byte_offset : Int
   has_error : Bool
 }
 
@@ -139,10 +142,11 @@ impl Parser {
 
 type Point
 impl Point {
-  column(Self) -> UInt
-  new(UInt, UInt) -> Self
-  row(Self) -> UInt
+  column(Self) -> Int
+  new(Int, Int) -> Self
+  row(Self) -> Int
 }
+impl Show for Point
 
 pub enum Quantifier {
   Zero
@@ -154,42 +158,43 @@ pub enum Quantifier {
 
 type Query
 impl Query {
-  capture_count(Self) -> UInt
-  capture_name_for_id(Self, UInt) -> String
-  capture_quantifier_for_id(Self, UInt, UInt) -> Quantifier
+  capture_count(Self) -> Int
+  capture_name_for_id(Self, Int) -> String
+  capture_quantifier_for_id(Self, Int, Int) -> Quantifier
   delete(Self) -> Unit
   disable_capture(Self, String) -> Unit
-  disable_pattern(Self, UInt) -> Unit
-  end_byte_for_pattern(Self, UInt) -> UInt
-  is_pattern_guaranteed_at_step(Self, UInt) -> Bool
-  is_pattern_non_local(Self, UInt) -> Bool
-  is_pattern_rooted(Self, UInt) -> Bool
+  disable_pattern(Self, Int) -> Unit
+  end_byte_for_pattern(Self, Int) -> Int
+  is_pattern_guaranteed_at_step(Self, Int) -> Bool
+  is_pattern_non_local(Self, Int) -> Bool
+  is_pattern_rooted(Self, Int) -> Bool
   new(Language, String) -> Self!QueryError
-  pattern_count(Self) -> UInt
-  predicates_for_pattern(Self, UInt) -> Array[QueryPredicateStep]
-  start_byte_for_pattern(Self, UInt) -> UInt
-  string_count(Self) -> UInt
-  string_value_for_id(Self, UInt) -> String
+  pattern_count(Self) -> Int
+  predicates_for_pattern(Self, Int) -> Array[QueryPredicateStep]
+  start_byte_for_pattern(Self, Int) -> Int
+  string_count(Self) -> Int
+  string_value_for_id(Self, Int) -> String
 }
 
 pub struct QueryCapture {
   node : Node
-  index : UInt
+  index : Int
 }
+impl Show for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
   delete(Self) -> Unit
   did_exceed_match_limit(Self) -> Bool
   exec(Self, Query, Node, options? : QueryCursorOptions) -> Unit
-  match_limit(Self) -> UInt
+  match_limit(Self) -> Int
   new() -> Self
   next_capture(Self) -> QueryCapture?
   next_match(Self) -> QueryMatch?
-  remove_match(Self, UInt) -> Unit
-  set_byte_range(Self, UInt, UInt) -> Unit
-  set_match_limit(Self, UInt) -> Unit
-  set_max_start_depth(Self, UInt) -> Unit
+  remove_match(Self, Int) -> Unit
+  set_byte_range(Self, Int, Int) -> Unit
+  set_match_limit(Self, Int) -> Unit
+  set_max_start_depth(Self, Int) -> Unit
   set_point_range(Self, Point, Point) -> Unit
 }
 
@@ -198,21 +203,21 @@ pub(all) struct QueryCursorOptions {
 }
 
 pub struct QueryCursorState {
-  current_byte_offset : UInt
+  current_byte_offset : Int
 }
 
 type QueryError
 impl Show for QueryError
 
 pub struct QueryMatch {
-  id : UInt
-  pattern_index : UInt
+  id : Int
+  pattern_index : Int
   captures : FixedArray[QueryCapture]
 }
 
 pub struct QueryPredicateStep {
   type_ : QueryPredicateStepType
-  value : UInt
+  value : Int
 }
 
 pub enum QueryPredicateStepType {
@@ -223,18 +228,19 @@ pub enum QueryPredicateStepType {
 
 type Range
 impl Range {
-  new(Point, Point, UInt, UInt) -> Self
+  end_byte(Self) -> Int
+  end_point(Self) -> Point
+  new(Point, Point, Int, Int) -> Self
+  start_byte(Self) -> Int
+  start_point(Self) -> Point
 }
+impl Show for Range
 
 type StateId
 
 type Symbol
 
 type SymbolType
-impl SymbolType {
-  of_int(UInt) -> Self
-  to_int(Self) -> UInt
-}
 
 type Tree
 impl Tree {
@@ -244,21 +250,21 @@ impl Tree {
   edit(Self, InputEdit) -> Self
   language(Self) -> Language
   root_node(Self) -> Node
-  root_node_with_offset(Self, UInt) -> Node
+  root_node_with_offset(Self, Int) -> Node
 }
 
 type TreeCursor
 impl TreeCursor {
   copy(Self) -> Self
-  current_depth(Self) -> UInt
-  current_descendant_index(Self) -> UInt
+  current_depth(Self) -> Int
+  current_descendant_index(Self) -> Int
   current_field_id(Self) -> FieldId
   current_field_name(Self) -> Bytes
   current_node(Self) -> Node
   delete(Self) -> Unit
-  goto_descendant(Self, UInt) -> Unit
+  goto_descendant(Self, Int) -> Unit
   goto_first_child(Self) -> Bool
-  goto_first_child_for_byte(Self, UInt) -> Bool
+  goto_first_child_for_byte(Self, Int) -> Bool
   goto_first_child_for_point(Self, Point) -> Bool
   goto_last_child(Self) -> Bool
   goto_next_sibling(Self) -> Bool

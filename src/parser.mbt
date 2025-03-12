@@ -43,9 +43,9 @@ extern "c" fn Parser::_included_ranges(self : Parser) -> FixedArray[UInt] = "moo
 pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
   let flatten_ranges = self._included_ranges()
   Array::makei(flatten_ranges.length() / 6, fn(i) {
-    Range::new(
-      Point::new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
-      Point::new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
+    Range::_new(
+      Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
+      Point::_new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
       flatten_ranges[i * 6 + 4],
       flatten_ranges[i * 6 + 5],
     )
@@ -63,7 +63,7 @@ extern "c" fn Parser::_parse(
 
 ///|
 pub struct ParseState {
-  current_byte_offset : UInt
+  current_byte_offset : Int
   has_error : Bool
 }
 
@@ -117,6 +117,7 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     input_encoding.to_uint(),
     decode,
     fn(current_byte_offset, has_error) {
+      let current_byte_offset = uint_to_int(current_byte_offset)
       (options.progress_callback)({ current_byte_offset, has_error })
     },
   )

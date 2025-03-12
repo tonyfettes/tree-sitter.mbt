@@ -27,13 +27,13 @@ pub fn Node::grammar_type(self : Node) -> String {
 pub extern "c" fn Node::grammar_symbol(self : Node) -> Symbol = "moonbit_ts_node_grammar_symbol"
 
 ///|
-pub extern "c" fn Node::start_byte(self : Node) -> UInt = "moonbit_ts_node_start_byte"
+pub extern "c" fn Node::start_byte(self : Node) -> Int = "moonbit_ts_node_start_byte"
 
 ///|
 pub extern "c" fn Node::start_point(self : Node) -> Point = "moonbit_ts_node_start_point"
 
 ///|
-pub extern "c" fn Node::end_byte(self : Node) -> UInt = "moonbit_ts_node_end_byte"
+pub extern "c" fn Node::end_byte(self : Node) -> Int = "moonbit_ts_node_end_byte"
 
 ///|
 extern "c" fn Node::_string(self : Node) -> Bytes = "moonbit_ts_node_string"
@@ -111,7 +111,20 @@ pub fn Node::child_with_descendant(self : Node, descendant : Node) -> Node? {
 extern "c" fn Node::_child(self : Node, index : UInt) -> Node = "moonbit_ts_node_child"
 
 ///|
-pub fn Node::child(self : Node, index : UInt) -> Node? {
+fn int_to_uint(value : Int) -> UInt {
+  guard value >= 0
+  value.reinterpret_as_uint()
+}
+
+///|
+fn uint_to_int(value : UInt) -> Int {
+  guard value <= @int.max_value.reinterpret_as_uint()
+  value.reinterpret_as_int()
+}
+
+///|
+pub fn Node::child(self : Node, index : Int) -> Node? {
+  let index = int_to_uint(index)
   let child = self._child(index)
   if child.is_null() {
     None
@@ -123,7 +136,7 @@ pub fn Node::child(self : Node, index : UInt) -> Node? {
 ///|
 pub fn Node::children(self : Node) -> Iter[Node] {
   Iter::new(fn(yield_) {
-    for i in 0U..<self.child_count() {
+    for i in 0U..<self._child_count() {
       match yield_(self._child(i)) {
         IterEnd => return IterEnd
         IterContinue => continue
@@ -140,7 +153,8 @@ extern "c" fn Node::_field_name_for_child(
 ) -> Bytes = "moonbit_ts_node_field_name_for_child"
 
 ///|
-pub fn Node::field_name_for_child(self : Node, child_index : UInt) -> String {
+pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String {
+  let child_index = int_to_uint(child_index)
   @encoding.decoder(UTF8).decode_lossy(self._field_name_for_child(child_index))
 }
 
@@ -153,21 +167,28 @@ extern "c" fn Node::_field_name_for_named_child(
 ///|
 pub fn Node::field_name_for_named_child(
   self : Node,
-  child_index : UInt
+  child_index : Int
 ) -> String {
+  let child_index = int_to_uint(child_index)
   @encoding.decoder(UTF8).decode_lossy(
     self._field_name_for_named_child(child_index),
   )
 }
 
 ///|
-pub extern "c" fn Node::child_count(self : Node) -> UInt = "moonbit_ts_node_child_count"
+extern "c" fn Node::_child_count(self : Node) -> UInt = "moonbit_ts_node_child_count"
+
+///|
+pub fn Node::child_node(self : Node) -> Int {
+  uint_to_int(self._child_count())
+}
 
 ///|
 extern "c" fn Node::_named_child(self : Node, child_index : UInt) -> Node = "moonbit_ts_node_named_child"
 
 ///|
-pub fn Node::named_child(self : Node, child_index : UInt) -> Node? {
+pub fn Node::named_child(self : Node, child_index : Int) -> Node? {
+  let child_index = int_to_uint(child_index)
   let child = self._named_child(child_index)
   if child.is_null() {
     None
@@ -177,12 +198,17 @@ pub fn Node::named_child(self : Node, child_index : UInt) -> Node? {
 }
 
 ///|
-pub extern "c" fn Node::named_child_count(self : Node) -> UInt = "moonbit_ts_node_named_child_count"
+extern "c" fn Node::_named_child_count(self : Node) -> UInt = "moonbit_ts_node_named_child_count"
+
+///|
+pub fn Node::named_child_count(self : Node) -> Int {
+  uint_to_int(self._named_child_count())
+}
 
 ///|
 pub fn Node::named_children(self : Node) -> Iter[Node] {
   Iter::new(fn(yield_) {
-    for i in 0U..<self.named_child_count() {
+    for i in 0U..<self._named_child_count() {
       match yield_(self._named_child(i)) {
         IterEnd => return IterEnd
         IterContinue => continue
@@ -275,7 +301,8 @@ pub fn Node::prev_named_sibling(self : Node) -> Node? {
 extern "c" fn Node::_first_child_for_byte(self : Node, byte : UInt) -> Node = "moonbit_ts_node_first_child_for_byte"
 
 ///|
-pub fn Node::first_child_for_byte(self : Node, byte : UInt) -> Node? {
+pub fn Node::first_child_for_byte(self : Node, byte : Int) -> Node? {
+  let byte = int_to_uint(byte)
   let child = self._first_child_for_byte(byte)
   if child.is_null() {
     None
@@ -291,7 +318,8 @@ extern "c" fn Node::_first_named_child_for_byte(
 ) -> Node = "moonbit_ts_node_first_named_child_for_byte"
 
 ///|
-pub fn Node::first_named_child_for_byte(self : Node, byte : UInt) -> Node? {
+pub fn Node::first_named_child_for_byte(self : Node, byte : Int) -> Node? {
+  let byte = int_to_uint(byte)
   let child = self._first_child_for_byte(byte)
   if child.is_null() {
     None
@@ -301,7 +329,7 @@ pub fn Node::first_named_child_for_byte(self : Node, byte : UInt) -> Node? {
 }
 
 ///|
-pub extern "c" fn Node::descendant_count(self : Node) -> UInt = "moonbit_ts_node_descendant_count"
+pub extern "c" fn Node::descendant_count(self : Node) -> Int = "moonbit_ts_node_descendant_count"
 
 ///|
 extern "c" fn Node::_descendant_for_byte_range(
@@ -313,9 +341,11 @@ extern "c" fn Node::_descendant_for_byte_range(
 ///|
 pub fn Node::descendant_for_byte_range(
   self : Node,
-  start_byte : UInt,
-  end_byte : UInt
+  start_byte : Int,
+  end_byte : Int
 ) -> Node? {
+  let start_byte = int_to_uint(start_byte)
+  let end_byte = int_to_uint(end_byte)
   let descendant = self._descendant_for_byte_range(start_byte, end_byte)
   if descendant.is_null() {
     None
