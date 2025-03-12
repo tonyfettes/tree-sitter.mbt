@@ -1080,7 +1080,7 @@ typedef struct MoonBitTSQueryCursorProgressCallback {
   );
 } MoonBitTSQueryCursorProgressCallback;
 
-bool
+static inline bool
 moonbit_ts_query_cursor_progress_callback(TSQueryCursorState *state) {
   MoonBitTSQueryCursorProgressCallback *callback =
     (MoonBitTSQueryCursorProgressCallback *)state->payload;
