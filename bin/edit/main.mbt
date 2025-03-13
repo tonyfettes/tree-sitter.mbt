@@ -126,6 +126,7 @@ fn main {
                   match captures_texts[name.to_string()] {
                     Some(value) => {
                       buffer.write_string(value)
+                      buffer.write_char(char)
                       continue replace~ replace
                     }
                     None => {
