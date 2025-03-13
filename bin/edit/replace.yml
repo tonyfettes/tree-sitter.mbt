@@ -1,6 +1,12 @@
 trivially-true:
   search: |
-    ((if_expression (_) @left "==" (_) @right)
-      (#eq? @left @right))
+    ((binary_expression (_) @left "==" (_) @right)
+     (#eq? @left @right))
   replace: |
     true
+
+if-true:
+  search: |
+    (if_expression (block_expression (_) @body))
+  replace: |
+    @body

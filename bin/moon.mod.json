@@ -6,7 +6,8 @@
     "tonyfettes/tree_sitter": {
       "path": ".."
     },
-    "tonyfettes/tree_sitter_moonbit": "0.1.5"
+    "tonyfettes/tree_sitter_moonbit": "0.1.5",
+    "tonyfettes/tree_sitter_yaml": "0.1.5"
   },
   "readme": "README.md",
   "repository": "",
