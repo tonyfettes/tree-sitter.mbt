@@ -9,4 +9,5 @@ if-true:
   search: |
     (if_expression (block_expression (_) @body))
   replace: |
-    @body
+    $body
+
