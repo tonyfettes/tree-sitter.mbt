@@ -180,7 +180,7 @@ pub fn Parser::parse_bytes(
   self : Parser,
   old_tree : Tree?,
   bytes : Bytes,
-  encoding : InputEncoding?
+  encoding? : InputEncoding
 ) -> Tree {
   let old_tree = @c.Nullable::of(old_tree)
   match encoding {
