@@ -115,7 +115,7 @@ fn main {
         }
         let buffer = StringBuilder::new()
         replace~: loop edit.replace[:] {
-          ['@', .. replace] => {
+          ['$', .. replace] => {
             let name = StringBuilder::new()
             name~: loop replace {
               [char, .. replace] =>
