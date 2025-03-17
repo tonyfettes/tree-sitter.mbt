@@ -45,12 +45,12 @@ fn InputEdit::_new(
 
 ///|
 pub fn InputEdit::new(
-  start_byte : Int,
-  old_end_byte : Int,
-  new_end_byte : Int,
-  start_point : Point,
-  old_end_point : Point,
-  new_end_point : Point
+  start_byte~ : Int,
+  old_end_byte~ : Int,
+  new_end_byte~ : Int,
+  start_point~ : Point,
+  old_end_point~ : Point,
+  new_end_point~ : Point
 ) -> InputEdit {
   let start_byte = int_to_uint(start_byte)
   let old_end_byte = int_to_uint(old_end_byte)
@@ -60,6 +60,7 @@ pub fn InputEdit::new(
   )
 }
 
+///|
 pub(all) struct DecodeResult {
   code_point : Int
   bytes_read : Int

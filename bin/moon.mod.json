@@ -6,8 +6,12 @@
     "tonyfettes/tree_sitter": {
       "path": ".."
     },
-    "tonyfettes/tree_sitter_moonbit": "0.1.5",
-    "tonyfettes/tree_sitter_yaml": "0.1.5"
+    "tonyfettes/tree_sitter_moonbit": {
+      "path": "../../moonbit-tree-sitter-languages/bindings/tree_sitter_moonbit"
+    },
+    "tonyfettes/tree_sitter_yaml": "0.1.5",
+    "yj-qin/regexp": "0.3.4",
+    "tonyfettes/tree_sitter_query": "0.1.5"
   },
   "readme": "README.md",
   "repository": "",

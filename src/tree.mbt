@@ -18,11 +18,9 @@ pub extern "c" fn Tree::delete(self : Tree) = "moonbit_ts_tree_delete"
 pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
 
 ///|
-extern "c" fn Tree::_root_node_with_offset(
-  self : Tree,
-  offset : UInt
-) -> Node = "moonbit_ts_tree_root_node_with_offset"
+extern "c" fn Tree::_root_node_with_offset(self : Tree, offset : UInt) -> Node = "moonbit_ts_tree_root_node_with_offset"
 
+///|
 pub fn Tree::root_node_with_offset(self : Tree, offset : Int) -> Node {
   self._root_node_with_offset(int_to_uint(offset))
 }
@@ -47,7 +45,7 @@ fn Tree::included_ranges(self : Tree) -> Array[Range] {
 }
 
 ///|
-pub extern "c" fn Tree::edit(self : Tree, edit : InputEdit) -> Tree = "moonbit_ts_tree_edit"
+pub extern "c" fn Tree::edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edit"
 
 ///|
 extern "c" fn Tree::get_changed_ranges(

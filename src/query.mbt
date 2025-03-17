@@ -113,11 +113,11 @@ extern "c" fn Query::_predicates_for_pattern(
 ) -> FixedArray[UInt] = "moonbit_ts_query_predicates_for_pattern"
 
 ///|
-pub enum QueryPredicateStepType {
+priv enum QueryPredicateStepType {
   Done
   Capture
   String
-}
+} derive(Show)
 
 ///|
 fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
@@ -130,26 +130,43 @@ fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
 }
 
 ///|
-pub struct QueryPredicateStep {
-  type_ : QueryPredicateStepType
-  value : Int
-}
+pub enum QueryPredicateStep {
+  Capture(String)
+  String(String)
+} derive(Show)
+
+///|
+pub typealias QueryPredicate = Array[QueryPredicateStep]
 
 ///|
 pub fn Query::predicates_for_pattern(
   self : Query,
   pattern_index : Int
-) -> Array[QueryPredicateStep] {
+) -> Array[QueryPredicate] {
   let pattern_index = int_to_uint(pattern_index)
   let flatten_predicates = Query::_predicates_for_pattern(self, pattern_index)
-  Array::makei(flatten_predicates.length() / 2, fn(i) {
+  let predicates = []
+  let mut predicate = []
+  for i in 0..<(flatten_predicates.length() / 2) {
     let value = flatten_predicates[i * 2 + 1]
     let value = uint_to_int(value)
-    QueryPredicateStep::{
-      type_: QueryPredicateStepType::of_uint(flatten_predicates[i * 2]),
-      value,
+    let type_ = QueryPredicateStepType::of_uint(flatten_predicates[i * 2])
+    match type_ {
+      Capture => {
+        let name = Query::capture_name_for_id(self, value)
+        predicate.push(QueryPredicateStep::Capture(name))
+      }
+      String => {
+        let value = Query::string_value_for_id(self, value)
+        predicate.push(QueryPredicateStep::String(value))
+      }
+      Done => {
+        predicates.push(predicate)
+        predicate = []
+      }
     }
-  })
+  }
+  predicates
 }
 
 ///|
@@ -208,7 +225,7 @@ pub enum Quantifier {
   ZeroOrMore
   One
   OneOrMore
-}
+} derive(Show)
 
 ///|
 fn Quantifier::of_uint(value : UInt) -> Quantifier {

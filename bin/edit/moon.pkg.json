@@ -7,12 +7,15 @@
     "tonyfettes/tree_sitter_moonbit",
     "tonyfettes/tree_sitter_yaml",
     "moonbitlang/x/encoding",
-    "tonyfettes/tree_sitter/sexp"
+    "tonyfettes/tree_sitter/sexp",
+    "yj-qin/regexp",
+    "tonyfettes/tree_sitter_query"
   ],
   "link": {
     "native": {
       "cc": "clang",
       "cc-flags": "-g -fsanitize=address"
     }
-  }
+  },
+  "warn-list": "-15+15"
 }

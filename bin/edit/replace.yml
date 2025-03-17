@@ -1,17 +1,21 @@
-trivially-true:
-  search: |
-    ((binary_expression (_) @left "==" (_) @right)
-     (#eq? @left @right))
-  replace: |
-    true
+# trivially-true:
+#   description:
+#   search: |
+#     ((binary_expression (_) @left "==" (_) @right)
+#      (#eq? @left @right))
+#   replace: |
+#     true
 
-if-true:
-  search: |
-    (if_expression (block_expression (_) @body))
-  replace: |
-    $body
+# if-true:
+#   search: |
+#     (if_expression
+#      (_) @cond
+#      (block_expression (_)* @body)
+#      (#eq? @cond "true"))
+#   replace: |
+#     $body
 
-suggest-for-in:
+suggested-for-in:
   search: |
     ((for_expression
       (for_binder
@@ -23,12 +27,13 @@ suggest-for-in:
             (atomic_expression
              (literal
               (integer_literal) @rangeLower)))))))
+        .
         (semicolon)
         (compound_expression
          (binary_expression
          (_) @binderConditional
          "<"
-         (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))) @rangeUpper))
+         (_) @rangeUpper))
         (semicolon)
         (for_binder
          (lowercase_identifier) @binderAssignment
@@ -39,10 +44,23 @@ suggest-for-in:
               (_) @binderUpdate
               "+"
               (_) @rangeStep)))))
-        (block_expression) @forBody)
+        (block_expression) @forBody
+        (else_clause)? @forBody)
      (#eq? @binderDefinition @binderConditional)
      (#eq? @binderDefinition @binderAssignment)
      (#eq? @binderDefinition @binderUpdate)
      (#eq? @rangeStep "1"))
   replace: |
-    for $binderDefinition in $rangeLower..<$rangeUpper $forBody
+    for $binderDefinition in $rangeLower..<($rangeUpper) $forBody
+
+# deprecated:
+#   search: |
+#     ((structure
+#       (comment) @deprecated
+#       .
+#       (semicolon)?
+#       .
+#       (structure_item (function_definition)))
+#      (#match? @deprecated "^/// @alert deprecated\\s+(?<message>\".*\")"))
+#   replace: |
+#     #deprecated($message)
