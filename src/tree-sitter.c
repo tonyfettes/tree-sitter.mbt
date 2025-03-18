@@ -1162,6 +1162,7 @@ moonbit_ts_query_cursor_next_capture(TSQueryCursor *self, uint32_t *match_id) {
   TSQueryMatch *match =
     (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
   bool has_match = ts_query_cursor_next_capture(self, match, match_id);
+  moonbit_decref(match_id);
   if (has_match) {
     return match;
   } else {
