@@ -20,10 +20,10 @@ priv type! YYObj_Atom Atom
 priv type! YYObj_Sexp Sexp
 
 ///|
-priv type! YYObj_String String
+priv type! YYObj_Array_Sexp_ Array[Sexp]
 
 ///|
-priv type! YYObj_Array_Sexp_ Array[Sexp]
+priv type! YYObj_String String
 
 ///|
 typealias YYState = (YYSymbol) -> YYDecision
@@ -53,16 +53,16 @@ priv enum YYSymbol {
   T_STRING
   T_SYMBOL
   NT_start
+  NT_list
   NT_sexp
   NT_atom
-  NT_list
   EOI
 }
 
 // Workaround for EOI unused warning
 ///|
 fn init {
-  match EOI {
+  match (EOI : YYSymbol) {
     EOI => ()
     _ => ()
   }
@@ -230,27 +230,27 @@ fn yy_input(
 }
 
 // [0, start → • list EOF, $]
-// [1, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
-// [8, list → •, EOF]
-// [9, list → • sexp list, EOF]
+// [1, list → •, EOF]
+// [2, list → • sexp list, EOF]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / LBRACE / LBRACKET / EOF / STRING / SYMBOL]
 // [10, start_prime → • start, $]
 ///|
 fn yy_state_0(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
     NT_start => Shift(yy_state_1)
-    NT_sexp => Shift(yy_state_2)
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    T_LBRACKET => Shift(yy_state_12)
-    T_LPAREN => Shift(yy_state_15)
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    T_LBRACKET => Shift(yy_state_10)
+    T_LPAREN => Shift(yy_state_13)
+    NT_sexp => Shift(yy_state_16)
     NT_list => Shift(yy_state_18)
     T_EOF => Reduce(0, NT_list, yy_action_3)
     _ => Error
@@ -263,50 +263,18 @@ fn yy_state_1(_lookahead : YYSymbol) -> YYDecision {
   Accept
 }
 
-// [1, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [8, list → •, RPAREN / RBRACE / RBRACKET / EOF]
-// [9, list → • sexp list, RPAREN / RBRACE / RBRACKET / EOF]
-// [9, list → sexp • list, RPAREN / RBRACE / RBRACKET / EOF]
+// [8, atom → STRING •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
 fn yy_state_2(_lookahead : YYSymbol) -> YYDecision {
-  match _lookahead {
-    NT_sexp => Shift(yy_state_2)
-    NT_list => Shift(yy_state_3)
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    T_LBRACKET => Shift(yy_state_12)
-    T_LPAREN => Shift(yy_state_15)
-    T_RPAREN | T_RBRACE | T_RBRACKET | T_EOF => Reduce(0, NT_list, yy_action_3)
-    _ => Error
-  }
-}
-
-// [9, list → sexp list •, RPAREN / RBRACE / RBRACKET / EOF]
-///|
-fn yy_state_3(_lookahead : YYSymbol) -> YYDecision {
-  ReduceNoLookahead(2, NT_list, yy_action_5)
-}
-
-// [6, atom → STRING •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-///|
-fn yy_state_4(_lookahead : YYSymbol) -> YYDecision {
   ReduceNoLookahead(1, NT_atom, yy_action_9)
 }
 
-// [5, sexp → SYMBOL • COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [7, atom → SYMBOL •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → SYMBOL • COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [9, atom → SYMBOL •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_5(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_3(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    T_COLON => Shift(yy_state_6)
+    T_COLON => Shift(yy_state_4)
     T_LPAREN
     | T_RPAREN
     | T_LBRACE
@@ -320,161 +288,193 @@ fn yy_state_5(_lookahead : YYSymbol) -> YYDecision {
   }
 }
 
-// [1, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [5, sexp → SYMBOL COLON • sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → SYMBOL COLON • sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_6(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_4(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_sexp => Shift(yy_state_7)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    T_LBRACKET => Shift(yy_state_12)
-    T_LPAREN => Shift(yy_state_15)
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_sexp => Shift(yy_state_5)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    T_LBRACKET => Shift(yy_state_10)
+    T_LPAREN => Shift(yy_state_13)
     _ => Error
   }
 }
 
-// [5, sexp → SYMBOL COLON sexp •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → SYMBOL COLON sexp •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_7(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_5(_lookahead : YYSymbol) -> YYDecision {
   ReduceNoLookahead(3, NT_sexp, yy_action_0)
 }
 
-// [4, sexp → atom •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [6, sexp → atom •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_8(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_6(_lookahead : YYSymbol) -> YYDecision {
   ReduceNoLookahead(1, NT_sexp, yy_action_6)
 }
 
-// [1, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [3, sexp → LBRACE • list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
-// [8, list → •, RBRACE]
-// [9, list → • sexp list, RBRACE]
+// [1, list → •, RBRACE]
+// [2, list → • sexp list, RBRACE]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [5, sexp → LBRACE • list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / LBRACE / RBRACE / LBRACKET / STRING / SYMBOL]
 ///|
-fn yy_state_9(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_7(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    NT_sexp => Shift(yy_state_2)
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    NT_list => Shift(yy_state_10)
-    T_LBRACKET => Shift(yy_state_12)
-    T_LPAREN => Shift(yy_state_15)
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    NT_list => Shift(yy_state_8)
+    T_LBRACKET => Shift(yy_state_10)
+    T_LPAREN => Shift(yy_state_13)
+    NT_sexp => Shift(yy_state_16)
     T_RBRACE => Reduce(0, NT_list, yy_action_3)
     _ => Error
   }
 }
 
-// [3, sexp → LBRACE list • RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → LBRACE list • RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_10(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_8(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    T_RBRACE => Shift(yy_state_11)
+    T_RBRACE => Shift(yy_state_9)
     _ => Error
   }
 }
 
-// [3, sexp → LBRACE list RBRACE •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → LBRACE list RBRACE •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_11(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_9(_lookahead : YYSymbol) -> YYDecision {
   ReduceNoLookahead(3, NT_sexp, yy_action_1)
 }
 
-// [1, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [2, sexp → LBRACKET • list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
-// [8, list → •, RBRACKET]
-// [9, list → • sexp list, RBRACKET]
+// [1, list → •, RBRACKET]
+// [2, list → • sexp list, RBRACKET]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [4, sexp → LBRACKET • list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / LBRACE / LBRACKET / RBRACKET / STRING / SYMBOL]
 ///|
-fn yy_state_12(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_10(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    NT_sexp => Shift(yy_state_2)
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    T_LBRACKET => Shift(yy_state_12)
-    NT_list => Shift(yy_state_13)
-    T_LPAREN => Shift(yy_state_15)
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    T_LBRACKET => Shift(yy_state_10)
+    NT_list => Shift(yy_state_11)
+    T_LPAREN => Shift(yy_state_13)
+    NT_sexp => Shift(yy_state_16)
     T_RBRACKET => Reduce(0, NT_list, yy_action_3)
     _ => Error
   }
 }
 
-// [2, sexp → LBRACKET list • RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → LBRACKET list • RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_13(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_11(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    T_RBRACKET => Shift(yy_state_14)
+    T_RBRACKET => Shift(yy_state_12)
     _ => Error
   }
 }
 
-// [2, sexp → LBRACKET list RBRACKET •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → LBRACKET list RBRACKET •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_14(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_12(_lookahead : YYSymbol) -> YYDecision {
   ReduceNoLookahead(3, NT_sexp, yy_action_8)
 }
 
-// [1, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [1, sexp → LPAREN • list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
-// [2, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [3, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [4, sexp → • atom, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [5, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [6, atom → • STRING, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [7, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
-// [8, list → •, RPAREN]
-// [9, list → • sexp list, RPAREN]
+// [1, list → •, RPAREN]
+// [2, list → • sexp list, RPAREN]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [3, sexp → LPAREN • list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / LBRACKET / STRING / SYMBOL]
 ///|
-fn yy_state_15(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_13(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    NT_sexp => Shift(yy_state_2)
-    T_STRING => Shift(yy_state_4)
-    T_SYMBOL => Shift(yy_state_5)
-    NT_atom => Shift(yy_state_8)
-    T_LBRACE => Shift(yy_state_9)
-    T_LBRACKET => Shift(yy_state_12)
-    T_LPAREN => Shift(yy_state_15)
-    NT_list => Shift(yy_state_16)
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    T_LBRACKET => Shift(yy_state_10)
+    T_LPAREN => Shift(yy_state_13)
+    NT_list => Shift(yy_state_14)
+    NT_sexp => Shift(yy_state_16)
     T_RPAREN => Reduce(0, NT_list, yy_action_3)
     _ => Error
   }
 }
 
-// [1, sexp → LPAREN list • RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [3, sexp → LPAREN list • RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
 ///|
-fn yy_state_16(_lookahead : YYSymbol) -> YYDecision {
+fn yy_state_14(_lookahead : YYSymbol) -> YYDecision {
   match _lookahead {
-    T_RPAREN => Shift(yy_state_17)
+    T_RPAREN => Shift(yy_state_15)
     _ => Error
   }
 }
 
-// [1, sexp → LPAREN list RPAREN •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [3, sexp → LPAREN list RPAREN •, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+///|
+fn yy_state_15(_lookahead : YYSymbol) -> YYDecision {
+  ReduceNoLookahead(3, NT_sexp, yy_action_7)
+}
+
+// [1, list → •, RPAREN / RBRACE / RBRACKET / EOF]
+// [2, list → • sexp list, RPAREN / RBRACE / RBRACKET / EOF]
+// [2, list → sexp • list, RPAREN / RBRACE / RBRACKET / EOF]
+// [3, sexp → • LPAREN list RPAREN, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [4, sexp → • LBRACKET list RBRACKET, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [5, sexp → • LBRACE list RBRACE, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [6, sexp → • atom, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [7, sexp → • SYMBOL COLON sexp, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [8, atom → • STRING, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+// [9, atom → • SYMBOL, LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / EOF / STRING / SYMBOL]
+///|
+fn yy_state_16(_lookahead : YYSymbol) -> YYDecision {
+  match _lookahead {
+    T_STRING => Shift(yy_state_2)
+    T_SYMBOL => Shift(yy_state_3)
+    NT_atom => Shift(yy_state_6)
+    T_LBRACE => Shift(yy_state_7)
+    T_LBRACKET => Shift(yy_state_10)
+    T_LPAREN => Shift(yy_state_13)
+    NT_sexp => Shift(yy_state_16)
+    NT_list => Shift(yy_state_17)
+    T_RPAREN | T_RBRACE | T_RBRACKET | T_EOF => Reduce(0, NT_list, yy_action_3)
+    _ => Error
+  }
+}
+
+// [2, list → sexp list •, RPAREN / RBRACE / RBRACKET / EOF]
 ///|
 fn yy_state_17(_lookahead : YYSymbol) -> YYDecision {
-  ReduceNoLookahead(3, NT_sexp, yy_action_7)
+  ReduceNoLookahead(2, NT_list, yy_action_5)
 }
 
 // [0, start → list • EOF, $]
