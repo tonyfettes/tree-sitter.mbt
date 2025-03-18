@@ -36,13 +36,11 @@ type! PatternError {
   NestedPattern(Int)
   MetaVarOutOfPattern(Int)
   UnterminatedPattern
-  ExtraClosingBracket(Int)
 }
 
 ///|
 fn pattern_query(
   parser : @tree_sitter.Parser,
-  language : @tree_sitter.Language,
   env : Environment,
   pattern : String
 ) -> Query! {
@@ -137,25 +135,11 @@ fn pattern_query(
   guard context.start is Some(pattern_start) && context.end is Some(pattern_end) else {
     raise UnterminatedPattern
   }
-  println("context.start = \{context.start}")
   let context = context.replaced.to_string()
   let context_tree = parser.parse_string(None, context)
   let context_root = context_tree.root_node()
-  println("context = \{context}")
-  let context_sexp = @sexp.parse!(context_root.to_string())
-  let context_sexp = {
-    let buffer = StringBuilder::new()
-    @sexp.print(context_sexp, buffer)
-    buffer.to_string()
-  }
-  println("context_root =\n\{context_sexp}")
   let capture_name : Array[String] = []
-  println("generate_pattern: pattern_start = \{pattern_start}")
-  println("generate_pattern: pattern_end = \{pattern_end}")
   fn generate_pattern(node : @tree_sitter.Node, stripping : Bool?) -> String {
-    println("generate_pattern: node.start_byte() = \{node.start_byte()}")
-    println("generate_pattern: node.end_byte() = \{node.end_byte()}")
-    println("generate_pattern: node.string() = \{node.string()}")
     if node.start_byte() <= pattern_start || node.end_byte() >= pattern_end {
       let child_patterns = []
       for child in node.children() {
@@ -189,7 +173,6 @@ fn pattern_query(
       }
     }
     let stripping = Some(false)
-    println("generate_pattern: inside pattern")
     if not(node.is_named()) {
       if node.type_() == "_" {
         for range, name in env.ranges {
@@ -223,7 +206,6 @@ fn pattern_query(
 
   let pattern = generate_pattern(context_root, None)
   let pattern = pattern + " @pattern"
-  println("pattern = \{pattern}")
   capture_name.push("pattern")
   { source: pattern, capture: capture_name }
 }
@@ -246,7 +228,7 @@ fn node_equal(node : @tree_sitter.Node, other : @tree_sitter.Node) -> Bool {
 }
 
 ///|
-test "a" {
+test "pattern" {
   let env = Environment::{ vars: Map::new(), ranges: Map::new() }
   let pattern =
     #|fn main {
@@ -263,7 +245,7 @@ test "a" {
   parser.set_language(language)
   let source_tree = parser.parse_string(None, source)
   let source_root = source_tree.root_node()
-  let pattern_query = pattern_query!(parser, language, env, pattern)
+  let pattern_query = pattern_query!(parser, env, pattern)
   inspect!(
     pattern_query.source,
     content=
@@ -273,6 +255,7 @@ test "a" {
   let query = @tree_sitter.Query::new!(language, pattern_query.source)
   let query_cursor = @tree_sitter.QueryCursor::new()
   query_cursor.exec(query, source_root)
+  let ranges = []
   while true {
     let next_match = query_cursor.next_match()
     if next_match is None {
@@ -282,9 +265,7 @@ test "a" {
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
     for capture in match_.captures {
       let capture_index = capture.index
-      println("Capture: \{capture_index}")
       let name = pattern_query.capture[capture_index]
-      println("Capture Name: \{name}")
       match meta_var_nodes.get(name) {
         None => meta_var_nodes.set(name, [capture.node])
         Some(nodes) => nodes.push(capture.node)
@@ -305,9 +286,14 @@ test "a" {
     if satisfied {
       let pattern_node = meta_var_nodes["pattern"].unwrap()[0]
       let (start, end) = (pattern_node.start_byte(), pattern_node.end_byte())
-      println("Patter found: \{start} - \{end}")
       let text = source[start:end]
-      println("Source: \{text}")
+      ranges.push((text, start, end))
     }
   }
+  inspect!(
+    ranges,
+    content=
+      #|[("1 == 1", 15, 21)]
+    ,
+  )
 }
