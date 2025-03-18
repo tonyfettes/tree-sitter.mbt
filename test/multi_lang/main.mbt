@@ -22,7 +22,7 @@ fn main {
     let html_ranges = []
     let ruby_ranges = []
     let child_count = erb_root_node.child_count()
-    for i in 0U..<child_count {
+    for i in 0..<child_count {
       let node = erb_root_node.child(i).unwrap()
       let type_ = node.type_()
       if type_ == "content" {
