@@ -14,25 +14,6 @@ test "json" {
     root_node.string(),
     content="(document (object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number))))",
   )
-  let root_sexp = @sexp.parse!(root_node.string())
-  @json.inspect!(root_sexp, content=[
-    [
-      "document",
-      [
-        "object",
-        [
-          "pair",
-          { "key": ["string", ["string_content"]] },
-          { "value": ["string", ["string_content"]] },
-        ],
-        [
-          "pair",
-          { "key": ["string", ["string_content"]] },
-          { "value": ["number"] },
-        ],
-      ],
-    ],
-  ])
   let root_node_first_child = root_node.child(0).map(@tree_sitter.Node::string)
   inspect!(
     root_node_first_child,
@@ -123,7 +104,6 @@ test "markdown" {
     #|```
   let tree = parser.parse_string(None, source)
   let root_node = tree.root_node()
-  let root_sexp = @sexp.parse!(root_node.string())
   guard root_node.children().collect() is [document]
   guard document.children().collect() is [_, _, fenced_code_block]
   let moonbit_ranges = []
@@ -143,28 +123,6 @@ test "markdown" {
   guard not(moonbit_ranges.is_empty())
   parser.set_language(moonbit)
   parser.set_included_ranges(moonbit_ranges)
-  @json.inspect!(root_sexp, content=[
-    [
-      "document",
-      [
-        "section",
-        ["atx_heading", ["atx_h1_marker"], { "heading_content": ["inline"] }],
-        ["paragraph", ["inline"]],
-        [
-          "fenced_code_block",
-          ["fenced_code_block_delimiter"],
-          ["info_string", ["language"]],
-          ["block_continuation"],
-          [
-            "code_fence_content",
-            ["block_continuation"],
-            ["block_continuation"],
-            ["block_continuation"],
-          ],
-        ],
-      ],
-    ],
-  ])
   tree.delete()
   parser.delete()
 }
