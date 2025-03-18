@@ -215,11 +215,12 @@ moonbit_size_to_uint(size_t value) {
 }
 
 void
-moonbit_ts_parser_set_included_ranges(TSParser *parser, TSRange *ranges) {
+moonbit_ts_parser_set_included_ranges(TSParser *parser, uint32_t *ranges) {
   size_t length = Moonbit_array_length(ranges);
   uint32_t count =
     moonbit_size_to_uint(length * sizeof(uint32_t) / sizeof(TSRange));
-  ts_parser_set_included_ranges(parser, ranges, count);
+  ts_parser_set_included_ranges(parser, (TSRange *)ranges, count);
+  moonbit_decref(ranges);
 }
 
 TSRange *

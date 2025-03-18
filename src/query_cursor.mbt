@@ -1,4 +1,3 @@
-
 ///|
 extern type QueryCursor
 
