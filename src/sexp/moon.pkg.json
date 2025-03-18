@@ -1,1 +1,14 @@
-{}
+{
+  "pre-build": [
+    {
+      "command": "$mod_dir/.mooncakes/moonbitlang/lex/moonlex $input | moonfmt > $output",
+      "input": "lexer.mbtx",
+      "output": "lexer.mbt"
+    },
+    {
+      "command": "$mod_dir/.mooncakes/moonbitlang/yacc/moonyacc $input --external-tokens | moonfmt > $output",
+      "input": "parser.mbty",
+      "output": "parser.mbt"
+    }
+  ]
+}
