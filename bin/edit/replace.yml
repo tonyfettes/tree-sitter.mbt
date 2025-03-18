@@ -1,19 +1,19 @@
-# trivially-true:
-#   description:
-#   search: |
-#     ((binary_expression (_) @left "==" (_) @right)
-#      (#eq? @left @right))
-#   replace: |
-#     true
+trivially-true:
+  description:
+  search: |
+    ((binary_expression (_) @left "==" (_) @right)
+     (#eq? @left @right))
+  replace: |
+    true
 
-# if-true:
-#   search: |
-#     (if_expression
-#      (_) @cond
-#      (block_expression (_)* @body)
-#      (#eq? @cond "true"))
-#   replace: |
-#     $body
+if-true:
+  search: |
+    (if_expression
+     (_) @cond
+     (block_expression (_)* @body)
+     (#eq? @cond "true"))
+  replace: |
+    $body
 
 suggested-for-in:
   search: |
