@@ -50,7 +50,7 @@ pub impl Eq for Rule with op_equal(self : Rule, other : Rule) -> Bool {
     (Alias(_, ..), _) => false
     (Blank, Blank) => true
     (Blank, _) => false
-    (Symbol(name1, ..), Symbol(name2, ..)) => name1 == name2
+    (Symbol(name1), Symbol(name2)) => name1 == name2
     (Symbol(_), _) => false
     (String(value1), String(value2)) => value1 == value2
     (String(_), _) => false
@@ -88,7 +88,7 @@ pub impl Hash for Rule with hash_combine(self, hasher) {
       hasher.combine(rule)
     }
     Blank => hasher.combine_int(1)
-    Symbol(name, ..) => {
+    Symbol(name) => {
       hasher.combine_int(2)
       hasher.combine_string(name)
     }
@@ -289,7 +289,7 @@ impl ToJson for Rule with to_json(self : Rule) -> Json {
     Repeat1(rule) => { "type": "REPEAT1", "content": rule.to_json() }
     Repeat(rule) => { "type": "REPEAT", "content": rule.to_json() }
     String(value) => { "type": "STRING", "value": String(value) }
-    Symbol(name, ..) => { "type": "SYMBOL", "name": String(name) }
+    Symbol(name) => { "type": "SYMBOL", "name": String(name) }
     Blank => { "type": "BLANK" }
     Pattern(value) => { "type": "PATTERN", "value": value.to_json() }
   }
