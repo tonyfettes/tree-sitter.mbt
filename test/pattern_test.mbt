@@ -205,6 +205,7 @@ fn pattern_query(
   }
 
   let pattern = generate_pattern(context_root, None)
+  context_tree.delete()
   let pattern = pattern + " @pattern"
   capture_name.push("pattern")
   { source: pattern, capture: capture_name }
@@ -258,10 +259,7 @@ test "pattern" {
   let ranges = []
   while true {
     let next_match = query_cursor.next_match()
-    if next_match is None {
-      break
-    }
-    let match_ = next_match.unwrap()
+    guard next_match is Some(match_) else { break }
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
     for capture in match_.captures {
       let capture_index = capture.index
@@ -290,6 +288,10 @@ test "pattern" {
       ranges.push((text, start, end))
     }
   }
+  query_cursor.delete()
+  query.delete()
+  source_tree.delete()
+  parser.delete()
   inspect!(
     ranges,
     content=

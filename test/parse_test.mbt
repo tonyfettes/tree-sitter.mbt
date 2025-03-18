@@ -40,6 +40,8 @@ test "json" {
       #|Some("(object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number)))")
     ,
   )
+  tree.delete()
+  parser.delete()
 }
 
 ///|
@@ -80,6 +82,9 @@ test "moonbit" {
       _ => continue
     }
   }
+  cursor.delete()
+  query.delete()
+  tree.delete()
   let comment_document = comment_document.join("\n")
   inspect!(
     comment_document.to_string(),
@@ -96,6 +101,8 @@ test "moonbit" {
     markdown_root_node,
     content="(document (section (atx_heading (atx_h1_marker) heading_content: (inline)) (paragraph (inline))))",
   )
+  markdown_tree.delete()
+  parser.delete()
 }
 
 ///|
@@ -136,12 +143,6 @@ test "markdown" {
   guard not(moonbit_ranges.is_empty())
   parser.set_language(moonbit)
   parser.set_included_ranges(moonbit_ranges)
-  // let moonbit_tree = parser.parse_string(None, source)
-  // let moonbit_root_node = moonbit_tree.root_node()
-  // @json.inspect!(
-  //   @sexp.parse!(moonbit_root_node.string()),
-  //   content="(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))) (semicolon (automatic_semicolon)) (ERROR (UNEXPECTED '`')))",
-  // )
   @json.inspect!(root_sexp, content=[
     [
       "document",
@@ -164,4 +165,6 @@ test "markdown" {
       ],
     ],
   ])
+  tree.delete()
+  parser.delete()
 }
