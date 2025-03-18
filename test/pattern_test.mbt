@@ -1,5 +1,5 @@
 ///|
-type Range (UInt, UInt) derive(Eq, Hash, ToJson)
+type Range (Int, Int) derive(Eq, Hash, ToJson)
 
 ///|
 impl Show for Range with output(self : Range, logger : &Logger) -> Unit {
@@ -33,10 +33,10 @@ struct Query {
 
 ///|
 type! PatternError {
-  NestedPattern(UInt)
-  MetaVarOutOfPattern(UInt)
+  NestedPattern(Int)
+  MetaVarOutOfPattern(Int)
   UnterminatedPattern
-  ExtraClosingBracket(UInt)
+  ExtraClosingBracket(Int)
 }
 
 ///|
@@ -48,10 +48,10 @@ fn pattern_query(
 ) -> Query! {
   struct Context {
     replaced : StringBuilder
-    brackets : Array[UInt]
-    mut start : UInt?
-    mut end : UInt?
-    mut var : (UInt, StringBuilder)?
+    brackets : Array[Int]
+    mut start : Int?
+    mut end : Int?
+    mut var : (Int, StringBuilder)?
   }
   let context = Context::{
     replaced: StringBuilder::new(),
@@ -60,7 +60,7 @@ fn pattern_query(
     end: None,
     var: None,
   }
-  loop 0U, pattern[:] {
+  loop 0, pattern[:] {
     offset, ['$', '[', .. pattern] => {
       if context.var is Some(_) {
         raise MetaVarOutOfPattern(offset)
@@ -233,7 +233,7 @@ fn node_equal(node : @tree_sitter.Node, other : @tree_sitter.Node) -> Bool {
   if node.type_() != other.type_() {
     return false
   }
-  for i in 0U..<node.child_count() {
+  for i in 0..<node.child_count() {
     match (node.child(i), other.child(i)) {
       (Some(self_child), Some(other_child)) =>
         if not(node_equal(self_child, other_child)) {
@@ -281,7 +281,7 @@ test "a" {
     let match_ = next_match.unwrap()
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
     for capture in match_.captures {
-      let capture_index = capture.index.reinterpret_as_int()
+      let capture_index = capture.index
       println("Capture: \{capture_index}")
       let name = pattern_query.capture[capture_index]
       println("Capture Name: \{name}")
@@ -306,7 +306,7 @@ test "a" {
       let pattern_node = meta_var_nodes["pattern"].unwrap()[0]
       let (start, end) = (pattern_node.start_byte(), pattern_node.end_byte())
       println("Patter found: \{start} - \{end}")
-      let text = source[start.reinterpret_as_int():end.reinterpret_as_int()]
+      let text = source[start:end]
       println("Source: \{text}")
     }
   }

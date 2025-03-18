@@ -70,8 +70,8 @@ test "moonbit" {
   cursor.exec(query, root_node)
   while cursor.next_match() is Some(match_) {
     let comment_node = match_.captures[0].node
-    let start_byte = comment_node.start_byte().reinterpret_as_int()
-    let end_byte = comment_node.end_byte().reinterpret_as_int()
+    let start_byte = comment_node.start_byte()
+    let end_byte = comment_node.end_byte()
     let comment = source[start_byte:end_byte]
     match comment {
       [.. "/// ", .. comment_content] =>
