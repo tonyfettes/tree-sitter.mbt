@@ -2,7 +2,7 @@
 type Point FixedArray[UInt]
 
 ///|
-pub impl Show for Point with output(self : Point, logger : &Logger) -> Unit {
+pub impl Show for Point with output(self : Point, logger : &@builtin.Logger) -> Unit {
   logger.write_string("(")
   logger.write_string(self.row().to_string())
   logger.write_string(", ")

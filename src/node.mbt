@@ -44,7 +44,7 @@ pub fn Node::string(self : Node) -> String {
 }
 
 ///|
-pub impl Show for Node with output(self : Node, logger : &Logger) -> Unit {
+pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Unit {
   logger.write_string(self.string())
 }
 

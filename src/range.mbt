@@ -2,7 +2,7 @@
 type Range FixedArray[UInt]
 
 ///|
-pub impl Show for Range with output(self : Range, logger : &Logger) -> Unit {
+pub impl Show for Range with output(self : Range, logger : &@builtin.Logger) -> Unit {
   logger.write_object(self.start_point())
   logger.write_string(" - ")
   logger.write_object(self.end_point())
