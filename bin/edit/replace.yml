@@ -53,14 +53,14 @@ suggested-for-in:
   replace: |
     for $binderDefinition in $rangeLower..<($rangeUpper) $forBody
 
-# deprecated:
-#   search: |
-#     ((structure
-#       (comment) @deprecated
-#       .
-#       (semicolon)?
-#       .
-#       (structure_item (function_definition)))
-#      (#match? @deprecated "^/// @alert deprecated\\s+(?<message>\".*\")"))
-#   replace: |
-#     #deprecated($message)
+deprecated:
+  search: |
+    ((structure
+      (comment) @deprecated
+      .
+      (semicolon)?
+      .
+      (structure_item (function_definition)))
+     (#match? @deprecated "^/// @alert deprecated\\s+(?<message>\".*\")"))
+  replace: |
+    #deprecated($message)
