@@ -44,6 +44,12 @@ extern "c" fn Query::_new(
 ) -> Query = "moonbit_ts_query_new"
 
 ///|
+/// Create a new query from a string containing one or more S-expression
+/// patterns. The query is associated with a particular language, and can
+/// only be run on syntax nodes parsed with that language.
+///
+/// If all of the given patterns are valid, this returns a `Query`.
+/// If a pattern is invalid, this raises a `QueryError`.
 pub fn Query::new(language : Language, source : String) -> Query!QueryError {
   let error = FixedArray::make(2, 0U)
   let source = @encoding.encode(UTF8, source)
@@ -56,28 +62,35 @@ pub fn Query::new(language : Language, source : String) -> Query!QueryError {
 }
 
 ///|
+/// Delete a query, freeing all of the memory that it used.
 pub extern "c" fn Query::delete(self : Query) = "moonbit_ts_query_delete"
 
 ///|
+/// Get the number of patterns in the query.
 extern "c" fn Query::_pattern_count(self : Query) -> UInt = "moonbit_ts_query_pattern_count"
 
 ///|
+/// Get the number of patterns in the query.
 pub fn Query::pattern_count(self : Query) -> Int {
   uint_to_int(self._pattern_count())
 }
 
 ///|
+/// Get the number of captures in the query.
 extern "c" fn Query::_capture_count(self : Query) -> UInt = "moonbit_ts_query_capture_count"
 
 ///|
+/// Get the number of captures in the query.
 pub fn Query::capture_count(self : Query) -> Int {
   uint_to_int(self._capture_count())
 }
 
 ///|
+/// Get the number of string literals in the query.
 extern "c" fn Query::_string_count(self : Query) -> UInt = "moonbit_ts_query_string_count"
 
 ///|
+/// Get the number of string literals in the query.
 pub fn Query::string_count(self : Query) -> Int {
   uint_to_int(self._string_count())
 }
@@ -89,6 +102,10 @@ extern "c" fn Query::_start_byte_for_pattern(
 ) -> UInt = "moonbit_ts_query_start_byte_for_pattern"
 
 ///|
+/// Get the byte offset where the given pattern starts in the query's source.
+///
+/// This can be useful when combining queries by concatenating their source
+/// code strings.
 pub fn Query::start_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
   let pattern_index = int_to_uint(pattern_index)
   self._start_byte_for_pattern(pattern_index) |> uint_to_int()
@@ -101,6 +118,10 @@ extern "c" fn Query::_end_byte_for_pattern(
 ) -> UInt = "moonbit_ts_query_end_byte_for_pattern"
 
 ///|
+/// Get the byte offset where the given pattern ends in the query's source.
+///
+/// This can be useful when combining queries by concatenating their source
+/// code strings.
 pub fn Query::end_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
   let pattern_index = int_to_uint(pattern_index)
   self._end_byte_for_pattern(pattern_index) |> uint_to_int()
@@ -139,6 +160,16 @@ pub enum QueryPredicateStep {
 pub typealias QueryPredicate = Array[QueryPredicateStep]
 
 ///|
+/// Get all of the predicates for the given pattern in the query.
+///
+/// The predicates are represented as a single array of array of steps.
+/// There are two types of steps in this array:
+/// - `QueryPredicateStep::Capture` - Steps with this type represent names
+///    of captures. Their `value_id` can be used with the
+///    `Query::capture_name_for_id` function to obtain the name of the capture.
+/// - `QueryPredicateStep::String` - Steps with this type represent literal
+///    strings. Their `value_id` can be used with the
+///    `Query::string_value_for_id` function to obtain their string value.
 pub fn Query::predicates_for_pattern(
   self : Query,
   pattern_index : Int
@@ -176,6 +207,7 @@ extern "c" fn Query::_is_pattern_rooted(
 ) -> Bool = "moonbit_ts_query_is_pattern_rooted"
 
 ///|
+/// Check if the given pattern in the query has a single root node.
 pub fn Query::is_pattern_rooted(self : Query, pattern_index : Int) -> Bool {
   self._is_pattern_rooted(int_to_uint(pattern_index))
 }
@@ -187,6 +219,12 @@ extern "c" fn Query::_is_pattern_non_local(
 ) -> Bool = "moonbit_ts_query_is_pattern_non_local"
 
 ///|
+/// Check if the given pattern in the query is 'non local'.
+///
+/// A non-local pattern has multiple root nodes and can match within a
+/// repeating sequence of nodes, as specified by the grammar. Non-local
+/// patterns disable certain optimizations that would otherwise be possible
+/// when executing a query on a specific range of a syntax tree.
 pub fn Query::is_pattern_non_local(self : Query, pattern_index : Int) -> Bool {
   self._is_pattern_non_local(int_to_uint(pattern_index))
 }
@@ -198,6 +236,8 @@ extern "c" fn Query::_is_pattern_guaranteed_at_step(
 ) -> Bool = "moonbit_ts_query_is_pattern_guaranteed_at_step"
 
 ///|
+/// Check if a given pattern is guaranteed to match once a given step is reached.
+/// The step is specified by its byte offset in the query's source code.
 pub fn Query::is_pattern_guaranteed_at_step(
   self : Query,
   byte_offset : Int
@@ -212,6 +252,8 @@ extern "c" fn Query::_capture_name_for_id(
 ) -> Bytes = "moonbit_ts_query_capture_name_for_id"
 
 ///|
+/// Get the name of one of the query's captures. Each capture is associated with a
+/// numeric id based on the order that it appeared in the query's source.
 pub fn Query::capture_name_for_id(self : Query, capture_id : Int) -> String {
   let capture_id = int_to_uint(capture_id)
   let name = Query::_capture_name_for_id(self, capture_id)
@@ -247,6 +289,8 @@ extern "c" fn Query::_capture_quantifier_for_id(
 ) -> UInt = "moonbit_ts_query_capture_quantifier_for_id"
 
 ///|
+/// Get the quantifier of the query's captures. Each capture is
+/// associated with a numeric id based on the order that it appeared in the query's source.
 pub fn Query::capture_quantifier_for_id(
   self : Query,
   pattern_index : Int,
@@ -266,6 +310,8 @@ extern "c" fn Query::_string_value_for_id(
 ) -> Bytes = "moonbit_ts_query_string_value_for_id"
 
 ///|
+/// Get the value of one of the query's string literals. Each string is associated with a
+/// numeric id based on the order that it appeared in the query's source.
 pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
   let string_id = int_to_uint(string_id)
   let value = Query::_string_value_for_id(self, string_id)
@@ -276,6 +322,11 @@ pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
 extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_query_disable_capture"
 
 ///|
+/// Disable a certain capture within a query.
+///
+/// This prevents the capture from being returned in matches, and also avoids
+/// any resource usage associated with recording the capture. Currently, there
+/// is no way to undo this.
 pub fn Query::disable_capture(self : Query, name : String) -> Unit {
   let name = @encoding.encode(UTF8, name)
   Query::_disable_capture(self, name)
@@ -285,6 +336,10 @@ pub fn Query::disable_capture(self : Query, name : String) -> Unit {
 extern "c" fn Query::_disable_pattern(self : Query, pattern_index : UInt) = "moonbit_ts_query_disable_pattern"
 
 ///|
+/// Disable a certain pattern within a query.
+///
+/// This prevents the pattern from matching and removes most of the overhead
+/// associated with the pattern. Currently, there is no way to undo this.
 pub fn Query::disable_pattern(self : Query, pattern_index : Int) -> Unit {
   self._disable_pattern(int_to_uint(pattern_index))
 }

@@ -160,13 +160,9 @@ moonbit_ts_language_next_state(
   return ts_language_next_state(self, state, symbol);
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_language_name(const TSLanguage *self) {
-  const char *name = ts_language_name(self);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_language_name(self);
 }
 
 TSParser *
@@ -594,28 +590,17 @@ moonbit_ts_node_child(TSNode *self, uint32_t child_index) {
   return node;
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_node_field_name_for_child(TSNode *self, uint32_t child_index) {
-  const char *name = ts_node_field_name_for_child(*self, child_index);
-  moonbit_decref(self);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_node_field_name_for_child(*self, child_index);
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_node_field_name_for_named_child(
   TSNode *self,
   uint32_t named_child_index
 ) {
-  const char *name =
-    ts_node_field_name_for_named_child(*self, named_child_index);
-  moonbit_decref(self);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_node_field_name_for_named_child(*self, named_child_index);
 }
 
 uint32_t
@@ -817,14 +802,9 @@ moonbit_ts_tree_cursor_current_node(TSTreeCursor *self) {
   return node;
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_tree_cursor_current_field_name(TSTreeCursor *self) {
-  const char *name = ts_tree_cursor_current_field_name(self);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  moonbit_decref(self);
-  return bytes;
+  return ts_tree_cursor_current_field_name(self);
 }
 
 TSFieldId

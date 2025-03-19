@@ -68,8 +68,8 @@ pub(all) struct DecodeResult {
 
 ///|
 /// This function signature reads one code point from the given bytes,
-/// returning the number of bytes consumed and the code point
-/// to the `code_point` pointer. If the input is valid, return `None`.
+/// returning the number of bytes consumed and the code point.
+/// If the input is invalid, return `None`.
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding
   decode(Bytes) -> DecodeResult?
