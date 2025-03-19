@@ -73,6 +73,7 @@ extern "c" fn TreeCursor::_goto_first_child_for_byte(
   goal_byte : UInt
 ) -> Bool = "moonbit_ts_tree_cursor_goto_first_child_for_byte"
 
+///|
 pub fn TreeCursor::goto_first_child_for_byte(
   self : TreeCursor,
   goal_byte : Int

@@ -10,6 +10,7 @@ pub extern "c" fn Language::delete(self : Language) -> Unit = "moonbit_ts_langua
 ///|
 extern "c" fn Language::_symbol_count(self : Language) -> UInt = "moonbit_ts_language_symbol_count"
 
+///|
 pub fn Language::symbol_count(self : Language) -> Int {
   uint_to_int(self._symbol_count())
 }

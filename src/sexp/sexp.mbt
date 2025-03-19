@@ -12,6 +12,7 @@ pub impl ToJson for Atom with to_json(self : Atom) -> Json {
   }
 }
 
+///|
 pub impl Show for Atom with output(self : Atom, logger : &Logger) -> Unit {
   match self {
     Symbol(symbol) => logger.write_string(symbol)
