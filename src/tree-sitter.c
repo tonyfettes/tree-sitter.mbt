@@ -165,24 +165,38 @@ moonbit_ts_language_name(const TSLanguage *self) {
   return ts_language_name(self);
 }
 
-TSParser *
-moonbit_ts_parser_new(void) {
-  return ts_parser_new();
-}
+typedef struct MoonBitTSParser {
+  struct moonbit_external_object object;
+  TSParser *parser;
+} MoonBitTSParser;
 
 void
-moonbit_ts_parser_delete(TSParser *parser) {
-  ts_parser_delete(parser);
+moonbit_ts_parser_delete(void *object) {
+  MoonBitTSParser *parser = (MoonBitTSParser *)object;
+  ts_parser_delete(parser->parser);
+}
+
+MoonBitTSParser *
+moonbit_ts_parser_new(void) {
+  MoonBitTSParser *parser = (MoonBitTSParser *)moonbit_make_external_object(
+    moonbit_ts_parser_delete, sizeof(TSParser *)
+  );
+  parser->parser = ts_parser_new();
+  return parser;
 }
 
 const TSLanguage *
-moonbit_ts_parser_language(const TSParser *parser) {
-  return ts_parser_language(parser);
+moonbit_ts_parser_language(MoonBitTSParser *parser) {
+  const TSLanguage *language = ts_parser_language(parser->parser);
+  moonbit_decref(parser);
+  return language;
 }
 
 bool
-moonbit_ts_parser_set_language(TSParser *parser, TSLanguage *language) {
-  return ts_parser_set_language(parser, language);
+moonbit_ts_parser_set_language(MoonBitTSParser *parser, TSLanguage *language) {
+  bool result = ts_parser_set_language(parser->parser, language);
+  moonbit_decref(parser);
+  return result;
 }
 
 static inline uint32_t
@@ -191,19 +205,26 @@ moonbit_size_to_uint(size_t value) {
   return (uint32_t)value;
 }
 
-void
-moonbit_ts_parser_set_included_ranges(TSParser *parser, uint32_t *ranges) {
+bool
+moonbit_ts_parser_set_included_ranges(
+  MoonBitTSParser *parser,
+  uint32_t *ranges
+) {
   size_t length = Moonbit_array_length(ranges);
   uint32_t count =
     moonbit_size_to_uint(length * sizeof(uint32_t) / sizeof(TSRange));
-  ts_parser_set_included_ranges(parser, (TSRange *)ranges, count);
+  bool result =
+    ts_parser_set_included_ranges(parser->parser, (TSRange *)ranges, count);
+  moonbit_decref(parser);
   moonbit_decref(ranges);
+  return result;
 }
 
 TSRange *
-moonbit_ts_parser_included_ranges(const TSParser *self) {
+moonbit_ts_parser_included_ranges(MoonBitTSParser *self) {
   uint32_t count = 0;
-  const TSRange *ranges = ts_parser_included_ranges(self, &count);
+  const TSRange *ranges = ts_parser_included_ranges(self->parser, &count);
+  moonbit_decref(self->parser);
   TSRange *copy = (TSRange *)moonbit_make_int32_array(
     count * sizeof(TSRange) / sizeof(int32_t), 0
   );
@@ -237,7 +258,7 @@ moonbit_ts_input_read(
 
 TSTree *
 moonbit_ts_parser_parse(
-  TSParser *self,
+  MoonBitTSParser *self,
   TSTree *old_tree,
   struct MoonBitTSInputRead *input,
   TSInputEncoding encoding,
@@ -249,7 +270,9 @@ moonbit_ts_parser_parse(
     .encoding = encoding,
     .decode = decode
   };
-  return ts_parser_parse(self, old_tree, ts_input);
+  TSTree *tree = ts_parser_parse(self->parser, old_tree, ts_input);
+  moonbit_decref(self);
+  return tree;
 }
 
 struct MoonBitTSParseOptionsProgressCallback {
@@ -271,7 +294,7 @@ moonbit_ts_parse_options_progress_callback(TSParseState *state) {
 
 TSTree *
 moonbit_ts_parser_parse_with_options(
-  TSParser *self,
+  MoonBitTSParser *self,
   TSTree *old_tree,
   struct MoonBitTSInputRead *input,
   TSInputEncoding encoding,
@@ -288,40 +311,47 @@ moonbit_ts_parser_parse_with_options(
     .payload = callback,
     .progress_callback = moonbit_ts_parse_options_progress_callback
   };
-  return ts_parser_parse_with_options(self, old_tree, ts_input, options);
+  TSTree *tree =
+    ts_parser_parse_with_options(self->parser, old_tree, ts_input, options);
+  moonbit_decref(self);
+  return tree;
 }
 
 TSTree *
 moonbit_ts_parser_parse_string(
-  TSParser *parser,
+  MoonBitTSParser *parser,
   TSTree *old_tree,
   moonbit_bytes_t bytes
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  TSTree *tree =
-    ts_parser_parse_string(parser, old_tree, (const char *)bytes, length);
+  TSTree *tree = ts_parser_parse_string(
+    parser->parser, old_tree, (const char *)bytes, length
+  );
+  moonbit_decref(parser);
   moonbit_decref(bytes);
   return tree;
 }
 
 TSTree *
 moonbit_ts_parser_parse_string_encoding(
-  TSParser *parser,
+  MoonBitTSParser *parser,
   TSTree *old_tree,
   moonbit_bytes_t bytes,
   TSInputEncoding encoding
 ) {
   uint32_t length = Moonbit_array_length(bytes);
   TSTree *tree = ts_parser_parse_string_encoding(
-    parser, old_tree, (const char *)bytes, length, encoding
+    parser->parser, old_tree, (const char *)bytes, length, encoding
   );
+  moonbit_decref(parser);
   moonbit_decref(bytes);
   return tree;
 }
 
 void
-moonbit_ts_parser_reset(TSParser *self) {
-  ts_parser_reset(self);
+moonbit_ts_parser_reset(MoonBitTSParser *self) {
+  ts_parser_reset(self->parser);
+  moonbit_decref(self);
 }
 
 struct MoonBitTSLogger {
@@ -342,14 +372,19 @@ moonbit_ts_logger_log(void *payload, TSLogType log_type, const char *buffer) {
 }
 
 void
-moonbit_ts_parser_set_logger(TSParser *self, struct MoonBitTSLogger *logger) {
+moonbit_ts_parser_set_logger(
+  MoonBitTSParser *self,
+  struct MoonBitTSLogger *logger
+) {
   TSLogger ts_logger = {.payload = logger, .log = moonbit_ts_logger_log};
-  ts_parser_set_logger(self, ts_logger);
+  ts_parser_set_logger(self->parser, ts_logger);
+  moonbit_decref(self);
 }
 
 struct MoonBitTSLogger *
-moonbit_ts_parser_logger(const TSParser *self) {
-  TSLogger logger = ts_parser_logger(self);
+moonbit_ts_parser_logger(MoonBitTSParser *self) {
+  TSLogger logger = ts_parser_logger(self->parser);
+  moonbit_decref(self);
   return logger.payload;
 }
 

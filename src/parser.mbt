@@ -38,11 +38,10 @@ pub const LANGUAGE_VERSION = 15
 pub const MIN_COMPATIBLE_LANGUAGE_VERSION = 13
 
 ///|
-/// Set the ranges of text that the parser should include when parsing.
 extern "c" fn Parser::_set_included_ranges(
   self : Parser,
   ranges : FixedArray[UInt]
-) -> Unit = "moonbit_ts_parser_set_included_ranges"
+) -> Bool = "moonbit_ts_parser_set_included_ranges"
 
 ///|
 /// Set the ranges of text that the parser should include when parsing.
@@ -64,11 +63,10 @@ extern "c" fn Parser::_set_included_ranges(
 /// If this requirement is not satisfied, the operation will fail, the ranges
 /// will not be assigned, and this function will return `false`. On success,
 /// this function returns `true`
-////
 pub fn Parser::set_included_ranges(
   self : Parser,
   ranges : Array[Range]
-) -> Unit {
+) -> Bool {
   let flatten_ranges = FixedArray::make(ranges.length() * 6, 0U)
   for i, range in ranges {
     flatten_ranges[i * 6] = range._[0]
@@ -78,7 +76,7 @@ pub fn Parser::set_included_ranges(
     flatten_ranges[i * 6 + 4] = range._[4]
     flatten_ranges[i * 6 + 5] = range._[5]
   }
-  self._set_included_ranges(flatten_ranges)
+  return self._set_included_ranges(flatten_ranges)
 }
 
 ///|
