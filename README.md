@@ -87,6 +87,7 @@ problems.
 ```bash
 # Initialize the tree-sitter submodule
 git submodule update --init --recursive
+moon update
 moon build --target native
 ```
 
