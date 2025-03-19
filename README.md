@@ -103,6 +103,8 @@ python3 src/preprocess.py
 
 ### Test
 
+Before running tests, make sure you have completed the build step above.
+
 To avoid introducing the dependency of the tree-sitter grammars, we put the
 majority of the tests inside the `test/` directory. To run the tests, you can
 cd into the `test/` directory and run `moon test --target native`:
