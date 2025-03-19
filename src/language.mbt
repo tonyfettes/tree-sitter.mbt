@@ -2,24 +2,6 @@
 pub(all) type Language @tree_sitter_language.Language
 
 ///|
-extern "c" fn Language::_load(
-  pathname : Bytes,
-  symbol : Bytes
-) -> @c.Nullable[Language] = "moonbit_ts_language_load"
-
-///|
-pub fn Language::load(path : String, name : String) -> Language? {
-  let pathname = @buffer.new()
-  pathname.write_bytes(@encoding.encode(UTF8, path))
-  pathname.write_byte(0)
-  let symbol = @buffer.new()
-  symbol.write_bytes(b"tree_sitter_")
-  symbol.write_bytes(@encoding.encode(UTF8, name))
-  symbol.write_byte(0)
-  Language::_load(pathname.contents(), symbol.contents()).to()
-}
-
-///|
 pub extern "c" fn Language::copy(self : Language) -> Language = "moonbit_ts_language_copy"
 
 ///|

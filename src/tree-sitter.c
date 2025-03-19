@@ -1,7 +1,6 @@
 #include "tree-sitter/lib/src/lib.c"
 #include "tree_sitter/api.h"
 #include <assert.h>
-#include <dlfcn.h>
 #include <moonbit.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -17,24 +16,6 @@
 #else
 #define static_assert_type_equal(...)
 #endif
-
-const TSLanguage *
-moonbit_ts_language_load(moonbit_bytes_t pathname, moonbit_bytes_t symbol) {
-  void *handle = dlopen((const char *)pathname, RTLD_NOW);
-  if (!handle) {
-    moonbit_decref(pathname);
-    moonbit_decref(symbol);
-    return NULL;
-  }
-  const TSLanguage *(*load)(void) = dlsym(handle, (const char *)symbol);
-  moonbit_decref(pathname);
-  moonbit_decref(symbol);
-  if (!load) {
-    dlclose(handle);
-    return NULL;
-  }
-  return load();
-}
 
 const TSLanguage *
 moonbit_ts_language_copy(const TSLanguage *self) {
