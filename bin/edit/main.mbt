@@ -319,7 +319,7 @@ pub fn schedule(
     let merged_captures = merge_captures!(captures, source)
     let predicates = query.predicates_for_pattern(match_.pattern_index)
     if not(handle_predicates!(merged_captures, predicates, properties)) {
-      println("Info: skipping match")
+      // println("Info: skipping match")
       continue
     }
     match captures[edit.name] {
@@ -371,7 +371,6 @@ fn apply_edit(
       let end = offset + match_.node.end_byte()
       let replace = @encoding.encode(UTF8, buffer)
       source = [..source[:start], ..replace, ..source[end:]]
-      println("source: \{@encoding.decoder(UTF8).decode!(source)}")
       let source_hash = source.hash()
       if old_source.contains(source_hash) {
         raise NoChange
