@@ -76,7 +76,7 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
 
 ///|
 test "parse_rules" {
-  let rules = parse_rules!(
+  let rules =
     #|suggested-for-in:
     #|  search: |
     #|    ((for_expression
@@ -115,8 +115,7 @@ test "parse_rules" {
     #|  replace: |
     #|    for $binderDefinition in $rangeLower..<($rangeUpper) $forBody
     #|
-    ,
-  )
+  let rules = parse_rules!(@encoding.encode(UTF8, rules))
   @json.inspect!(rules, content=[
     {
       "name": "suggested-for-in",

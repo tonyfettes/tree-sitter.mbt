@@ -122,7 +122,7 @@ test "markdown" {
   }
   guard not(moonbit_ranges.is_empty())
   parser.set_language(moonbit)
-  parser.set_included_ranges(moonbit_ranges)
+  parser.set_included_ranges(moonbit_ranges) |> ignore()
   tree.delete()
   parser.delete()
 }
