@@ -5,7 +5,7 @@
     "tonyfettes/tree_sitter": {
       "path": ".."
     },
-    "moonbitlang/x": "0.4.22",
+    "moonbitlang/x": "0.4.23",
     "tonyfettes/tree_sitter_moonbit": "0.1.7",
     "tonyfettes/tree_sitter_json": "0.1.7",
     "tonyfettes/tree_sitter_markdown": "0.1.7",

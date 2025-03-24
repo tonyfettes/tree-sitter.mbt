@@ -2,9 +2,11 @@
   "name": "tonyfettes/tree_sitter",
   "version": "0.1.12",
   "deps": {
-    "moonbitlang/x": "0.4.22",
+    "moonbitlang/x": "0.4.23",
     "tonyfettes/tree_sitter_language": "0.1.1",
-    "tonyfettes/c": "0.1.9"
+    "tonyfettes/c": "0.1.9",
+    "moonbitlang/lex": "0.3.2",
+    "moonbitlang/yacc": "0.2.11"
   },
   "bin-deps": {
     "moonbitlang/yacc": "0.2.11",
