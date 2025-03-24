@@ -166,7 +166,6 @@ moonbit_ts_language_name(const TSLanguage *self) {
 }
 
 typedef struct MoonBitTSParser {
-  struct moonbit_external_object object;
   TSParser *parser;
 } MoonBitTSParser;
 

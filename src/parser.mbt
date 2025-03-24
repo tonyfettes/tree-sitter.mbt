@@ -1,5 +1,5 @@
 ///|
-extern type Parser
+type Parser
 
 ///|
 /// Create a new parser.
