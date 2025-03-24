@@ -1,5 +1,5 @@
 ///|
-extern type Tree
+type Tree
 
 ///|
 /// Create a shallow copy of the syntax tree. This is very fast.
