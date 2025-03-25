@@ -58,7 +58,7 @@ fn pattern_query(
     end: None,
     var: None,
   }
-  loop 0, pattern[:] {
+  loop 0, pattern.view() {
     offset, ['$', '[', .. pattern] => {
       if context.var is Some(_) {
         raise MetaVarOutOfPattern(offset)
