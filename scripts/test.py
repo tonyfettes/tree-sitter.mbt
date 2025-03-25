@@ -6,12 +6,17 @@ import os
 
 
 def macos_flags():
-    llvm_prefix = subprocess.run(
-        ["brew", "--prefix", "llvm"], check=True, text=True, capture_output=True
-    ).stdout
-    llvm_prefix = llvm_prefix.strip()
-    clang_path = Path(llvm_prefix) / "bin" / "clang"
-    return {"cc": str(clang_path), "cc-flags": "-g -fsanitize=address"}
+    llvm_opts = ["llvm", "llvm@18", "llvm@19", "llvm@15", "llvm@13"]
+    for llvm in llvm_opts:
+        llvm_prefix = subprocess.run(
+            ["brew", "--prefix", llvm], check=True, text=True, capture_output=True
+        ).stdout
+        llvm_prefix = llvm_prefix.strip()
+        clang_path = Path(llvm_prefix) / "bin" / "clang"
+        if clang_path.exists():
+            return {"cc": str(clang_path), "cc-flags": "-g -fsanitize=address"}
+    print("Warning: No LLVM installation found, using GCC-14")
+    return {"cc": "gcc-14", "cc-flags": "-g -fsanitize=address"}
 
 
 def linux_flags():
