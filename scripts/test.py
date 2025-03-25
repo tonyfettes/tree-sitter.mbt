@@ -24,7 +24,7 @@ def linux_flags():
 
 
 def windows_flags():
-    return {"cc": "cl.exe", "cc-flags": "/fsanitize=address"}
+    return {"cc": "cl.exe", "cc-flags": "/fsanitize=address /DEBUG"}
 
 
 def remove_pre_build(path: Path):
