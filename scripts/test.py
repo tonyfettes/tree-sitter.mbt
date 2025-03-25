@@ -60,8 +60,9 @@ def main():
     print(moon_pkg_path.read_text())
     print("----------------------------------------------")
     env = os.environ.copy()
-    env["ASAN_OPTIONS"] = "detect_leaks=1"
-    env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
+    if platform.system() != "Windows":
+        env["ASAN_OPTIONS"] = "detect_leaks=1"
+        env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
     try:
         subprocess.run(
             ["moon", "test", "--target", "native"], check=True, cwd=test_path, env=env
