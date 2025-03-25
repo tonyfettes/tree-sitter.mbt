@@ -21,8 +21,6 @@ test "json" {
       #|Some("(object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number)))")
     ,
   )
-  tree.delete()
-  parser.delete()
 }
 
 ///|
@@ -64,8 +62,6 @@ test "moonbit" {
     }
   }
   cursor.delete()
-  query.delete()
-  tree.delete()
   let comment_document = comment_document.join("\n")
   inspect!(
     comment_document.to_string(),
@@ -82,8 +78,6 @@ test "moonbit" {
     markdown_root_node,
     content="(document (section (atx_heading (atx_h1_marker) heading_content: (inline)) (paragraph (inline))))",
   )
-  markdown_tree.delete()
-  parser.delete()
 }
 
 ///|
@@ -123,6 +117,4 @@ test "markdown" {
   guard not(moonbit_ranges.is_empty())
   parser.set_language(moonbit)
   parser.set_included_ranges(moonbit_ranges) |> ignore()
-  tree.delete()
-  parser.delete()
 }

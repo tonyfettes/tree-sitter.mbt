@@ -6,10 +6,6 @@ type Parser
 pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
 
 ///|
-/// Delete the parser, freeing all of the memory that it used.
-pub extern "c" fn Parser::delete(self : Parser) = "moonbit_ts_parser_delete"
-
-///|
 /// Set the language that the parser should use for parsing.
 ///
 /// Returns a boolean indicating whether or not the language was successfully

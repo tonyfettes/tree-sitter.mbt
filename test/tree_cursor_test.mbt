@@ -40,6 +40,4 @@ test "tree_cursor" {
     content="(document (array (number) (null)))",
   )
   tree_cursor.delete()
-  tree.delete()
-  parser.delete()
 }

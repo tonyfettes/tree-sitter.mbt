@@ -169,7 +169,7 @@ typedef struct MoonBitTSParser {
   TSParser *parser;
 } MoonBitTSParser;
 
-void
+static inline void
 moonbit_ts_parser_delete(void *object) {
   MoonBitTSParser *parser = (MoonBitTSParser *)object;
   ts_parser_delete(parser->parser);
@@ -259,7 +259,7 @@ typedef struct MoonBitTSTree {
   TSTree *tree;
 } MoonBitTSTree;
 
-void
+static inline void
 moonbit_ts_tree_delete(void *object) {
   MoonBitTSTree *tree = (MoonBitTSTree *)object;
   ts_tree_delete(tree->tree);
@@ -288,6 +288,9 @@ moonbit_ts_parser_parse(
   );
   tree->tree = ts_parser_parse(self->parser, ts_old_tree, ts_input);
   moonbit_decref(self);
+  if (old_tree) {
+    moonbit_decref(old_tree);
+  }
   return tree;
 }
 
@@ -448,6 +451,7 @@ TSNode *
 moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
   TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
   *node = ts_tree_root_node(tree->tree);
+  moonbit_decref(tree);
   return node;
 }
 
@@ -497,7 +501,8 @@ moonbit_ts_tree_get_changed_ranges(
   MoonBitTSTree *new_tree
 ) {
   uint32_t count = 0;
-  TSRange *ranges = ts_tree_get_changed_ranges(old_tree->tree, new_tree->tree, &count);
+  TSRange *ranges =
+    ts_tree_get_changed_ranges(old_tree->tree, new_tree->tree, &count);
   moonbit_decref(old_tree);
   moonbit_decref(new_tree);
   TSRange *copy = (TSRange *)moonbit_make_int32_array(

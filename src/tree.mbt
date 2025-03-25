@@ -9,10 +9,6 @@ type Tree
 pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 
 ///|
-/// Delete the syntax tree, freeing all of the memory that it used.
-pub extern "c" fn Tree::delete(self : Tree) = "moonbit_ts_tree_delete"
-
-///|
 /// Get the root node of the syntax tree.
 pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
 

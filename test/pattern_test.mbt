@@ -205,7 +205,6 @@ fn pattern_query(
   }
 
   let pattern = generate_pattern(context_root, None)
-  context_tree.delete()
   let pattern = pattern + " @pattern"
   capture_name.push("pattern")
   { source: pattern, capture: capture_name }
@@ -289,9 +288,6 @@ test "pattern" {
     }
   }
   query_cursor.delete()
-  query.delete()
-  source_tree.delete()
-  parser.delete()
   inspect!(
     ranges,
     content=
