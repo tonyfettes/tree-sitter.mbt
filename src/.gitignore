@@ -1,2 +1,3 @@
 /tree-sitter-lib/**
 !/tree-sitter-lib/moon.pkg.json
+!/tree-sitter-lib/tree-sitter.c
