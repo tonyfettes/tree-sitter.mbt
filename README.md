@@ -46,7 +46,6 @@ parsing library.
 4. Use the `tonyfettes/tree_sitter` API to parse your code:
 
    ```moonbit
-   ///|
    fn main {
      let moonbit = @tree_sitter_moonbit.language()
      let parser = @tree_sitter.Parser::new()
@@ -92,14 +91,14 @@ moon build --target native
 ```
 
 We amalgamate the tree-sitter source code with the C stubs together to build a
-monolithic C file (`src/tree-sitter-lib.c`) that can be compiled as a single
-object file. This step is done by a Python script at `src/preprocess.py`. The
+monolithic C file (`src/tree-sitter-lib/lib.c`) that can be compiled as a single
+object file. This step is done by a Python script at `scripts/prepare.py`. The
 script is set to run automatically when you run `moon build --target native` or
 `moon check --target native`. If you find the generated C file is out of date,
 you can run the script manually:
 
 ```bash
-python3 src/preprocess.py
+python scripts/prepare.py
 ```
 
 ### Test
