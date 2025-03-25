@@ -7,7 +7,7 @@ import os
 
 def macos_flags():
     llvm_prefix = subprocess.run(
-        ["brew", "--prefix", "llvm@18"], check=True, text=True, capture_output=True
+        ["brew", "--prefix", "llvm"], check=True, text=True, capture_output=True
     ).stdout
     llvm_prefix = llvm_prefix.strip()
     clang_path = Path(llvm_prefix) / "bin" / "clang"
