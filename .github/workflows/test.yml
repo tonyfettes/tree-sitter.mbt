@@ -16,6 +16,8 @@ jobs:
     continue-on-error: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install MoonBit (Unix)
         if: ${{ matrix.os != 'windows-latest' }}
