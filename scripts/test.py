@@ -27,7 +27,15 @@ def windows_flags():
     return {"cc": "cl.exe", "cc-flags": "/fsanitize=address"}
 
 
+def remove_pre_build(path: Path):
+    moon_pkg_json = json.loads(path.read_text())
+    if "pre-build" in moon_pkg_json:
+        moon_pkg_json.pop("pre-build")
+        path.write_text(json.dumps(moon_pkg_json, indent=2))
+
+
 def main():
+    remove_pre_build(Path("src") / "sexp" / "moon.pkg.json")
     subprocess.run(["moon", "check", "--target", "native"], check=True)
     test_path = Path("test")
     flags = None
