@@ -23,6 +23,7 @@ def windows_flags():
 
 
 def main():
+    subprocess.run(["moon", "check", "--target", "native"], check=True)
     test_path = Path("test")
     flags = None
     if platform.system() == "Linux":
@@ -54,7 +55,6 @@ def main():
         )
     finally:
         moon_pkg_path.write_text(moon_pkg_text)
-
 
 
 if __name__ == "__main__":
