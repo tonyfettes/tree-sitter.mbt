@@ -3,7 +3,7 @@
     {
       "input": [],
       "output": ["tree-sitter-lib/lib.c"],
-      "command": "python3 src/preprocess.py"
+      "command": "python3 scripts/prepare.py"
     }
   ],
   "import": [
