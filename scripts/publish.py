@@ -23,16 +23,16 @@ def main():
     shutil.copytree("src", publish_path / "src")
     for path in (publish_path / "src").rglob("moon.pkg.json"):
         remove_pre_build(path)
-    shutil.rmtree(publish_path / "src/tree-sitter")
-    shutil.rmtree(publish_path / "src/tinycc")
-    (publish_path / "src/sexp/lexer.mbtx").unlink()
-    (publish_path / "src/sexp/parser.mbty").unlink()
+    shutil.rmtree(publish_path / "src" / "tree-sitter")
+    shutil.rmtree(publish_path / "src" / "tinycc")
+    shutil.rmtree(publish_path / "src" / "grammar" / "moonbit")
+    (publish_path / "src" / "sexp" / "lexer.mbtx").unlink()
+    (publish_path / "src" / "sexp" / "parser.mbty").unlink()
     for test_path in (publish_path / "src").rglob("*_test.mbt"):
         test_path.unlink()
-    (publish_path / "src/.gitignore").unlink()
-    (publish_path / "src/tree-sitter.c").unlink()
-    for mbti_path in (publish_path / "src").rglob("*.mbti"):
-        mbti_path.unlink()
+    (publish_path / "src" / ".gitignore").unlink()
+    (publish_path / "src" / "preprocess.py").unlink()
+    (publish_path / "src" / "tree-sitter.c").unlink()
 
     subprocess.run(["moon", "publish"], cwd=publish_path)
 
