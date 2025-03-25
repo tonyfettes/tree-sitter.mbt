@@ -216,8 +216,14 @@ fn node_equal(
     return false
   }
   if node.child_count() is 1 && other.child_count() is 1 {
-    let node_text = source[node.start_byte():node.end_byte()]
-    let other_text = source[other.start_byte():other.end_byte()]
+    let node_text = source.view(
+      start_offset=node.start_byte(),
+      end_offset=node.end_byte(),
+    )
+    let other_text = source.view(
+      start_offset=other.start_byte(),
+      end_offset=other.end_byte(),
+    )
     if node_text.to_string() != other_text.to_string() {
       return false
     }

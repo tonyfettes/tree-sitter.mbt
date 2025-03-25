@@ -192,7 +192,7 @@ fn fill_captures(
   captures_texts : Map[String, String]
 ) -> String {
   let buffer = StringBuilder::new()
-  replace~: loop replacement[:] {
+  replace~: loop replacement.view() {
     ['$', .. replace] => {
       let name = StringBuilder::new()
       name~: loop replace {
