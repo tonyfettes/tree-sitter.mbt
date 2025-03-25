@@ -54,7 +54,7 @@ pub fn Pattern::parse(
     end: None,
     var: None,
   }
-  loop 0, source[:] {
+  loop 0, source.view() {
     offset, ['$', '[', .. source] => {
       if context.var is Some(_) {
         raise MetaVarOutOfPattern(offset)
