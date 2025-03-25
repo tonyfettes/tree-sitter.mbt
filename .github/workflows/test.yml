@@ -39,6 +39,10 @@ jobs:
       - name: Update mooncakes.io index
         run: moon update
 
+      - name: Setup MSVC
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Run tests
         run: |
           python3 scripts/test.py
