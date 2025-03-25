@@ -4,8 +4,16 @@ alias @moonbitlang/core/builtin as @builtin
 alias @tonyfettes/tree_sitter_language as @tree_sitter_language
 
 // Values
+const LANGUAGE_VERSION : Int = 15
+
+const MIN_COMPATIBLE_LANGUAGE_VERSION : Int = 13
 
 // Types and methods
+pub(all) struct DecodeResult {
+  code_point : Int
+  bytes_read : Int
+}
+
 type FieldId
 
 type Input[DecodeFunction]
@@ -15,7 +23,7 @@ impl Input {
 
 type InputEdit
 impl InputEdit {
-  new(Int, Int, Int, Point, Point, Point) -> Self
+  new(start_byte~ : Int, old_end_byte~ : Int, new_end_byte~ : Int, start_point~ : Point, old_end_point~ : Point, new_end_point~ : Point) -> Self
 }
 
 pub(all) enum InputEncoding {
@@ -31,8 +39,9 @@ impl Language {
   copy(Self) -> Self
   delete(Self) -> Unit
   field_id_for_name(Self, String) -> Int
-  load(String, String) -> Self?
-  name(Self) -> String
+  metadata(Self) -> LanguageMetadata
+  name(Self) -> String?
+  next_state(Self, StateId, Symbol) -> StateId
   state_count(Self) -> Int
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
@@ -40,6 +49,7 @@ impl Language {
   symbol_for_name(Self, String) -> Symbol
   symbol_name(Self, Symbol) -> String
   symbol_type(Self, Symbol) -> SymbolType
+  #deprecated
   version(Self) -> Int
 }
 
@@ -63,10 +73,10 @@ impl LookaheadIterator {
   current_symbol_name(Self) -> String
   delete(Self) -> Unit
   language(Self) -> Language
-  new(Language, StateId) -> Self
+  new(Language, StateId) -> Self?
   next(Self) -> Bool
-  reset(Self, Language, StateId) -> Unit
-  reset_state(Self, StateId) -> Unit
+  reset(Self, Language, StateId) -> Bool
+  reset_state(Self, StateId) -> Bool
 }
 
 type Node
@@ -74,7 +84,7 @@ impl Node {
   child(Self, Int) -> Self?
   child_by_field_id(Self, FieldId) -> Self?
   child_by_field_name(Self, String) -> Self?
-  child_node(Self) -> Int
+  child_count(Self) -> Int
   child_with_descendant(Self, Self) -> Self?
   children(Self) -> Iter[Self]
   descendant_count(Self) -> Int
@@ -84,8 +94,8 @@ impl Node {
   end_byte(Self) -> Int
   end_point(Self) -> Point
   eq(Self, Self) -> Bool
-  field_name_for_child(Self, Int) -> String
-  field_name_for_named_child(Self, Int) -> String
+  field_name_for_child(Self, Int) -> String?
+  field_name_for_named_child(Self, Int) -> String?
   first_child_for_byte(Self, Int) -> Self?
   first_named_child_for_byte(Self, Int) -> Self?
   grammar_symbol(Self) -> Symbol
@@ -127,15 +137,14 @@ pub struct ParseState {
 
 type Parser
 impl Parser {
-  delete(Self) -> Unit
   included_ranges(Self) -> Array[Range]
   logger(Self) -> Logger
   new() -> Self
-  parse[Encoding : DecodeFunction](Self, Tree?, Input[Encoding], options? : ParseOptions) -> Tree
-  parse_bytes(Self, Tree?, Bytes, InputEncoding?) -> Tree
+  parse[Encoding : DecodeFunction](Self, Tree?, Input[Encoding], options? : ParseOptions) -> Tree?
+  parse_bytes(Self, Tree?, Bytes, encoding? : InputEncoding) -> Tree
   parse_string(Self, Tree?, String) -> Tree
   reset(Self) -> Unit
-  set_included_ranges(Self, Array[Range]) -> Unit
+  set_included_ranges(Self, Array[Range]) -> Bool
   set_language(Self, Language) -> Unit
   set_logger(Self, Logger) -> Unit
 }
@@ -155,13 +164,13 @@ pub enum Quantifier {
   One
   OneOrMore
 }
+impl Show for Quantifier
 
 type Query
 impl Query {
   capture_count(Self) -> Int
   capture_name_for_id(Self, Int) -> String
   capture_quantifier_for_id(Self, Int, Int) -> Quantifier
-  delete(Self) -> Unit
   disable_capture(Self, String) -> Unit
   disable_pattern(Self, Int) -> Unit
   end_byte_for_pattern(Self, Int) -> Int
@@ -170,7 +179,7 @@ impl Query {
   is_pattern_rooted(Self, Int) -> Bool
   new(Language, String) -> Self!QueryError
   pattern_count(Self) -> Int
-  predicates_for_pattern(Self, Int) -> Array[QueryPredicateStep]
+  predicates_for_pattern(Self, Int) -> Array[Array[QueryPredicateStep]]
   start_byte_for_pattern(Self, Int) -> Int
   string_count(Self) -> Int
   string_value_for_id(Self, Int) -> String
@@ -184,7 +193,6 @@ impl Show for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
-  delete(Self) -> Unit
   did_exceed_match_limit(Self) -> Bool
   exec(Self, Query, Node, options? : QueryCursorOptions) -> Unit
   match_limit(Self) -> Int
@@ -215,16 +223,11 @@ pub struct QueryMatch {
   captures : FixedArray[QueryCapture]
 }
 
-pub struct QueryPredicateStep {
-  type_ : QueryPredicateStepType
-  value : Int
+pub enum QueryPredicateStep {
+  Capture(String)
+  String(String)
 }
-
-pub enum QueryPredicateStepType {
-  Done
-  Capture
-  String
-}
+impl Show for QueryPredicateStep
 
 type Range
 impl Range {
@@ -244,10 +247,9 @@ type SymbolType
 
 type Tree
 impl Tree {
-  changed_ranges(Self, Self) -> Array[Range]
   copy(Self) -> Self
-  delete(Self) -> Unit
-  edit(Self, InputEdit) -> Self
+  edit(Self, InputEdit) -> Unit
+  get_changed_ranges(Self, Self) -> Array[Range]
   language(Self) -> Language
   root_node(Self) -> Node
   root_node_with_offset(Self, Int) -> Node
@@ -259,9 +261,8 @@ impl TreeCursor {
   current_depth(Self) -> Int
   current_descendant_index(Self) -> Int
   current_field_id(Self) -> FieldId
-  current_field_name(Self) -> Bytes
+  current_field_name(Self) -> String?
   current_node(Self) -> Node
-  delete(Self) -> Unit
   goto_descendant(Self, Int) -> Unit
   goto_first_child(Self) -> Bool
   goto_first_child_for_byte(Self, Int) -> Bool
@@ -280,10 +281,12 @@ pub typealias Grammar = @tonyfettes/tree_sitter/grammar.Grammar
 
 pub typealias NodeTypes = @tonyfettes/tree_sitter/node_types.NodeTypes
 
+pub typealias QueryPredicate = Array[QueryPredicateStep]
+
 // Traits
 pub(open) trait DecodeFunction {
   input_encoding(Self) -> InputEncoding
-  decode(Bytes, Int) -> Int
+  decode(Bytes) -> DecodeResult?
 }
 impl DecodeFunction::input_encoding
 
