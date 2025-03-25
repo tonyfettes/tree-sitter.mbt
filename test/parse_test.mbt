@@ -47,9 +47,9 @@ test "moonbit" {
   let root_node = tree.root_node()
   let comment_document = []
   let query = @tree_sitter.Query::new!(moonbit, "(comment) @comment")
-  let cursor = @tree_sitter.QueryCursor::new()
-  cursor.exec(query, root_node)
-  while cursor.next_match() is Some(match_) {
+  let query_cursor = @tree_sitter.QueryCursor::new()
+  query_cursor.exec(query, root_node)
+  while query_cursor.next_match() is Some(match_) {
     let comment_node = match_.captures[0].node
     let start_byte = comment_node.start_byte()
     let end_byte = comment_node.end_byte()
@@ -61,7 +61,6 @@ test "moonbit" {
       _ => continue
     }
   }
-  cursor.delete()
   let comment_document = comment_document.join("\n")
   inspect!(
     comment_document.to_string(),

@@ -1,5 +1,5 @@
 ///|
-type TreeCursor Bytes
+type TreeCursor
 
 ///|
 /// Create a new tree cursor starting from the given node.
@@ -11,10 +11,6 @@ type TreeCursor Bytes
 /// Note that the given node is considered the root of the cursor,
 /// and the cursor cannot walk outside this node.
 pub extern "c" fn TreeCursor::new(node : Node) -> TreeCursor = "moonbit_ts_tree_cursor_new"
-
-///|
-/// Delete a tree cursor, freeing all of the memory that it used.
-pub extern "c" fn TreeCursor::delete(self : TreeCursor) = "moonbit_ts_tree_cursor_delete"
 
 ///|
 /// Re-initialize a tree cursor to start at the original node that the cursor was

@@ -287,7 +287,6 @@ test "pattern" {
       ranges.push((text, start, end))
     }
   }
-  query_cursor.delete()
   inspect!(
     ranges,
     content=

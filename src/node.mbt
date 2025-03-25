@@ -1,5 +1,5 @@
 ///|
-type Node Bytes
+type Node
 
 ///|
 extern "c" fn Node::_type(self : Node) -> Bytes = "moonbit_ts_node_type"

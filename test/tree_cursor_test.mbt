@@ -39,5 +39,4 @@ test "tree_cursor" {
     tree_cursor.current_node(),
     content="(document (array (number) (null)))",
   )
-  tree_cursor.delete()
 }

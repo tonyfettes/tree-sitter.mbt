@@ -1,6 +1,6 @@
 ///|
 /// A cursor for executing a query on a syntax tree.
-extern type QueryCursor
+type QueryCursor
 
 ///|
 /// Create a new cursor for executing a given query.
@@ -24,10 +24,6 @@ extern type QueryCursor
 /// You can then start executing another query on another node by calling
 /// QueryCursor::exec again.
 pub extern "c" fn QueryCursor::new() -> QueryCursor = "moonbit_ts_query_cursor_new"
-
-///|
-/// Delete a query cursor, freeing all of the memory that it used.
-pub extern "c" fn QueryCursor::delete(self : QueryCursor) = "moonbit_ts_query_cursor_delete"
 
 ///|
 extern "c" fn QueryCursor::_exec(
@@ -160,12 +156,7 @@ pub struct QueryMatch {
 }
 
 ///|
-priv type QueryMatch_ Bytes
-
-///|
-fn init {
-  ignore(QueryMatch_)
-}
+priv type QueryMatch_
 
 ///|
 extern "c" fn QueryMatch_::id(self : QueryMatch_) -> UInt = "moonbit_ts_query_match_id"

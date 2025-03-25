@@ -4,9 +4,14 @@
 #include <moonbit.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef DEBUG
+#include <stdio.h>
+#define moonbit_ts_trace(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define moonbit_ts_trace(...)
+#endif
 
 #ifndef __TINYC__
 #define static_assert_type_equal(type, expected)                               \
@@ -262,6 +267,8 @@ typedef struct MoonBitTSTree {
 static inline void
 moonbit_ts_tree_delete(void *object) {
   MoonBitTSTree *tree = (MoonBitTSTree *)object;
+  moonbit_ts_trace("moonbit_ts_tree_delete: tree = %p\n", tree);
+  moonbit_ts_trace("moonbit_ts_tree_delete: tree->tree = %p\n", tree->tree);
   ts_tree_delete(tree->tree);
 }
 
@@ -360,8 +367,12 @@ moonbit_ts_parser_parse_string(
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
+  moonbit_ts_trace("moonbit_ts_parser_parse_string: tree = %p\n", tree);
   tree->tree = ts_parser_parse_string(
     parser->parser, old_ts_tree, (const char *)bytes, length
+  );
+  moonbit_ts_trace(
+    "moonbit_ts_parser_parse_string: tree->tree = %p\n", tree->tree
   );
   moonbit_decref(parser);
   if (old_tree) {
@@ -386,8 +397,14 @@ moonbit_ts_parser_parse_string_encoding(
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
+  moonbit_ts_trace(
+    "moonbit_ts_parser_parse_string_encoding: tree = %p\n", tree
+  );
   tree->tree = ts_parser_parse_string_encoding(
     parser->parser, old_ts_tree, (const char *)bytes, length, encoding
+  );
+  moonbit_ts_trace(
+    "moonbit_ts_parser_parse_string_encoding: tree->tree = %p\n", tree->tree
   );
   moonbit_decref(parser);
   if (old_tree) {
@@ -447,26 +464,55 @@ moonbit_ts_tree_copy(MoonBitTSTree *self) {
   return tree;
 }
 
-TSNode *
-moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_tree_root_node(tree->tree);
-  moonbit_decref(tree);
-  return node;
+typedef struct MoonBitTSNode {
+  TSNode node;
+  MoonBitTSTree *tree;
+} MoonBitTSNode;
+
+static inline void
+moonbit_ts_node_delete(void *object) {
+  MoonBitTSNode *self = (MoonBitTSNode *)object;
+  moonbit_ts_trace("moonbit_ts_node_delete: self = %p\n", self);
+  moonbit_ts_trace("moonbit_ts_node_delete: self->tree = %p\n", self->tree);
+  moonbit_decref(self->tree);
 }
 
-TSNode *
+static inline MoonBitTSNode *
+moonbit_ts_node_new(TSNode node, MoonBitTSTree *tree) {
+  MoonBitTSNode *self = (MoonBitTSNode *)moonbit_make_external_object(
+    moonbit_ts_node_delete, sizeof(MoonBitTSNode)
+  );
+  self->node = node;
+  self->tree = tree;
+  moonbit_ts_trace("moonbit_ts_node_new: self = %p\n", self);
+  moonbit_ts_trace("moonbit_ts_node_new: self->tree = %p\n", self->tree);
+  return self;
+}
+
+static inline MoonBitTSTree *
+moonbit_ts_node_tree(MoonBitTSNode *node) {
+  MoonBitTSTree *tree = node->tree;
+  moonbit_incref(tree);
+  moonbit_decref(node);
+  return tree;
+}
+
+MoonBitTSNode *
+moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
+  TSNode node = ts_tree_root_node(tree->tree);
+  return moonbit_ts_node_new(node, tree);
+}
+
+MoonBitTSNode *
 moonbit_ts_tree_root_node_with_offset(
   MoonBitTSTree *tree,
   uint32_t offset_bytes,
   TSPoint *offset_extent
 ) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node =
+  TSNode node =
     ts_tree_root_node_with_offset(tree->tree, offset_bytes, *offset_extent);
-  moonbit_decref(tree);
   moonbit_decref(offset_extent);
-  return node;
+  return moonbit_ts_node_new(node, tree);
 }
 
 const TSLanguage *
@@ -513,8 +559,8 @@ moonbit_ts_tree_get_changed_ranges(
 }
 
 moonbit_bytes_t
-moonbit_ts_node_type(TSNode *self) {
-  const char *type = ts_node_type(*self);
+moonbit_ts_node_type(MoonBitTSNode *self) {
+  const char *type = ts_node_type(self->node);
   moonbit_decref(self);
   size_t length = strlen(type);
   moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
@@ -523,20 +569,20 @@ moonbit_ts_node_type(TSNode *self) {
 }
 
 TSSymbol
-moonbit_ts_node_symbol(TSNode *self) {
-  TSSymbol symbol = ts_node_symbol(*self);
+moonbit_ts_node_symbol(MoonBitTSNode *self) {
+  TSSymbol symbol = ts_node_symbol(self->node);
   moonbit_decref(self);
   return symbol;
 }
 
 const TSLanguage *
-moonbit_ts_node_language(TSNode *self) {
-  return ts_node_language(*self);
+moonbit_ts_node_language(MoonBitTSNode *self) {
+  return ts_node_language(self->node);
 }
 
 moonbit_bytes_t
-moonbit_ts_node_grammar_type(TSNode *self) {
-  const char *type = ts_node_grammar_type(*self);
+moonbit_ts_node_grammar_type(MoonBitTSNode *self) {
+  const char *type = ts_node_grammar_type(self->node);
   moonbit_decref(self);
   size_t length = strlen(type);
   moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
@@ -545,49 +591,49 @@ moonbit_ts_node_grammar_type(TSNode *self) {
 }
 
 TSSymbol
-moonbit_ts_node_grammar_symbol(TSNode *self) {
-  TSSymbol symbol = ts_node_grammar_symbol(*self);
+moonbit_ts_node_grammar_symbol(MoonBitTSNode *self) {
+  TSSymbol symbol = ts_node_grammar_symbol(self->node);
   moonbit_decref(self);
   return symbol;
 }
 
 uint32_t
-moonbit_ts_node_start_byte(TSNode *self) {
-  uint32_t byte = ts_node_start_byte(*self);
+moonbit_ts_node_start_byte(MoonBitTSNode *self) {
+  uint32_t byte = ts_node_start_byte(self->node);
   moonbit_decref(self);
   return byte;
 }
 
 TSPoint *
-moonbit_ts_node_start_point(TSNode *self) {
+moonbit_ts_node_start_point(MoonBitTSNode *self) {
   TSPoint *point = (TSPoint *)moonbit_make_int32_array(
     sizeof(struct TSPoint) / sizeof(int32_t), 0
   );
-  *point = ts_node_start_point(*self);
+  *point = ts_node_start_point(self->node);
   moonbit_decref(self);
   return point;
 }
 
 uint32_t
-moonbit_ts_node_end_byte(TSNode *self) {
-  uint32_t byte = ts_node_end_byte(*self);
+moonbit_ts_node_end_byte(MoonBitTSNode *self) {
+  uint32_t byte = ts_node_end_byte(self->node);
   moonbit_decref(self);
   return byte;
 }
 
 TSPoint *
-moonbit_ts_node_end_point(TSNode *self) {
+moonbit_ts_node_end_point(MoonBitTSNode *self) {
   TSPoint *point = (TSPoint *)moonbit_make_int32_array(
     sizeof(struct TSPoint) / sizeof(int32_t), 0
   );
-  *point = ts_node_end_point(*self);
+  *point = ts_node_end_point(self->node);
   moonbit_decref(self);
   return point;
 }
 
 moonbit_bytes_t
-moonbit_ts_node_string(TSNode *self) {
-  char *string = ts_node_string(*self);
+moonbit_ts_node_string(MoonBitTSNode *self) {
+  char *string = ts_node_string(self->node);
   moonbit_decref(self);
   size_t length = strlen(string);
   moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
@@ -597,395 +643,416 @@ moonbit_ts_node_string(TSNode *self) {
 }
 
 bool
-moonbit_ts_node_is_null(TSNode *self) {
-  bool is_null = ts_node_is_null(*self);
+moonbit_ts_node_is_null(MoonBitTSNode *self) {
+  bool is_null = ts_node_is_null(self->node);
   moonbit_decref(self);
   return is_null;
 }
 
 bool
-moonbit_ts_node_is_named(TSNode *self) {
-  bool is_named = ts_node_is_named(*self);
+moonbit_ts_node_is_named(MoonBitTSNode *self) {
+  bool is_named = ts_node_is_named(self->node);
   moonbit_decref(self);
   return is_named;
 }
 
 bool
-moonbit_ts_node_is_missing(TSNode *self) {
-  bool is_missing = ts_node_is_missing(*self);
+moonbit_ts_node_is_missing(MoonBitTSNode *self) {
+  bool is_missing = ts_node_is_missing(self->node);
   moonbit_decref(self);
   return is_missing;
 }
 
 bool
-moonbit_ts_node_is_extra(TSNode *self) {
-  bool is_extra = ts_node_is_extra(*self);
+moonbit_ts_node_is_extra(MoonBitTSNode *self) {
+  bool is_extra = ts_node_is_extra(self->node);
   moonbit_decref(self);
   return is_extra;
 }
 
 bool
-moonbit_ts_node_has_changes(TSNode *self) {
-  bool has_changes = ts_node_has_changes(*self);
+moonbit_ts_node_has_changes(MoonBitTSNode *self) {
+  bool has_changes = ts_node_has_changes(self->node);
   moonbit_decref(self);
   return has_changes;
 }
 
 bool
-moonbit_ts_node_has_error(TSNode *self) {
-  bool has_error = ts_node_has_error(*self);
+moonbit_ts_node_has_error(MoonBitTSNode *self) {
+  bool has_error = ts_node_has_error(self->node);
   moonbit_decref(self);
   return has_error;
 }
 
 bool
-moonbit_ts_node_is_error(TSNode *self) {
-  bool is_error = ts_node_is_error(*self);
+moonbit_ts_node_is_error(MoonBitTSNode *self) {
+  bool is_error = ts_node_is_error(self->node);
   moonbit_decref(self);
   return is_error;
 }
 
 TSStateId
-moonbit_ts_node_parse_state(TSNode *self) {
-  TSStateId state = ts_node_parse_state(*self);
+moonbit_ts_node_parse_state(MoonBitTSNode *self) {
+  TSStateId state = ts_node_parse_state(self->node);
   moonbit_decref(self);
   return state;
 }
 
 TSStateId
-moonbit_ts_node_next_parse_state(TSNode *self) {
-  TSStateId state = ts_node_next_parse_state(*self);
+moonbit_ts_node_next_parse_state(MoonBitTSNode *self) {
+  TSStateId state = ts_node_next_parse_state(self->node);
   moonbit_decref(self);
   return state;
 }
 
-TSNode *
-moonbit_ts_node_parent(TSNode *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_parent(*self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_parent(MoonBitTSNode *self) {
+  TSNode node = ts_node_parent(self->node);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_child_with_descendant(TSNode *self, TSNode *descendant) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_child_with_descendant(*self, *descendant);
-  moonbit_decref(self);
+MoonBitTSNode *
+moonbit_ts_node_child_with_descendant(
+  MoonBitTSNode *self,
+  MoonBitTSNode *descendant
+) {
+  TSNode node = ts_node_child_with_descendant(self->node, descendant->node);
   moonbit_decref(descendant);
-  return node;
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_child(TSNode *self, uint32_t child_index) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_child(*self, child_index);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_child(MoonBitTSNode *self, uint32_t child_index) {
+  TSNode node = ts_node_child(self->node, child_index);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
 const char *
-moonbit_ts_node_field_name_for_child(TSNode *self, uint32_t child_index) {
-  return ts_node_field_name_for_child(*self, child_index);
+moonbit_ts_node_field_name_for_child(
+  MoonBitTSNode *self,
+  uint32_t child_index
+) {
+  const char *name = ts_node_field_name_for_child(self->node, child_index);
+  moonbit_decref(self);
+  return name;
 }
 
 const char *
 moonbit_ts_node_field_name_for_named_child(
-  TSNode *self,
+  MoonBitTSNode *self,
   uint32_t named_child_index
 ) {
-  return ts_node_field_name_for_named_child(*self, named_child_index);
+  const char *name =
+    ts_node_field_name_for_named_child(self->node, named_child_index);
+  moonbit_decref(self);
+  return name;
 }
 
 uint32_t
-moonbit_ts_node_child_count(TSNode *self) {
-  uint32_t count = ts_node_child_count(*self);
+moonbit_ts_node_child_count(MoonBitTSNode *self) {
+  uint32_t count = ts_node_child_count(self->node);
   moonbit_decref(self);
   return count;
 }
 
-TSNode *
-moonbit_ts_node_named_child(TSNode *self, uint32_t child_index) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_named_child(*self, child_index);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_named_child(MoonBitTSNode *self, uint32_t child_index) {
+  TSNode node = ts_node_named_child(self->node, child_index);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
 uint32_t
-moonbit_ts_node_named_child_count(TSNode *self) {
-  uint32_t count = ts_node_named_child_count(*self);
+moonbit_ts_node_named_child_count(MoonBitTSNode *self) {
+  uint32_t count = ts_node_named_child_count(self->node);
   moonbit_decref(self);
   return count;
 }
 
-TSNode *
-moonbit_ts_node_child_by_field_name(TSNode *self, moonbit_bytes_t name) {
+MoonBitTSNode *
+moonbit_ts_node_child_by_field_name(MoonBitTSNode *self, moonbit_bytes_t name) {
   uint32_t length = Moonbit_array_length(name);
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_child_by_field_name(*self, (const char *)name, length);
-  moonbit_decref(self);
+  TSNode node =
+    ts_node_child_by_field_name(self->node, (const char *)name, length);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
   moonbit_decref(name);
-  return node;
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_child_by_field_id(TSNode *self, TSFieldId field_id) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_child_by_field_id(*self, field_id);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_child_by_field_id(MoonBitTSNode *self, TSFieldId field_id) {
+  TSNode node = ts_node_child_by_field_id(self->node, field_id);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_next_sibling(TSNode *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_next_sibling(*self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_next_sibling(MoonBitTSNode *self) {
+  TSNode node = ts_node_next_sibling(self->node);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_prev_sibling(TSNode *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_prev_sibling(*self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_prev_sibling(MoonBitTSNode *self) {
+  TSNode node = ts_node_prev_sibling(self->node);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_next_named_sibling(TSNode *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_next_named_sibling(*self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_next_named_sibling(MoonBitTSNode *self) {
+  TSNode node = ts_node_next_named_sibling(self->node);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_prev_named_sibling(TSNode *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_prev_named_sibling(*self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_prev_named_sibling(MoonBitTSNode *self) {
+  TSNode node = ts_node_prev_named_sibling(self->node);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_first_child_for_byte(TSNode *self, uint32_t byte) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_first_child_for_byte(*self, byte);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_first_child_for_byte(MoonBitTSNode *self, uint32_t byte) {
+  TSNode node = ts_node_first_child_for_byte(self->node, byte);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
-moonbit_ts_node_first_named_child_for_byte(TSNode *self, uint32_t byte) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_first_named_child_for_byte(*self, byte);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_node_first_named_child_for_byte(MoonBitTSNode *self, uint32_t byte) {
+  TSNode node = ts_node_first_named_child_for_byte(self->node, byte);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
 uint32_t
-moonbit_ts_node_descendant_count(TSNode *self) {
-  uint32_t count = ts_node_descendant_count(*self);
+moonbit_ts_node_descendant_count(MoonBitTSNode *self) {
+  uint32_t count = ts_node_descendant_count(self->node);
   moonbit_decref(self);
   return count;
 }
 
-TSNode *
+MoonBitTSNode *
 moonbit_ts_node_descendant_for_byte_range(
-  TSNode *self,
+  MoonBitTSNode *self,
   uint32_t start,
   uint32_t end
 ) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_descendant_for_byte_range(*self, start, end);
-  moonbit_decref(self);
-  return node;
+  TSNode node = ts_node_descendant_for_byte_range(self->node, start, end);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
+MoonBitTSNode *
 moonbit_ts_node_descendant_for_point_range(
-  TSNode *self,
+  MoonBitTSNode *self,
   TSPoint *start,
   TSPoint *end
 ) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_descendant_for_point_range(*self, *start, *end);
-  moonbit_decref(self);
+  TSNode node = ts_node_descendant_for_point_range(self->node, *start, *end);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
   moonbit_decref(start);
   moonbit_decref(end);
-  return node;
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
+MoonBitTSNode *
 moonbit_ts_node_named_descendant_for_byte_range(
-  TSNode *self,
+  MoonBitTSNode *self,
   uint32_t start,
   uint32_t end
 ) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_named_descendant_for_byte_range(*self, start, end);
-  moonbit_decref(self);
-  return node;
+  TSNode node = ts_node_named_descendant_for_byte_range(self->node, start, end);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
-TSNode *
+MoonBitTSNode *
 moonbit_ts_node_named_descendant_for_point_range(
-  TSNode *self,
+  MoonBitTSNode *self,
   TSPoint *start,
   TSPoint *end
 ) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_node_named_descendant_for_point_range(*self, *start, *end);
-  moonbit_decref(self);
+  TSNode node =
+    ts_node_named_descendant_for_point_range(self->node, *start, *end);
+  MoonBitTSTree *tree = moonbit_ts_node_tree(self);
   moonbit_decref(start);
   moonbit_decref(end);
-  return node;
+  return moonbit_ts_node_new(node, tree);
 }
 
 void
-moonbit_ts_node_edit(TSNode *self, TSInputEdit *edit) {
-  ts_node_edit(self, edit);
+moonbit_ts_node_edit(MoonBitTSNode *self, TSInputEdit *edit) {
+  ts_node_edit(&self->node, edit);
   moonbit_decref(self);
   moonbit_decref(edit);
 }
 
 bool
-moonbit_ts_node_eq(TSNode *self, TSNode *other) {
-  bool eq = ts_node_eq(*self, *other);
+moonbit_ts_node_eq(MoonBitTSNode *self, MoonBitTSNode *other) {
+  bool eq = ts_node_eq(self->node, other->node);
   moonbit_decref(self);
   moonbit_decref(other);
   return eq;
 }
 
-TSTreeCursor *
-moonbit_ts_tree_cursor_new(TSNode *node) {
-  TSTreeCursor *cursor =
-    (TSTreeCursor *)moonbit_malloc(sizeof(struct TSTreeCursor));
-  *cursor = ts_tree_cursor_new(*node);
-  moonbit_decref(node);
+typedef struct MoonBitTSTreeCursor {
+  TSTreeCursor cursor;
+  MoonBitTSTree *tree;
+} MoonBitTSTreeCursor;
+
+static inline void
+moonbit_ts_tree_cursor_delete(void *object) {
+  MoonBitTSTreeCursor *cursor = (MoonBitTSTreeCursor *)object;
+  ts_tree_cursor_delete(&cursor->cursor);
+  moonbit_decref(cursor->tree);
+}
+
+MoonBitTSTreeCursor *
+moonbit_ts_tree_cursor_new(MoonBitTSNode *node) {
+  MoonBitTSTreeCursor *cursor =
+    (MoonBitTSTreeCursor *)moonbit_make_external_object(
+      moonbit_ts_tree_cursor_delete, sizeof(MoonBitTSTreeCursor)
+    );
+  cursor->cursor = ts_tree_cursor_new(node->node);
+  cursor->tree = moonbit_ts_node_tree(node);
   return cursor;
 }
 
-void
-moonbit_ts_tree_cursor_delete(TSTreeCursor *self) {
-  ts_tree_cursor_delete(self);
+MoonBitTSTree *
+moonbit_ts_tree_cursor_tree(MoonBitTSTreeCursor *self) {
+  MoonBitTSTree *tree = self->tree;
+  moonbit_incref(tree);
   moonbit_decref(self);
+  return tree;
 }
 
 void
-moonbit_ts_tree_cursor_reset(TSTreeCursor *self, TSNode *node) {
-  ts_tree_cursor_reset(self, *node);
+moonbit_ts_tree_cursor_reset(MoonBitTSTreeCursor *self, MoonBitTSNode *node) {
+  ts_tree_cursor_reset(&self->cursor, node->node);
   moonbit_decref(node);
   moonbit_decref(self);
 }
 
 void
-moonbit_ts_tree_cursor_reset_to(TSTreeCursor *dst, TSTreeCursor *src) {
-  ts_tree_cursor_reset_to(dst, src);
+moonbit_ts_tree_cursor_reset_to(
+  MoonBitTSTreeCursor *dst,
+  MoonBitTSTreeCursor *src
+) {
+  ts_tree_cursor_reset_to(&dst->cursor, &src->cursor);
   moonbit_decref(src);
   moonbit_decref(dst);
 }
 
-TSNode *
-moonbit_ts_tree_cursor_current_node(TSTreeCursor *self) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = ts_tree_cursor_current_node(self);
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_tree_cursor_current_node(MoonBitTSTreeCursor *self) {
+  TSNode node = ts_tree_cursor_current_node(&self->cursor);
+  MoonBitTSTree *tree = moonbit_ts_tree_cursor_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
 const char *
-moonbit_ts_tree_cursor_current_field_name(TSTreeCursor *self) {
-  return ts_tree_cursor_current_field_name(self);
+moonbit_ts_tree_cursor_current_field_name(MoonBitTSTreeCursor *self) {
+  const char *name = ts_tree_cursor_current_field_name(&self->cursor);
+  moonbit_decref(self);
+  return name;
 }
 
 TSFieldId
-moonbit_ts_tree_cursor_current_field_id(TSTreeCursor *self) {
-  TSFieldId id = ts_tree_cursor_current_field_id(self);
+moonbit_ts_tree_cursor_current_field_id(MoonBitTSTreeCursor *self) {
+  TSFieldId id = ts_tree_cursor_current_field_id(&self->cursor);
   moonbit_decref(self);
   return id;
 }
 
 bool
-moonbit_ts_tree_cursor_goto_parent(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_parent(self);
+moonbit_ts_tree_cursor_goto_parent(MoonBitTSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_parent(&self->cursor);
   moonbit_decref(self);
   return result;
 }
 
 bool
-moonbit_ts_tree_cursor_goto_next_sibling(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_next_sibling(self);
+moonbit_ts_tree_cursor_goto_next_sibling(MoonBitTSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_next_sibling(&self->cursor);
   moonbit_decref(self);
   return result;
 }
 
 bool
-moonbit_ts_tree_cursor_goto_first_child(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_first_child(self);
+moonbit_ts_tree_cursor_goto_first_child(MoonBitTSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_first_child(&self->cursor);
   moonbit_decref(self);
   return result;
 }
 
 bool
-moonbit_ts_tree_cursor_goto_last_child(TSTreeCursor *self) {
-  bool result = ts_tree_cursor_goto_last_child(self);
+moonbit_ts_tree_cursor_goto_last_child(MoonBitTSTreeCursor *self) {
+  bool result = ts_tree_cursor_goto_last_child(&self->cursor);
   moonbit_decref(self);
   return result;
 }
 
 void
 moonbit_ts_tree_cursor_goto_descendant(
-  TSTreeCursor *self,
+  MoonBitTSTreeCursor *self,
   uint32_t goal_descendant_index
 ) {
-  ts_tree_cursor_goto_descendant(self, goal_descendant_index);
+  ts_tree_cursor_goto_descendant(&self->cursor, goal_descendant_index);
   moonbit_decref(self);
 }
 
 uint32_t
-moonbit_ts_tree_cursor_current_descendant_index(TSTreeCursor *self) {
-  uint32_t index = ts_tree_cursor_current_descendant_index(self);
+moonbit_ts_tree_cursor_current_descendant_index(MoonBitTSTreeCursor *self) {
+  uint32_t index = ts_tree_cursor_current_descendant_index(&self->cursor);
   moonbit_decref(self);
   return index;
 }
 
 uint32_t
-moonbit_ts_tree_cursor_current_depth(TSTreeCursor *self) {
-  uint32_t depth = ts_tree_cursor_current_depth(self);
+moonbit_ts_tree_cursor_current_depth(MoonBitTSTreeCursor *self) {
+  uint32_t depth = ts_tree_cursor_current_depth(&self->cursor);
   moonbit_decref(self);
   return depth;
 }
 
 int64_t
 moonbit_ts_tree_cursor_goto_first_child_for_byte(
-  TSTreeCursor *self,
+  MoonBitTSTreeCursor *self,
   uint32_t goal_byte
 ) {
-  int64_t result = ts_tree_cursor_goto_first_child_for_byte(self, goal_byte);
+  int64_t result =
+    ts_tree_cursor_goto_first_child_for_byte(&self->cursor, goal_byte);
   moonbit_decref(self);
   return result;
 }
 
 int64_t
 moonbit_ts_tree_cursor_goto_first_child_for_point(
-  TSTreeCursor *self,
+  MoonBitTSTreeCursor *self,
   TSPoint *goal_point
 ) {
-  int64_t result = ts_tree_cursor_goto_first_child_for_point(self, *goal_point);
+  int64_t result =
+    ts_tree_cursor_goto_first_child_for_point(&self->cursor, *goal_point);
   moonbit_decref(self);
   moonbit_decref(goal_point);
   return result;
 }
 
-TSTreeCursor *
-moonbit_ts_tree_cursor_copy(TSTreeCursor *cursor) {
-  TSTreeCursor *copy =
-    (TSTreeCursor *)moonbit_malloc(sizeof(struct TSTreeCursor));
-  *copy = ts_tree_cursor_copy(cursor);
-  moonbit_decref(cursor);
+MoonBitTSTreeCursor *
+moonbit_ts_tree_cursor_copy(MoonBitTSTreeCursor *self) {
+  MoonBitTSTreeCursor *copy =
+    (MoonBitTSTreeCursor *)moonbit_make_external_object(
+      moonbit_ts_tree_cursor_delete, sizeof(MoonBitTSTreeCursor)
+    );
+  copy->cursor = ts_tree_cursor_copy(&self->cursor);
+  copy->tree = moonbit_ts_tree_cursor_tree(self);
   return copy;
 }
 
@@ -995,8 +1062,10 @@ typedef struct MoonBitTSQuery {
 
 static inline void
 moonbit_ts_query_delete(void *object) {
-  MoonBitTSQuery *query = object;
-  ts_query_delete(query->query);
+  MoonBitTSQuery *self = object;
+  moonbit_ts_trace("moonbit_ts_query_delete: self = %p\n", self);
+  moonbit_ts_trace("moonbit_ts_query_delete: self->query = %p\n", self->query);
+  ts_query_delete(self->query);
 }
 
 MoonBitTSQuery *
@@ -1006,11 +1075,13 @@ moonbit_ts_query_new(
   uint32_t *error
 ) {
   uint32_t length = Moonbit_array_length(source);
-  MoonBitTSQuery *query = (MoonBitTSQuery *)moonbit_make_external_object(
-    moonbit_ts_query_delete, sizeof(TSQuery *)
+  MoonBitTSQuery *query = moonbit_make_external_object(
+    moonbit_ts_query_delete, sizeof(MoonBitTSQuery)
   );
+  moonbit_ts_trace("moonbit_ts_query_new: query = %p\n", query);
   query->query =
-    ts_query_new(language, (const char *)source, length, error, error + 1);
+    ts_query_new(language, (const char *)source, length, &error[0], &error[1]);
+  moonbit_ts_trace("moonbit_ts_query_new: query->query = %p\n", query->query);
   moonbit_decref(source);
   moonbit_decref(error);
   return query;
@@ -1160,25 +1231,92 @@ moonbit_ts_query_disable_pattern(MoonBitTSQuery *self, uint32_t pattern_index) {
   moonbit_decref(self);
 }
 
-TSQueryCursor *
-moonbit_ts_query_cursor_new(void) {
-  return ts_query_cursor_new();
+typedef struct MoonBitTSQueryCursor {
+  TSQueryCursor *cursor;
+  MoonBitTSQuery *query;
+  MoonBitTSTree *tree;
+} MoonBitTSQueryCursor;
+
+static inline void
+moonbit_ts_query_cursor_delete(void *object) {
+  MoonBitTSQueryCursor *self = (MoonBitTSQueryCursor *)object;
+  moonbit_ts_trace("moonbit_ts_query_cursor_delete: self = %p\n", self);
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_delete: self->cursor = %p\n", self->cursor
+  );
+  ts_query_cursor_delete(self->cursor);
+  if (self->query) {
+    moonbit_decref(self->query);
+  }
+  if (self->tree) {
+    moonbit_decref(self->tree);
+  }
 }
 
-void
-moonbit_ts_query_cursor_delete(TSQueryCursor *self) {
-  ts_query_cursor_delete(self);
+MoonBitTSQueryCursor *
+moonbit_ts_query_cursor_new(void) {
+  MoonBitTSQueryCursor *cursor = moonbit_make_external_object(
+    moonbit_ts_query_cursor_delete, sizeof(MoonBitTSQueryCursor)
+  );
+  moonbit_ts_trace("moonbit_ts_query_cursor_new: cursor = %p\n", cursor);
+  cursor->cursor = ts_query_cursor_new();
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_new: cursor->cursor = %p\n", cursor->cursor
+  );
+  cursor->query = NULL;
+  cursor->tree = NULL;
+  return cursor;
+}
+
+static inline void
+moonbit_ts_query_cursor_set_query(
+  MoonBitTSQueryCursor *self,
+  MoonBitTSQuery *query
+) {
+  if (self->query) {
+    moonbit_decref(self->query);
+  }
+  self->query = query;
+}
+
+static inline void
+moonbit_ts_query_cursor_set_tree(
+  MoonBitTSQueryCursor *self,
+  MoonBitTSTree *tree
+) {
+  if (self->tree) {
+    moonbit_decref(self->tree);
+  }
+  self->tree = tree;
+}
+
+static inline MoonBitTSTree *
+moonbit_ts_query_cursor_tree(MoonBitTSQueryCursor *self) {
+  MoonBitTSTree *tree = self->tree;
+  if (self->tree) {
+    moonbit_incref(self->tree);
+  }
+  moonbit_decref(self);
+  return tree;
 }
 
 void
 moonbit_ts_query_cursor_exec(
-  TSQueryCursor *self,
+  MoonBitTSQueryCursor *self,
   MoonBitTSQuery *query,
-  TSNode *node
+  MoonBitTSNode *node
 ) {
-  ts_query_cursor_exec(self, query->query, *node);
-  moonbit_decref(query);
-  moonbit_decref(node);
+  ts_query_cursor_exec(self->cursor, query->query, node->node);
+  moonbit_ts_query_cursor_set_query(self, query);
+  moonbit_ts_query_cursor_set_tree(self, moonbit_ts_node_tree(node));
+  moonbit_ts_trace("moonbit_ts_query_cursor_exec: self = %p\n", self);
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_exec: self->cursor = %p\n", self->cursor
+  );
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_exec: self->tree = %p\n", self->tree
+  );
+  moonbit_decref(self);
 }
 
 typedef struct MoonBitTSQueryCursorProgressCallback {
@@ -1197,127 +1335,195 @@ moonbit_ts_query_cursor_progress_callback(TSQueryCursorState *state) {
 
 void
 moonbit_ts_query_cursor_exec_with_options(
-  TSQueryCursor *self,
+  MoonBitTSQueryCursor *self,
   MoonBitTSQuery *query,
-  TSNode *node,
+  MoonBitTSNode *node,
   MoonBitTSQueryCursorProgressCallback *callback
 ) {
   TSQueryCursorOptions options = {
     .payload = callback,
     .progress_callback = moonbit_ts_query_cursor_progress_callback
   };
-  ts_query_cursor_exec_with_options(self, query->query, *node, &options);
+  moonbit_ts_query_cursor_set_tree(self, moonbit_ts_node_tree(node));
+  ts_query_cursor_exec_with_options(
+    self->cursor, query->query, node->node, &options
+  );
+  moonbit_decref(self);
   moonbit_decref(query);
-  moonbit_decref(node);
 }
 
 bool
-moonbit_ts_query_cursor_did_exceed_match_limit(TSQueryCursor *self) {
-  return ts_query_cursor_did_exceed_match_limit(self);
+moonbit_ts_query_cursor_did_exceed_match_limit(MoonBitTSQueryCursor *self) {
+  bool result = ts_query_cursor_did_exceed_match_limit(self->cursor);
+  moonbit_decref(self);
+  return result;
 }
 
 uint32_t
-moonbit_ts_query_cursor_match_limit(TSQueryCursor *self) {
-  return ts_query_cursor_match_limit(self);
+moonbit_ts_query_cursor_match_limit(MoonBitTSQueryCursor *self) {
+  bool result = ts_query_cursor_match_limit(self->cursor);
+  moonbit_decref(self);
+  return result;
 }
 
 void
-moonbit_ts_query_cursor_set_match_limit(TSQueryCursor *self, uint32_t limit) {
-  ts_query_cursor_set_match_limit(self, limit);
+moonbit_ts_query_cursor_set_match_limit(
+  MoonBitTSQueryCursor *self,
+  uint32_t limit
+) {
+  ts_query_cursor_set_match_limit(self->cursor, limit);
+  moonbit_decref(self);
 }
 
 void
 moonbit_ts_query_cursor_set_byte_range(
-  TSQueryCursor *self,
+  MoonBitTSQueryCursor *self,
   uint32_t start_byte,
   uint32_t end_byte
 ) {
-  ts_query_cursor_set_byte_range(self, start_byte, end_byte);
+  ts_query_cursor_set_byte_range(self->cursor, start_byte, end_byte);
+  moonbit_decref(self);
 }
 
 void
 moonbit_ts_query_cursor_set_point_range(
-  TSQueryCursor *self,
+  MoonBitTSQueryCursor *self,
   TSPoint *start_point,
   TSPoint *end_point
 ) {
-  ts_query_cursor_set_point_range(self, *start_point, *end_point);
+  ts_query_cursor_set_point_range(self->cursor, *start_point, *end_point);
+  moonbit_decref(self);
   moonbit_decref(start_point);
   moonbit_decref(end_point);
 }
 
-TSQueryMatch *
-moonbit_ts_query_cursor_next_match(TSQueryCursor *self) {
-  TSQueryMatch *match =
-    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
-  bool has_match = ts_query_cursor_next_match(self, match);
+typedef struct MoonBitTSQueryMatch {
+  TSQueryMatch match;
+  MoonBitTSTree *tree;
+} MoonBitTSQueryMatch;
+
+static inline void
+moonbit_ts_query_match_delete(void *object) {
+  MoonBitTSQueryMatch *match = (MoonBitTSQueryMatch *)object;
+  if (match->tree) {
+    moonbit_decref(match->tree);
+  }
+}
+
+static inline MoonBitTSTree *
+moonbit_ts_query_match_tree(MoonBitTSQueryMatch *self) {
+  MoonBitTSTree *tree = self->tree;
+  if (self->tree) {
+    moonbit_incref(self->tree);
+  }
+  moonbit_decref(self);
+  return tree;
+}
+
+MoonBitTSQueryMatch *
+moonbit_ts_query_cursor_next_match(MoonBitTSQueryCursor *self) {
+  moonbit_ts_trace("moonbit_ts_query_cursor_next_match: self = %p\n", self);
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_next_match: self->cursor = %p\n", self->cursor
+  );
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_next_match: self->tree = %p\n", self->tree
+  );
+  MoonBitTSQueryMatch *match = moonbit_make_external_object(
+    moonbit_ts_query_match_delete, sizeof(MoonBitTSQueryMatch)
+  );
+  bool has_match = ts_query_cursor_next_match(self->cursor, &match->match);
+  moonbit_ts_trace(
+    "moonbit_ts_query_cursor_next_match: has_match = %d\n", has_match
+  );
   if (has_match) {
+    match->tree = moonbit_ts_query_cursor_tree(self);
     return match;
   } else {
+    match->tree = NULL;
     moonbit_decref(match);
+    moonbit_decref(self);
     return NULL;
   }
 }
 
 void
-moonbit_ts_query_cursor_remove_match(TSQueryCursor *self, uint32_t match_id) {
-  ts_query_cursor_remove_match(self, match_id);
+moonbit_ts_query_cursor_remove_match(
+  MoonBitTSQueryCursor *self,
+  uint32_t match_id
+) {
+  ts_query_cursor_remove_match(self->cursor, match_id);
+  moonbit_decref(self);
 }
 
-TSQueryMatch *
-moonbit_ts_query_cursor_next_capture(TSQueryCursor *self, uint32_t *match_id) {
-  TSQueryMatch *match =
-    (TSQueryMatch *)moonbit_malloc(sizeof(struct TSQueryMatch));
-  bool has_match = ts_query_cursor_next_capture(self, match, match_id);
+MoonBitTSQueryMatch *
+moonbit_ts_query_cursor_next_capture(
+  MoonBitTSQueryCursor *self,
+  uint32_t *match_id
+) {
+  MoonBitTSQueryMatch *match = moonbit_make_external_object(
+    moonbit_ts_query_match_delete, sizeof(MoonBitTSQueryMatch)
+  );
+  bool has_match =
+    ts_query_cursor_next_capture(self->cursor, &match->match, match_id);
   moonbit_decref(match_id);
   if (has_match) {
+    match->tree = moonbit_ts_query_cursor_tree(self);
     return match;
   } else {
+    match->tree = NULL;
     moonbit_decref(match);
+    moonbit_decref(self);
     return NULL;
   }
 }
 
 void
 moonbit_ts_query_cursor_set_max_start_depth(
-  TSQueryCursor *self,
+  MoonBitTSQueryCursor *self,
   uint32_t max_start_depth
 ) {
-  ts_query_cursor_set_max_start_depth(self, max_start_depth);
+  ts_query_cursor_set_max_start_depth(self->cursor, max_start_depth);
+  moonbit_decref(self);
 }
 
 uint32_t
-moonbit_ts_query_match_id(TSQueryMatch *self) {
-  uint32_t id = self->id;
+moonbit_ts_query_match_id(MoonBitTSQueryMatch *self) {
+  uint32_t id = self->match.id;
   moonbit_decref(self);
   return id;
 }
 
 uint16_t
-moonbit_ts_query_match_pattern_index(TSQueryMatch *self) {
-  uint16_t index = self->pattern_index;
+moonbit_ts_query_match_pattern_index(MoonBitTSQueryMatch *self) {
+  uint16_t index = self->match.pattern_index;
   moonbit_decref(self);
   return index;
 }
 
 uint16_t
-moonbit_ts_query_match_capture_count(TSQueryMatch *self) {
-  uint16_t count = self->capture_count;
+moonbit_ts_query_match_capture_count(MoonBitTSQueryMatch *self) {
+  uint16_t count = self->match.capture_count;
   moonbit_decref(self);
   return count;
 }
 
-TSNode *
-moonbit_ts_query_match_captures_get_node(TSQueryMatch *self, uint32_t index) {
-  TSNode *node = (TSNode *)moonbit_malloc(sizeof(struct TSNode));
-  *node = self->captures[index].node;
-  moonbit_decref(self);
-  return node;
+MoonBitTSNode *
+moonbit_ts_query_match_captures_get_node(
+  MoonBitTSQueryMatch *self,
+  uint32_t index
+) {
+  TSNode node = self->match.captures[index].node;
+  MoonBitTSTree *tree = moonbit_ts_query_match_tree(self);
+  return moonbit_ts_node_new(node, tree);
 }
 
 uint32_t
-moonbit_ts_query_match_captures_get_index(TSQueryMatch *self, uint32_t index) {
-  uint32_t i = self->captures[index].index;
+moonbit_ts_query_match_captures_get_index(
+  MoonBitTSQueryMatch *self,
+  uint32_t index
+) {
+  uint32_t i = self->match.captures[index].index;
   moonbit_decref(self);
   return i;
 }
