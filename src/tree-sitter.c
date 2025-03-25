@@ -13,7 +13,7 @@
 #define moonbit_ts_trace(...)
 #endif
 
-#ifndef __TINYC__
+#if defined (__GNUC__) || defined (__clang__)
 #define static_assert_type_equal(type, expected)                               \
   static_assert(                                                               \
     _Generic((type)0, expected: 1, default: 0), #type " is not " #expected     \
