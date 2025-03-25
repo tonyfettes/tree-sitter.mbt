@@ -1,5 +1,5 @@
 ///|
-extern type Query
+type Query
 
 ///|
 type! QueryError {
@@ -60,10 +60,6 @@ pub fn Query::new(language : Language, source : String) -> Query!QueryError {
     raise QueryError::from(error[0], error[1])
   }
 }
-
-///|
-/// Delete a query, freeing all of the memory that it used.
-pub extern "c" fn Query::delete(self : Query) = "moonbit_ts_query_delete"
 
 ///|
 /// Get the number of patterns in the query.
