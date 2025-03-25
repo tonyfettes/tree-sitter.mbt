@@ -201,7 +201,6 @@ pub fn Pattern::parse(
   }
 
   let query = generate_query(context_root, None)
-  context_tree.delete()
   let query = query + " @pattern"
   capture_name.push("pattern")
   { source: query, capture: capture_name, vars: meta_vars, ranges: meta_ranges }
@@ -274,8 +273,6 @@ pub fn Pattern::search(
       instances.push(matched)
     }
   }
-  query_cursor.delete()
-  query.delete()
   instances
 }
 
@@ -307,8 +304,6 @@ fn main {
         }
       }
     }
-    source_tree.delete()
-    parser.delete()
   } catch {
     error => {
       if "a" == "a" {
