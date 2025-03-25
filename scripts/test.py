@@ -6,12 +6,17 @@ import os
 
 
 def macos_flags():
-    llvm_prefix = subprocess.run(
-        ["brew", "--prefix", "llvm@18"], check=True, text=True, capture_output=True
-    ).stdout
-    llvm_prefix = llvm_prefix.strip()
-    clang_path = Path(llvm_prefix) / "bin" / "clang"
-    return {"cc": str(clang_path), "cc-flags": "-g -fsanitize=address"}
+    llvm_opts = ["llvm", "llvm@18", "llvm@19", "llvm@15", "llvm@13"]
+    for llvm in llvm_opts:
+        llvm_prefix = subprocess.run(
+            ["brew", "--prefix", llvm], check=True, text=True, capture_output=True
+        ).stdout
+        llvm_prefix = llvm_prefix.strip()
+        clang_path = Path(llvm_prefix) / "bin" / "clang"
+        if clang_path.exists():
+            return {"cc": str(clang_path), "cc-flags": "-g -fsanitize=address"}
+    print("Warning: No LLVM installation found, using GCC-14")
+    return {"cc": "gcc-14", "cc-flags": "-g -fsanitize=address"}
 
 
 def linux_flags():
@@ -19,10 +24,19 @@ def linux_flags():
 
 
 def windows_flags():
-    return {"cc": "cl.exe", "cc-flags": "/fsanitize=address"}
+    return {"cc": "cl.exe", "cc-flags": "/fsanitize=address /DEBUG"}
+
+
+def remove_pre_build(path: Path):
+    moon_pkg_json = json.loads(path.read_text())
+    if "pre-build" in moon_pkg_json:
+        moon_pkg_json.pop("pre-build")
+        path.write_text(json.dumps(moon_pkg_json, indent=2))
 
 
 def main():
+    remove_pre_build(Path("src") / "sexp" / "moon.pkg.json")
+    subprocess.run(["moon", "check", "--target", "native"], check=True)
     test_path = Path("test")
     flags = None
     if platform.system() == "Linux":
@@ -46,15 +60,15 @@ def main():
     print(moon_pkg_path.read_text())
     print("----------------------------------------------")
     env = os.environ.copy()
-    env["ASAN_OPTIONS"] = "detect_leaks=1"
-    env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
+    if platform.system() != "Windows":
+        env["ASAN_OPTIONS"] = "detect_leaks=1"
+        env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
     try:
         subprocess.run(
             ["moon", "test", "--target", "native"], check=True, cwd=test_path, env=env
         )
     finally:
         moon_pkg_path.write_text(moon_pkg_text)
-
 
 
 if __name__ == "__main__":

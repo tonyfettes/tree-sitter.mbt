@@ -1,0 +1,8 @@
+{
+  "native-stub": [
+    "lib.c"
+  ],
+  "support-targets": [
+    "native"
+  ]
+}

@@ -1,9 +1,9 @@
 {
   "pre-build": [
     {
-      "input": ["tree-sitter.c"],
-      "output": ["tree-sitter-lib.c"],
-      "command": "python3 src/preprocess.py"
+      "input": [],
+      "output": ["tree-sitter-lib/lib.c"],
+      "command": "python scripts/prepare.py"
     }
   ],
   "import": [
@@ -11,8 +11,8 @@
     "tonyfettes/c",
     "tonyfettes/tree_sitter/grammar",
     "tonyfettes/tree_sitter/node_types",
-    "tonyfettes/tree_sitter_language"
+    "tonyfettes/tree_sitter_language",
+    "tonyfettes/tree_sitter/tree-sitter-lib"
   ],
-  "native-stub": ["tree-sitter-lib.c"],
   "supported-targets": ["native"]
 }
