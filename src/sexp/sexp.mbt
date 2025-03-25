@@ -39,33 +39,3 @@ pub impl ToJson for Sexp with to_json(self : Sexp) -> Json {
     List(list) => list.to_json()
   }
 }
-
-///|
-pub type! SexpError {
-  LexError(LexError)
-  ParseError(ParseError)
-}
-
-///|
-pub fn parse(source : String) -> Array[Sexp]!SexpError {
-  let lexer = Lexbuf::from_string(source)
-  let tokens = []
-  while true {
-    try {
-      match token!(lexer) {
-        (EOF, _, _) as token => {
-          tokens.push(token)
-          break
-        }
-        token => tokens.push(token)
-      }
-    } catch {
-      error => raise LexError(error)
-    }
-  }
-  try {
-    start!(tokens)
-  } catch {
-    error => raise ParseError(error)
-  }
-}
