@@ -1,9 +1,4 @@
 {
-  "link": {
-    "native": {
-      "cc-flags": "-g"
-    }
-  },
   "test-import": [
     "tonyfettes/tree_sitter",
     "tonyfettes/tree_sitter_moonbit",
