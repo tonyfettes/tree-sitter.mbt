@@ -210,7 +210,7 @@ pub extern "c" fn Language::next_state(
 ) -> StateId = "moonbit_ts_language_next_state"
 
 ///|
-fn Language::name_(self : @tree_sitter_language.Language) -> @c.Pointer[Byte] = "moonbit_ts_language_name"
+extern "c" fn Language::name_(self : @tree_sitter_language.Language) -> @c.Pointer[Byte] = "moonbit_ts_language_name"
 
 ///|
 /// Get the name of this language. This returns `None` in older parsers.
