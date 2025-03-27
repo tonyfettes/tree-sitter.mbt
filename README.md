@@ -77,6 +77,11 @@ MoonBit type definitions for a tree-sitter grammar.
 
 ## Development
 
+### Prerequisites
+
+Other than MoonBit toolchain, this project requires Python (3.9 or later) to
+build. Please make sure your system has `python` available in the `PATH`.
+
 ### Build
 
 The build should work out of the box on Linux and macOS. Windows is not tested,
