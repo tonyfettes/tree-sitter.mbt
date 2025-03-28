@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh" xml:lang="zh">
+<head>
+<!-- 2025-03-28 Fri 23:15 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 MoonBit 和 Tree-sitter 构建 Code Linter</title>
+<meta name="author" content="费浩祥" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<style>
+@media print {
+table {
+page-break-inside: avoid;
+}
+h2, h3, h4 {
+page-break-before: always;
+}
+p {
+page-break-inside: avoid;
+}
+}
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">使用 MoonBit 和 Tree-sitter 构建 Code Linter</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org634b0a7">1. Tree-sitter 的介绍</a></li>
+<li><a href="#org480fea4">2. MoonBit 的引用计数机制</a>
+<ul>
+<li><a href="#org642063e">2.1. 作用域生命周期</a>
+<ul>
+<li><a href="#org7e76a60">2.1.1. 提前释放所有权</a></li>
+</ul>
+</li>
+<li><a href="#org52c1f98">2.2. 函数调用</a>
+<ul>
+<li><a href="#orgf99490b">2.2.1. One Last Move</a></li>
+<li><a href="#orga476940">2.2.2. 借用</a></li>
+</ul>
+</li>
+<li><a href="#orgfe700e8">2.3. 函数返回</a>
+<ul>
+<li><a href="#org4f4554c">2.3.1. 返回值，移动</a></li>
+</ul>
+</li>
+<li><a href="#org84bf639">2.4. 聚合数据类型</a>
+<ul>
+<li><a href="#org5681a94">2.4.1. 聚合数据类型中的借用和移动</a></li>
+<li><a href="#orgab4ceff">2.4.2. 递归释放所有权</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org4eda4d6">3. Tree-sitter 和一些 C 库的生命周期管理</a>
+<ul>
+<li><a href="#org15ca2e9">3.1. 参数传递</a></li>
+<li><a href="#orgdeaf91b">3.2. 返回值</a></li>
+<li><a href="#org5d5ddb7">3.3. 聚合数据类型</a></li>
+</ul>
+</li>
+<li><a href="#orgb998e37">4. 在 MoonBit 中绑定 Tree-sitter</a>
+<ul>
+<li><a href="#org42ebc7d">4.1. 外部类型</a>
+<ul>
+<li><a href="#org29dad3b">4.1.1. <code>@tree_sitter.Language</code></a></li>
+</ul>
+</li>
+<li><a href="#orga9a53a8">4.2. 抽象类型</a>
+<ul>
+<li><a href="#org98405f0">4.2.1. <code>Node</code> 的类型定义</a></li>
+<li><a href="#org4e12123">4.2.2. <code>Node</code> 类型的值的构造</a></li>
+<li><a href="#orga7d46d1">4.2.3. <code>Node</code> 类型的值的析构</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org3f2b453">5. 使用 MoonBit 的 Tree-sitter 绑定</a>
+<ul>
+<li><a href="#org8231665">5.1. <code>tonyfettes/tree_sitter/sexp</code></a></li>
+<li><a href="#orga332b08">5.2. 代码检查（Lint）</a>
+<ul>
+<li><a href="#org2d5db67">5.2.1. 使用 <code>Node</code> API 遍历语法树</a></li>
+<li><a href="#org16f5360">5.2.2. 使用 Query</a></li>
+</ul>
+</li>
+<li><a href="#orga269307">5.3. 代码重构（Refactor）</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org634b0a7" class="outline-2">
+<h2 id="org634b0a7"><span class="section-number-2">1.</span> Tree-sitter 的介绍</h2>
+<div class="outline-text-2" id="text-1">
+<blockquote>
+<p>
+Tree-sitter is a parser generator tool and an incremental parsing library
+</p>
+</blockquote>
+
+<p>
+Tree-sitter 有着丰富的 parser 生态，支持的语言包括但不限于：
+</p>
+
+<ol class="org-ol">
+<li>JavaScript</li>
+<li>C/C++</li>
+<li>Python</li>
+<li>Go</li>
+<li>Rust</li>
+<li>&#x2026;</li>
+</ol>
+
+<p>
+在编辑器中，Tree-sitter 被用来实现代码高亮、结构化编辑、符号索引等功能（Neovim, Zed）。它也被 GitHub 用来做代码导航。在 AI coding 兴起之后，
+GitHub Copilot，Cline 等 AI 代码助手也利用 Tree-sitter 来实现符号查找和代码索引。
+</p>
+
+<p>
+除此之外，类似于 semgrep 和 astgrep 的工具在 Tree-sitter 的基础上提供了对代码进行 lint 和修复的功能。相较于传统的方案，使用 Tree-sitter 进行 lint 更加轻量，也更容易增加对新语言的支持。
+</p>
+</div>
+</div>
+<div id="outline-container-org480fea4" class="outline-2">
+<h2 id="org480fea4"><span class="section-number-2">2.</span> MoonBit 的引用计数机制</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org642063e" class="outline-3">
+<h3 id="org642063e"><span class="section-number-3">2.1.</span> 作用域生命周期</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+一个对象在作用域结束的时候结束它的生命周期。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let bytes = { ... } // RC = 1
+  let b = bytes[0]
+  println(b)
+  // moonbit_decref(bytes), RC = 0
+}
+</pre>
+</div>
+</div>
+<div id="outline-container-org7e76a60" class="outline-4">
+<h4 id="org7e76a60"><span class="section-number-4">2.1.1.</span> 提前释放所有权</h4>
+<div class="outline-text-4" id="text-2-1-1">
+<p>
+然而，一些局部对象 <b>实际</b> 的生命周期可能会短于作用域。因此，我们可以在一个对象在该作用域内最后一次使用时进行 <code>decref</code> 。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let bytes = { ... } // RC = 1
+  let b = bytes[0] // last usage
+  // moonbit_decref(bytes), RC = 0
+  println(b)
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org52c1f98" class="outline-3">
+<h3 id="org52c1f98"><span class="section-number-3">2.2.</span> 函数调用</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+MoonBit 的所有权方案是 callee owned 。这意味着对象所有权会被转移到调用函数中，如果对象的引用计数在函数调用中归零，则由该函数负责释放内存。参数在传入 MoonBit 函数之前会先调用一次 <code>incref</code> 。该参数在传入函数之后成为函数作用域里面的局部对象，因此会在函数作用域结束的时候进行
+<code>decref</code> 。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn f(bytes : Bytes) { // RC = 2 when passed in
+  // ...
+  // moonbit_decref(bytes) // RC = 1
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+  // moonbit_incref(bytes), RC = 2
+  f(bytes)
+  // Returned from f, RC = 1
+  // moonbit_decref(bytes), RC = 0
+}
+</pre>
+</div>
+</div>
+<div id="outline-container-orgf99490b" class="outline-4">
+<h4 id="orgf99490b"><span class="section-number-4">2.2.1.</span> One Last Move</h4>
+<div class="outline-text-4" id="text-2-2-1">
+<p>
+如果一个局部对象在当前作用域内的最后一次使用是作为参数传入一个函数，那么在调用函数前对该对象的 <code>incref</code> 可以和最后一次使用引入的 <code>decref</code> 抵消。此时，我们可以认为该对象被 <i>移动</i> 进入了函数作用域。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn f(bytes : Bytes) -&gt; Unit { // RC = 1
+  // ...
+  // moonbit_decref(bytes) // RC = 0
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+  f(bytes)
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga476940" class="outline-4">
+<h4 id="orga476940"><span class="section-number-4">2.2.2.</span> 借用</h4>
+<div class="outline-text-4" id="text-2-2-2">
+<p>
+我们发现，对于那些不是最后一次使用该对象的函数调用，该对象的引用计数在
+<code>incref</code> 前和函数返回后是一致的。即，去掉任意不是最后一次使用 的函数调用，不影响对象的生命周期。此时，我们可以认为这些函数调用 <i>借用</i> 了该对象，该借用具有和函数调用相同的生命周期。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn f(bytes : Bytes) -&gt; Unit {
+  // moonbit_decref(bytes)
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+
+  // 借用, RC = 1
+  // moonbit_incref(bytes), RC = 2
+  f(bytes)
+  // RC = 1
+
+  // 移动
+  f(bytes) // RC = 0
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgfe700e8" class="outline-3">
+<h3 id="orgfe700e8"><span class="section-number-3">2.3.</span> 函数返回</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+函数的返回值会在返回之前调用一次 <code>incref</code> 。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn f() -&gt; Bytes {
+  let local = { ... } // RC = 1
+  // moonbit_incref(local), RC = 2
+  return local
+  // moonbit_decref(local), RC = 1
+}
+
+fn main {
+  let result = f() // RC = 1
+  // moonbit_decref(result), RC = 0
+}
+</pre>
+</div>
+</div>
+<div id="outline-container-org4f4554c" class="outline-4">
+<h4 id="org4f4554c"><span class="section-number-4">2.3.1.</span> 返回值，移动</h4>
+<div class="outline-text-4" id="text-2-3-1">
+<p>
+注意，被返回的对象的生命周期会在返回以后结束。所以，该对象会在
+<code>incref</code> 后被立马 <code>decref</code> 。这一对 <code>incref</code> 和 <code>decref</code> 互相抵消。此时，我们可以认为该对象被 <i>移动</i> 出了当前作用域。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn f() -&gt; Bytes {
+  let local = { ... } // RC = 1
+  return local // RC = 1
+}
+
+fn main {
+  let result = f() // RC = 1
+  // moonbit_decref(result), RC = 0
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org84bf639" class="outline-3">
+<h3 id="org84bf639"><span class="section-number-3">2.4.</span> 聚合数据类型</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有权。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">struct A {
+  bytes : Bytes // 拥有对 bytes 的所有权
+}
+</pre>
+</div>
+
+<p>
+因此，在将一个对象存储到另一个对象中前，该对象会被 <code>incref</code> 。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let a_bytes = { ... } // RC = 1
+  let a = A::{
+    // moonbit_incref(a_bytes)
+    bytes: a_bytes
+  }
+  ...
+}
+</pre>
+</div>
+</div>
+<div id="outline-container-org5681a94" class="outline-4">
+<h4 id="org5681a94"><span class="section-number-4">2.4.1.</span> 聚合数据类型中的借用和移动</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+类似的，取决于该次构造是否是作用域中对该对象的最后一次使用，我们可以分别认为该对象被 <i>借用</i> 进入了这个对象，或者被 <i>移动</i> 进入了这个对象。需要注意的是，不同于函数调用的借用，此处的借用拥有和构造出来的对象相同的生命周期。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let bytes = { ... } // RC = 1
+  let a = A::{ bytes } // 借用，RC = 2
+  let b = A::{ bytes } // 移动，RC = 3
+  ...
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgab4ceff" class="outline-4">
+<h4 id="orgab4ceff"><span class="section-number-4">2.4.2.</span> 递归释放所有权</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<p>
+当一个对象的生命周期结束的时候，MoonBit 会对它的每个成员调用 <code>decref</code>
+，释放该对象拥有（共享）所有权。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let bytes = { ... } // RC = 1
+  let a = A::{ bytes } // 借用，RC = 2
+  let b = A::{ bytes } // 移动，RC = 2
+  println(a)
+  // moonbit_decref(a)
+  // -&gt; moonbit_decref(a.bytes), RC = 1
+  println(b)
+  // moonbit_decref(b)
+  // -&gt; moonbit_decref(b.bytes), RC = 0
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org4eda4d6" class="outline-2">
+<h2 id="org4eda4d6"><span class="section-number-2">3.</span> Tree-sitter 和一些 C 库的生命周期管理</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+在 C 中，内存对象的管理完全交由程序员来决定。然而，不少 C 库都有着借用、移动、所有权等概念。
+</p>
+</div>
+<div id="outline-container-org15ca2e9" class="outline-3">
+<h3 id="org15ca2e9"><span class="section-number-3">3.1.</span> 参数传递</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+不同于 MoonBit 采用的 callee owned 的所有权方案，
+Tree-sitter 中采取了 caller owned 的所有权方案，即函数不参与参数的所有权管理，但是调用者需要对函数的返回值进行管理。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">TSTree *ts_parser_parse_string(
+  TSParser *self,
+  const TSTree *old_tree,
+  const char *string,
+  uint32_t length
+);
+</pre>
+</div>
+
+<p>
+该函数解析传入的字符串，并将生成的语法树返回给调用者。调用者拥有该语法树的所有权，需要在该语法树生命周期结束的时候调用 <code>ts_tree_delete</code> 来进行显式的资源释放。
+</p>
+</div>
+</div>
+<div id="outline-container-orgdeaf91b" class="outline-3">
+<h3 id="orgdeaf91b"><span class="section-number-3">3.2.</span> 返回值</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+然而，并不是所有的 API 都会将所有权交给调用者。如果函数返回的是通过
+<code>const</code> 修饰的指针，则意味着调用者拥有被返回对象的临时借用，不拥有对象的所有权，因此不需要处理资源释放。
+</p>
+
+<p>
+例如，Tree-sitter 提供的从 <code>TSNode</code> 获取对应的 <code>TSLanguage</code> ，就是对
+<code>TSLanguage</code> 的临时借用。调用者不需要释放 <code>TSLanguage</code> 。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">const TSLanguage *ts_node_language(TSNode self);
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org5d5ddb7" class="outline-3">
+<h3 id="org5d5ddb7"><span class="section-number-3">3.3.</span> 聚合数据类型</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+类似的，在聚合数据类型中，带有 <code>const</code> 修饰的指针说明这是一个借用，而没有被修饰的指针代表对该对象的所有权。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">typedef struct TSNode {
+  uint32_t context[4];
+  const void *id; // 借用
+  const TSTree *tree; // 借用
+} TSNode;
+
+typedef struct TSQueryCursorState {
+  void *payload; // 拥有所有权，需要负责释放
+  uint32_t current_byte_offset;
+} TSQueryCursorState;
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb998e37" class="outline-2">
+<h2 id="orgb998e37"><span class="section-number-2">4.</span> 在 MoonBit 中绑定 Tree-sitter</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+我们可以从上面的讨论发现，MoonBit 的内存管理和 Tree-sitter 有很大的不同：
+</p>
+
+<ol class="org-ol">
+<li>MoonBit 有引用计数，Tree-sitter 没有。</li>
+<li>MoonBit 的借用是共享所有权，而 tree-sitter 的借用没有所有权。</li>
+<li>MoonBit 采用的是 callee owned 的所有权传递，而 Tree-sitter 采用的是
+caller owned 的所有权传递。</li>
+</ol>
+
+<p>
+因此，在 MoonBit 中绑定 Tree-sitter ，需要对裸的 Tree-sitter 的 C API
+进行包装，从而满足 MoonBit 引用计数系统要求。
+</p>
+
+<p>
+为了方便在 MoonBit 中实现 C 的 FFI 绑定，MoonBit 提供了两种对外部数据类型的抽象：外部类型（external type）和抽象类型（abstract type）。
+</p>
+</div>
+<div id="outline-container-org42ebc7d" class="outline-3">
+<h3 id="org42ebc7d"><span class="section-number-3">4.1.</span> 外部类型</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+外部类型可以通过如下方式定义：
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">extern type A
+</pre>
+</div>
+
+<p>
+外部类型不参与内存管理，任何 <code>A</code> 类型的对象将不参与引用计数系统。这通常用来绑定：
+</p>
+
+<ol class="org-ol">
+<li>具有静态生命周期的对象；</li>
+<li>不由 MoonBit 分配的对象；</li>
+<li>需要手动管理的对象。</li>
+</ol>
+
+<p>
+外部类型在 C 代码中表示为指针（ <code>void *</code> ），在 MoonBit 侧可以放在接受或者返回指针的地方。
+</p>
+</div>
+<div id="outline-container-org29dad3b" class="outline-4">
+<h4 id="org29dad3b"><span class="section-number-4">4.1.1.</span> <code>@tree_sitter.Language</code></h4>
+<div class="outline-text-4" id="text-4-1-1">
+<p>
+Tree-sitter 中，我们从各个语言拿到的 <code>TSLanguage</code> 对象都是静态分配的，因此，我们可以将其绑定为外部类型，从而避免传递该对象时对其进行
+<code>incref</code> / <code>decref</code> 操作。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c" id="orge4987e4">const TSLanguage *tree_sitter_json(void);
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-moonbit" id="orgc16c665">extern type Language
+extern "c" fn tree_sitter_json() -&gt; Language =
+  "tree_sitter_json"
+</pre>
+</div>
+
+<p>
+需要注意的是，虽然 Tree-sitter 提供了 <code>ts_language_delete</code> 函数，但是该函数只对通过 Wasm module 加载的语言有效，所以更适用外部类型来进行绑定。
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orga9a53a8" class="outline-3">
+<h3 id="orga9a53a8"><span class="section-number-3">4.2.</span> 抽象类型</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+抽象类型可以通过如下的方式进行定义：
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">type Node
+</pre>
+</div>
+
+<p>
+抽象类型参与内存管理，并且能够在生命周期结束的时候调用对应的析构函数，进行自动化的资源释放，基本上可以用来绑定任何需要资源管理的对象。抽象类型在 C 侧表示为指针（ <code>void *</code> ）。然而，并不是所有指针都能够被作为该类型的值使用。由于 MoonBit 在进行 <code>incref</code> / <code>decref</code> 的时候会读取对象头，所以只有通过 <code>moonbit_make_external_object</code> 分配的对象可以作为抽象类型的值使用。以下是 <code>moonbit_make_external_object</code> 函数的签名。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">void *moonbit_make_external_object(
+  void (*finalize)(void *self),
+  uint32_t payload_size
+);
+</pre>
+</div>
+</div>
+<div id="outline-container-org98405f0" class="outline-4">
+<h4 id="org98405f0"><span class="section-number-4">4.2.1.</span> <code>Node</code> 的类型定义</h4>
+<div class="outline-text-4" id="text-4-2-1">
+<p>
+在 Tree-sitter 中， <code>TSNode</code> 表示语法树上的一个节点。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">typedef struct TSNode {
+  uint32_t context[4];
+  const void *id;
+  const TSTree *tree;
+} TSNode;
+</pre>
+</div>
+
+<p>
+注意到， <code>TSNode</code> 拥有对于该节点所在语法树（ <code>TSTree</code> ）的借用。在
+Tree-sitter 中，借用不拥有所有权，所以我们需要确保对应的语法树的生命周期长于该节点。因此，我们在 <code>MoonBitTSNode</code> 中额外添加了
+<code>MoonBitTSTree</code> 的一份指针，以确保 <code>MoonBitTSNode</code> 在生命周期内总是持有 <code>MoonBitTSTree</code> 的一份引用，防止 <code>TSNode</code> 中对应的指针因为 <code>TSTree</code>
+被释放而失效。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">typedef struct MoonBitTSNode {
+  TSNode node;
+  MoonBitTSNode *tree;
+} MoonBitTSNode;
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4e12123" class="outline-4">
+<h4 id="org4e12123"><span class="section-number-4">4.2.2.</span> <code>Node</code> 类型的值的构造</h4>
+<div class="outline-text-4" id="text-4-2-2">
+<p>
+我们通过调用 <code>moonbit_make_external_object</code> 来构造合法的
+<code>MoonBitTSNode</code> 对象，并初始化该对象来持有对应语法树的所有权。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">static inline void
+moonbit_ts_node_delete(void *object);
+
+MoonBitTSNode *
+moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
+  TSNode node = ts_tree_root_node(tree-&gt;tree);
+  MoonBitTSNode *self = moonbit_make_external_object(
+    moonbit_ts_node_delete,
+    sizeof(MoonBitTSNode)
+  );
+  self-&gt;node = node;
+  self-&gt;tree = tree;
+  return self;
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga7d46d1" class="outline-4">
+<h4 id="orga7d46d1"><span class="section-number-4">4.2.3.</span> <code>Node</code> 类型的值的析构</h4>
+<div class="outline-text-4" id="text-4-2-3">
+<p>
+同时，我们需要在 <code>MoonBitTSNode</code> 被释放的时候，维护存储的
+<code>MoonBitTSTree</code> 的指针，防止内存泄漏。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-c">static inline void
+moonbit_ts_node_delete(void *object) {
+  MoonBitTSNode *self = (MoonBitTSNode *)object;
+  moonbit_decref(self-&gt;tree);
+}
+</pre>
+</div>
+
+<p>
+在完成这些工作以后，我们可以在 MoonBit 侧绑定这些函数了。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">extern "c" fn Tree::root_node(self : Tree) -&gt; Node =
+  "moonbit_ts_tree_root_node"
+extern "c" fn Node::language(self : Node) -&gt; Language =
+  "moonbit_ts_node_language"
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org3f2b453" class="outline-2">
+<h2 id="org3f2b453"><span class="section-number-2">5.</span> 使用 MoonBit 的 Tree-sitter 绑定</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。下面是一个简单的 parse MoonBit 源码的代码：
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  let moonbit = @tree_sitter_moonbit.language()
+  let parser = @tree_sitter.Parser::new()
+  parser.set_language(moonbit)
+  let source =
+    #|fn main {
+    #|  if 1 == 1 {
+    #|    println("Hello, world!")
+    #|  }
+    #|}
+  let tree = parser.parse_string(None, source)
+  let root_node = tree.root_node()
+  println(root_node.string())
+}
+</pre>
+</div>
+
+<p>
+如果一切顺利，那么你会在终端里面看到一坨挤在一起的 S 表达式：
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nil">(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (if_expression (compound_expression (binary_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon)))))) (semicolon (automatic_semicolon))))))
+</pre>
+</div>
+</div>
+<div id="outline-container-org8231665" class="outline-3">
+<h3 id="org8231665"><span class="section-number-3">5.1.</span> <code>tonyfettes/tree_sitter/sexp</code></h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+我们提供了一个简单的 S 表达式的 parser 和 printer ，用来将输出打印成更人类可读的形式。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json">{
+  "import": [
+    "tonyfettes/tree_sitter/sexp"
+  ]
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  ...
+  let root_sexp = @sexp.parse!(root_node.string())
+  let root_text = StringBuilder::new()
+  @sexp.print(root_sexp, root_text)
+  println(root_text.to_string())
+  ...
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-query" id="org34c61dd">(structure
+ (structure_item
+  (function_definition
+   (function_identifier
+    (lowercase_identifier))
+    ; ...
+    (semicolon
+     (automatic_semicolon)))))
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga332b08" class="outline-3">
+<h3 id="orga332b08"><span class="section-number-3">5.2.</span> 代码检查（Lint）</h3>
+<div class="outline-text-3" id="text-5-2">
+</div>
+<div id="outline-container-org2d5db67" class="outline-4">
+<h4 id="org2d5db67"><span class="section-number-4">5.2.1.</span> 使用 <code>Node</code> API 遍历语法树</h4>
+<div class="outline-text-4" id="text-5-2-1">
+<p>
+通过 <code>tree.root_node()</code> 拿到语法树的根节点以后，我们就可以通过 <code>Node</code>
+相关的 API ，递归地检查语法树中的节点，来寻找可能出现的错误。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  ...
+  fn find_x_eq_x(node : @tree_sitter.Node) -&gt; Unit {
+    if node.type_() == "binary_expression" {
+      let left = node.child(0).unwrap()
+      let right = node.child(2).unwrap()
+      let left_content = source[left.start_byte():left.end_byte()]
+      let right_content = source[right.start_byte():right.end_byte()]
+      if [..left_content] == [..right_content] {
+        println("Found x == x at line \{node.start_point().row() + 1}")
+      }
+    }
+    for child in node.children() {
+      find_x_eq_x(child)
+    }
+  }
+  find_x_eq_x(root_node)
+}
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-nil">Found x == x at line 2
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org16f5360" class="outline-4">
+<h4 id="org16f5360"><span class="section-number-4">5.2.2.</span> 使用 Query</h4>
+<div class="outline-text-4" id="text-5-2-2">
+<p>
+虽然这种方式非常灵活，但是写起来还是有些麻烦。Tree-sitter 为我们提供了
+query 功能，允许我们通过书写 query ，来寻找符合 query 中模式的节点。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-moonbit">fn main {
+  ...
+  let query =
+    #|(binary_expression (_) @left "==" (_) @right)
+  let query_cursor = @tree_sitter.QueryCursor::new()
+  query_cursor.exec(@tree_sitter.Query::new!(moonbit, query), root_node)
+  while query_cursor.next_match() is Some(match_) {
+    let left = match_.captures[0].node
+    let right = match_.captures[1].node
+    let left_content = source[left.start_byte():left.end_byte()]
+    let right_content = source[right.start_byte():right.end_byte()]
+    if [..left_content] == [..right_content] {
+      println("Found x == x at Line \{left.start_point().row() + 1}")
+    }
+  }
+}
+</pre>
+</div>
+
+<p>
+这种方式效率高，可以允许使用用户定义的 query ，也是目前 moon-lint 采取的方案。但是这种方案的缺点也很明显：功能受到 query 表达能力的限制。比如，寻找一个不含有 <code>continue</code> 语句的 <code>for</code> 循环就没有办法只通过一次
+query 来完成。
+</p>
+
+<p>
+在未来，我们会探索更多的书写 lint 规则的方式：
+</p>
+
+<ol class="org-ol">
+<li>设计一个类似于 Datalog 或者 SQL 的查询语言。</li>
+<li>通过 WASM runtime 来运行用户的 lint 程序，从而实现更高的灵活性。</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-orga269307" class="outline-3">
+<h3 id="orga269307"><span class="section-number-3">5.3.</span> 代码重构（Refactor）</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+除了检查一些简单的逻辑错误以外，我们还能够在 Tree-sitter 的基础上实现错误的自动修复，和进行代码的现代化重构（modernization）。
+</p>
+
+<p>
+从 Tree-sitter 的 query 出发，我们可以在 Tree-sitter 上实现类似于正则的查找替换功能。在 Tree-sitter 的 query 中，你可以通过 <code>@&lt;name&gt;</code> 的方式捕获一个节点。在 moon-lint 的替换表达式中，你可以通过 <code>$&lt;name&gt;</code> 的语法让这些捕获的节点填入到替换字符串中。例如，我们希望将形如 <code>not(a &lt;
+b)</code> 的代码替换成 <code>a &gt;= b</code> ，那么我们可以用如下的 query 和替换表达式来完成这项工作。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-query">(apply_expression
+ (simple_expression) @functionName
+ (argument
+  (expression
+   (pipeline_expression
+    (compound_expression
+     (binary_expression
+      (_) @left
+      "&lt;"
+      (_) @right)))))
+ (#eq? @functionName "not"))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-nil">$left &gt;= $right
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

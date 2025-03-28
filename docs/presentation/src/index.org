@@ -1,0 +1,607 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil expand-links:t f:t
+#+options: inline:t num:t p:nil pri:nil prop:nil stat:t tags:t
+#+options: tasks:t tex:t timestamp:t title:t toc:t todo:t |:t
+#+title: 使用 MoonBit 和 Tree-sitter 构建 Code Linter
+#+date: 2025-03-28
+#+author: 费浩祥
+#+email: feihaoxiang@idea.edu.cn
+#+language: zh
+#+select_tags: export
+#+exclude_tags: noexport
+#+creator: Emacs 30.1 (Org mode 9.7.11)
+#+cite_export:
+#+LATEX_COMPILER: xelatex
+#+LATEX_CLASS: ctexbeamer
+#+LATEX_CLASS_OPTIONS: [bigger]
+#+options: H:3
+#+OPTIONS: html-postamble:nil
+#+HTML_HEAD: <style>
+#+HTML_HEAD: @media print {
+#+HTML_HEAD:   table {
+#+HTML_HEAD:     page-break-inside: avoid;
+#+HTML_HEAD:   }
+#+HTML_HEAD:   h2, h3, h4 {
+#+HTML_HEAD:     page-break-before: always;
+#+HTML_HEAD:   }
+#+HTML_HEAD:   p {
+#+HTML_HEAD:     page-break-inside: avoid;
+#+HTML_HEAD:   }
+#+HTML_HEAD: }
+#+HTML_HEAD: </style>
+
+* Tree-sitter 的介绍
+
+#+BEGIN_QUOTE
+Tree-sitter is a parser generator tool and an incremental parsing library
+#+END_QUOTE
+
+Tree-sitter 有着丰富的 parser 生态，支持的语言包括但不限于：
+
+1. JavaScript
+2. C/C++
+3. Python
+4. Go
+5. Rust
+6. ...
+
+在编辑器中，Tree-sitter 被用来实现代码高亮、结构化编辑、符号索引等功能
+（Neovim, Zed）。它也被 GitHub 用来做代码导航。在 AI coding 兴起之后，
+GitHub Copilot，Cline 等 AI 代码助手也利用 Tree-sitter 来实现符号查找
+和代码索引。
+
+除此之外，类似于 semgrep 和 astgrep 的工具在 Tree-sitter 的基础上提供
+了对代码进行 lint 和修复的功能。相较于传统的方案，使用 Tree-sitter 进
+行 lint 更加轻量，也更容易增加对新语言的支持。
+
+* MoonBit 的引用计数机制
+
+** 作用域生命周期
+
+一个对象在作用域结束的时候结束它的生命周期。
+
+#+BEGIN_SRC moonbit
+fn main {
+  let bytes = { ... } // RC = 1
+  let b = bytes[0]
+  println(b)
+  // moonbit_decref(bytes), RC = 0
+}
+#+END_SRC
+
+*** 提前释放所有权
+
+然而，一些局部对象 *实际* 的生命周期可能会短于作用域。因此，我们可以在
+一个对象在该作用域内最后一次使用时进行 ~decref~ 。
+
+#+BEGIN_SRC moonbit
+fn main {
+  let bytes = { ... } // RC = 1
+  let b = bytes[0] // last usage
+  // moonbit_decref(bytes), RC = 0
+  println(b)
+}
+#+END_SRC
+
+** 函数调用
+
+MoonBit 的所有权方案是 callee owned 。这意味着对象所有权会被转移到调用
+函数中，如果对象的引用计数在函数调用中归零，则由该函数负责释放内存。参
+数在传入 MoonBit 函数之前会先调用一次 ~incref~ 。该参数在传入函数之后
+成为函数作用域里面的局部对象，因此会在函数作用域结束的时候进行
+~decref~ 。
+
+#+BEGIN_SRC moonbit
+fn f(bytes : Bytes) { // RC = 2 when passed in
+  // ...
+  // moonbit_decref(bytes) // RC = 1
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+  // moonbit_incref(bytes), RC = 2
+  f(bytes)
+  // Returned from f, RC = 1
+  // moonbit_decref(bytes), RC = 0
+}
+#+END_SRC
+
+*** One Last Move
+
+如果一个局部对象在当前作用域内的最后一次使用是作为参数传入一个函数，那
+么在调用函数前对该对象的 ~incref~ 可以和最后一次使用引入的 ~decref~ 抵
+消。此时，我们可以认为该对象被 /移动/ 进入了函数作用域。
+
+#+BEGIN_SRC moonbit
+fn f(bytes : Bytes) -> Unit { // RC = 1
+  // ...
+  // moonbit_decref(bytes) // RC = 0
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+  f(bytes)
+}
+#+END_SRC
+
+*** 借用
+
+我们发现，对于那些不是最后一次使用该对象的函数调用，该对象的引用计数在
+~incref~ 前和函数返回后是一致的。即，去掉任意不是最后一次使用 的函数调
+用，不影响对象的生命周期。此时，我们可以认为这些函数调用 /借用/ 了该对
+象，该借用具有和函数调用相同的生命周期。
+
+#+BEGIN_SRC moonbit
+fn f(bytes : Bytes) -> Unit {
+  // moonbit_decref(bytes)
+}
+
+fn main {
+  let bytes = { ... } // RC = 1
+
+  // 借用, RC = 1
+  // moonbit_incref(bytes), RC = 2
+  f(bytes)
+  // RC = 1
+
+  // 移动
+  f(bytes) // RC = 0
+}
+#+END_SRC
+
+** 函数返回
+
+函数的返回值会在返回之前调用一次 ~incref~ 。
+
+#+BEGIN_SRC moonbit
+fn f() -> Bytes {
+  let local = { ... } // RC = 1
+  // moonbit_incref(local), RC = 2
+  return local
+  // moonbit_decref(local), RC = 1
+}
+
+fn main {
+  let result = f() // RC = 1
+  // moonbit_decref(result), RC = 0
+}
+#+END_SRC
+
+*** 返回值，移动
+
+注意，被返回的对象的生命周期会在返回以后结束。所以，该对象会在
+~incref~ 后被立马 ~decref~ 。这一对 ~incref~ 和 ~decref~ 互相抵消。此
+时，我们可以认为该对象被 /移动/ 出了当前作用域。
+
+#+BEGIN_SRC moonbit
+fn f() -> Bytes {
+  let local = { ... } // RC = 1
+  return local // RC = 1
+}
+
+fn main {
+  let result = f() // RC = 1
+  // moonbit_decref(result), RC = 0
+}
+#+END_SRC
+
+** 聚合数据类型
+
+MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有权。
+
+#+BEGIN_SRC moonbit
+struct A {
+  bytes : Bytes // 拥有对 bytes 的所有权
+}
+#+END_SRC
+
+因此，在将一个对象存储到另一个对象中前，该对象会被 ~incref~ 。
+
+#+BEGIN_SRC moonbit
+fn main {
+  let a_bytes = { ... } // RC = 1
+  let a = A::{
+    // moonbit_incref(a_bytes)
+    bytes: a_bytes
+  }
+  ...
+}
+#+END_SRC
+
+*** 聚合数据类型中的借用和移动
+
+类似的，取决于该次构造是否是作用域中对该对象的最后一次使用，我们可以分
+别认为该对象被 /借用/ 进入了这个对象，或者被 /移动/ 进入了这个对象。需
+要注意的是，不同于函数调用的借用，此处的借用拥有和构造出来的对象相同的
+生命周期。
+
+#+BEGIN_SRC moonbit
+fn main {
+  let bytes = { ... } // RC = 1
+  let a = A::{ bytes } // 借用，RC = 2
+  let b = A::{ bytes } // 移动，RC = 3
+  ...
+}
+#+END_SRC
+
+*** 递归释放所有权
+
+当一个对象的生命周期结束的时候，MoonBit 会对它的每个成员调用 ~decref~
+，释放该对象拥有（共享）所有权。
+
+#+BEGIN_SRC moonbit
+fn main {
+  let bytes = { ... } // RC = 1
+  let a = A::{ bytes } // 借用，RC = 2
+  let b = A::{ bytes } // 移动，RC = 2
+  println(a)
+  // moonbit_decref(a)
+  // -> moonbit_decref(a.bytes), RC = 1
+  println(b)
+  // moonbit_decref(b)
+  // -> moonbit_decref(b.bytes), RC = 0
+}
+#+END_SRC
+
+* Tree-sitter 和一些 C 库的生命周期管理
+
+在 C 中，内存对象的管理完全交由程序员来决定。然而，不少 C 库都有着借用、
+移动、所有权等概念。
+
+** 参数传递
+
+不同于 MoonBit 采用的 callee owned 的所有权方案，
+Tree-sitter 中采取了 caller owned 的所有权方案，即函数不参与参数的所有
+权管理，但是调用者需要对函数的返回值进行管理。
+
+#+BEGIN_SRC c
+TSTree *ts_parser_parse_string(
+  TSParser *self,
+  const TSTree *old_tree,
+  const char *string,
+  uint32_t length
+);
+#+END_SRC
+
+该函数解析传入的字符串，并将生成的语法树返回给调用者。调用者拥有该语法
+树的所有权，需要在该语法树生命周期结束的时候调用 ~ts_tree_delete~ 来进
+行显式的资源释放。
+
+** 返回值
+
+然而，并不是所有的 API 都会将所有权交给调用者。如果函数返回的是通过
+~const~ 修饰的指针，则意味着调用者拥有被返回对象的临时借用，不拥有对象
+的所有权，因此不需要处理资源释放。
+
+例如，Tree-sitter 提供的从 ~TSNode~ 获取对应的 ~TSLanguage~ ，就是对
+~TSLanguage~ 的临时借用。调用者不需要释放 ~TSLanguage~ 。
+
+#+BEGIN_SRC c
+const TSLanguage *ts_node_language(TSNode self);
+#+END_SRC
+
+** 聚合数据类型
+
+类似的，在聚合数据类型中，带有 ~const~ 修饰的指针说明这是一个借用，而
+没有被修饰的指针代表对该对象的所有权。
+
+#+BEGIN_SRC c
+typedef struct TSNode {
+  uint32_t context[4];
+  const void *id; // 借用
+  const TSTree *tree; // 借用
+} TSNode;
+
+typedef struct TSQueryCursorState {
+  void *payload; // 拥有所有权，需要负责释放
+  uint32_t current_byte_offset;
+} TSQueryCursorState;
+#+END_SRC
+
+* 在 MoonBit 中绑定 Tree-sitter
+
+我们可以从上面的讨论发现，MoonBit 的内存管理和 Tree-sitter 有很大的不同：
+
+1. MoonBit 有引用计数，Tree-sitter 没有。
+2. MoonBit 的借用是共享所有权，而 tree-sitter 的借用没有所有权。
+3. MoonBit 采用的是 callee owned 的所有权传递，而 Tree-sitter 采用的是
+   caller owned 的所有权传递。
+
+因此，在 MoonBit 中绑定 Tree-sitter ，需要对裸的 Tree-sitter 的 C API
+进行包装，从而满足 MoonBit 引用计数系统要求。
+
+为了方便在 MoonBit 中实现 C 的 FFI 绑定，MoonBit 提供了两种对外部数据
+类型的抽象：外部类型（external type）和抽象类型（abstract type）。
+
+** 外部类型
+
+外部类型可以通过如下方式定义：
+
+#+BEGIN_SRC moonbit
+extern type A
+#+END_SRC
+
+外部类型不参与内存管理，任何 ~A~ 类型的对象将不参与引用计数系统。这通
+常用来绑定：
+
+1. 具有静态生命周期的对象；
+2. 不由 MoonBit 分配的对象；
+3. 需要手动管理的对象。
+
+外部类型在 C 代码中表示为指针（ ~void *~ ），在 MoonBit 侧可以放在接受或
+者返回指针的地方。
+
+*** ~@tree_sitter.Language~
+
+Tree-sitter 中，我们从各个语言拿到的 ~TSLanguage~ 对象都是静态分配的，
+因此，我们可以将其绑定为外部类型，从而避免传递该对象时对其进行
+~incref~ / ~decref~ 操作。
+
+#+NAME: C 函数声明
+#+BEGIN_SRC c
+const TSLanguage *tree_sitter_json(void);
+#+END_SRC
+
+#+NAME: MoonBit 侧绑定
+#+BEGIN_SRC moonbit
+extern type Language
+extern "c" fn tree_sitter_json() -> Language =
+  "tree_sitter_json"
+#+END_SRC
+
+需要注意的是，虽然 Tree-sitter 提供了 ~ts_language_delete~ 函数，但是
+该函数只对通过 Wasm module 加载的语言有效，所以更适用外部类型来进行绑
+定。
+
+** 抽象类型
+
+抽象类型可以通过如下的方式进行定义：
+
+#+BEGIN_SRC moonbit
+type Node
+#+END_SRC
+
+抽象类型参与内存管理，并且能够在生命周期结束的时候调用对应的析构函数，
+进行自动化的资源释放，基本上可以用来绑定任何需要资源管理的对象。抽象类
+型在 C 侧表示为指针（ ~void *~ ）。然而，并不是所有指针都能够被作为该
+类型的值使用。由于 MoonBit 在进行 ~incref~ / ~decref~ 的时候会读取对象
+头，所以只有通过 ~moonbit_make_external_object~ 分配的对象可以作为抽象
+类型的值使用。以下是 ~moonbit_make_external_object~ 函数的签名。
+
+#+BEGIN_SRC c
+void *moonbit_make_external_object(
+  void (*finalize)(void *self),
+  uint32_t payload_size
+);
+#+END_SRC
+
+*** ~Node~ 的类型定义
+
+在 Tree-sitter 中， ~TSNode~ 表示语法树上的一个节点。
+
+#+BEGIN_SRC c
+typedef struct TSNode {
+  uint32_t context[4];
+  const void *id;
+  const TSTree *tree;
+} TSNode;
+#+END_SRC
+
+注意到， ~TSNode~ 拥有对于该节点所在语法树（ ~TSTree~ ）的借用。在
+Tree-sitter 中，借用不拥有所有权，所以我们需要确保对应的语法树的生命周
+期长于该节点。因此，我们在 ~MoonBitTSNode~ 中额外添加了
+~MoonBitTSTree~ 的一份指针，以确保 ~MoonBitTSNode~ 在生命周期内总是持
+有 ~MoonBitTSTree~ 的一份引用，防止 ~TSNode~ 中对应的指针因为 ~TSTree~
+被释放而失效。
+
+#+BEGIN_SRC c
+typedef struct MoonBitTSNode {
+  TSNode node;
+  MoonBitTSNode *tree;
+} MoonBitTSNode;
+#+END_SRC
+
+*** ~Node~ 类型的值的构造
+
+我们通过调用 ~moonbit_make_external_object~ 来构造合法的
+~MoonBitTSNode~ 对象，并初始化该对象来持有对应语法树的所有权。
+
+#+BEGIN_SRC c
+static inline void
+moonbit_ts_node_delete(void *object);
+
+MoonBitTSNode *
+moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
+  TSNode node = ts_tree_root_node(tree->tree);
+  MoonBitTSNode *self = moonbit_make_external_object(
+    moonbit_ts_node_delete,
+    sizeof(MoonBitTSNode)
+  );
+  self->node = node;
+  self->tree = tree;
+  return self;
+}
+#+END_SRC
+
+*** ~Node~ 类型的值的析构
+
+同时，我们需要在 ~MoonBitTSNode~ 被释放的时候，维护存储的
+~MoonBitTSTree~ 的指针，防止内存泄漏。
+
+#+BEGIN_SRC c
+static inline void
+moonbit_ts_node_delete(void *object) {
+  MoonBitTSNode *self = (MoonBitTSNode *)object;
+  moonbit_decref(self->tree);
+}
+#+END_SRC
+
+在完成这些工作以后，我们可以在 MoonBit 侧绑定这些函数了。
+
+#+BEGIN_SRC moonbit
+extern "c" fn Tree::root_node(self : Tree) -> Node =
+  "moonbit_ts_tree_root_node"
+extern "c" fn Node::language(self : Node) -> Language =
+  "moonbit_ts_node_language"
+#+END_SRC
+
+* 使用 MoonBit 的 Tree-sitter 绑定
+
+MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。下面是一
+个简单的 parse MoonBit 源码的代码：
+
+#+BEGIN_SRC moonbit
+fn main {
+  let moonbit = @tree_sitter_moonbit.language()
+  let parser = @tree_sitter.Parser::new()
+  parser.set_language(moonbit)
+  let source =
+    #|fn main {
+    #|  if 1 == 1 {
+    #|    println("Hello, world!")
+    #|  }
+    #|}
+  let tree = parser.parse_string(None, source)
+  let root_node = tree.root_node()
+  println(root_node.string())
+}
+#+END_SRC
+
+如果一切顺利，那么你会在终端里面看到一坨挤在一起的 S 表达式：
+
+#+BEGIN_SRC
+(structure (structure_item (function_definition (function_identifier (lowercase_identifier)) (block_expression (statement_expression (expression (if_expression (compound_expression (binary_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon)))))) (semicolon (automatic_semicolon))))))
+#+END_SRC
+
+** ~tonyfettes/tree_sitter/sexp~
+
+我们提供了一个简单的 S 表达式的 parser 和 printer ，用来将输出打印成更
+人类可读的形式。
+
+#+BEGIN_SRC json
+{
+  "import": [
+    "tonyfettes/tree_sitter/sexp"
+  ]
+}
+#+END_SRC
+
+#+BEGIN_SRC moonbit
+fn main {
+  ...
+  let root_sexp = @sexp.parse!(root_node.string())
+  let root_text = StringBuilder::new()
+  @sexp.print(root_sexp, root_text)
+  println(root_text.to_string())
+  ...
+}
+#+END_SRC
+
+#+NAME: 终端输出
+#+BEGIN_SRC query
+(structure
+ (structure_item
+  (function_definition
+   (function_identifier
+    (lowercase_identifier))
+    ; ...
+    (semicolon
+     (automatic_semicolon)))))
+#+END_SRC
+
+** 代码检查（Lint）
+
+*** 使用 ~Node~ API 遍历语法树
+
+通过 ~tree.root_node()~ 拿到语法树的根节点以后，我们就可以通过 ~Node~
+相关的 API ，递归地检查语法树中的节点，来寻找可能出现的错误。
+
+#+BEGIN_SRC moonbit
+fn main {
+  ...
+  fn find_x_eq_x(node : @tree_sitter.Node) -> Unit {
+    if node.type_() == "binary_expression" {
+      let left = node.child(0).unwrap()
+      let right = node.child(2).unwrap()
+      let left_content = source[left.start_byte():left.end_byte()]
+      let right_content = source[right.start_byte():right.end_byte()]
+      if [..left_content] == [..right_content] {
+        println("Found x == x at line \{node.start_point().row() + 1}")
+      }
+    }
+    for child in node.children() {
+      find_x_eq_x(child)
+    }
+  }
+  find_x_eq_x(root_node)
+}
+#+END_SRC
+
+#+BEGIN_SRC
+Found x == x at line 2
+#+END_SRC
+
+*** 使用 Query
+
+虽然这种方式非常灵活，但是写起来还是有些麻烦。Tree-sitter 为我们提供了
+query 功能，允许我们通过书写 query ，来寻找符合 query 中模式的节点。
+
+#+BEGIN_SRC moonbit
+fn main {
+  ...
+  let query =
+    #|(binary_expression (_) @left "==" (_) @right)
+  let query_cursor = @tree_sitter.QueryCursor::new()
+  query_cursor.exec(@tree_sitter.Query::new!(moonbit, query), root_node)
+  while query_cursor.next_match() is Some(match_) {
+    let left = match_.captures[0].node
+    let right = match_.captures[1].node
+    let left_content = source[left.start_byte():left.end_byte()]
+    let right_content = source[right.start_byte():right.end_byte()]
+    if [..left_content] == [..right_content] {
+      println("Found x == x at Line \{left.start_point().row() + 1}")
+    }
+  }
+}
+#+END_SRC
+
+这种方式效率高，可以允许使用用户定义的 query ，也是目前 moon-lint 采取
+的方案。但是这种方案的缺点也很明显：功能受到 query 表达能力的限制。比
+如，寻找一个不含有 ~continue~ 语句的 ~for~ 循环就没有办法只通过一次
+query 来完成。
+
+在未来，我们会探索更多的书写 lint 规则的方式：
+
+1. 设计一个类似于 Datalog 或者 SQL 的查询语言。
+2. 通过 WASM runtime 来运行用户的 lint 程序，从而实现更高的灵活性。
+
+** 代码重构（Refactor）
+
+除了检查一些简单的逻辑错误以外，我们还能够在 Tree-sitter 的基础上实现
+错误的自动修复，和进行代码的现代化重构（modernization）。
+
+从 Tree-sitter 的 query 出发，我们可以在 Tree-sitter 上实现类似于正则
+的查找替换功能。在 Tree-sitter 的 query 中，你可以通过 ~@<name>~ 的方
+式捕获一个节点。在 moon-lint 的替换表达式中，你可以通过 ~$<name>~ 的语
+法让这些捕获的节点填入到替换字符串中。例如，我们希望将形如 ~not(a <
+b)~ 的代码替换成 ~a >= b~ ，那么我们可以用如下的 query 和替换表达式来
+完成这项工作。
+
+#+BEGIN_SRC query
+(apply_expression
+ (simple_expression) @functionName
+ (argument
+  (expression
+   (pipeline_expression
+    (compound_expression
+     (binary_expression
+      (_) @left
+      "<"
+      (_) @right)))))
+ (#eq? @functionName "not"))
+#+END_SRC
+
+#+BEGIN_SRC
+$left >= $right
+#+END_SRC
