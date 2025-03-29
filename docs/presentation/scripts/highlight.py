@@ -88,9 +88,10 @@ def main():
     if all_styles:
         # Create a new style tag
         style_tag = soup.new_tag("style", type="text/css")
-        style_tag.string = (
-            "\n/* Tree-sitter syntax highlighting styles */\n" + all_styles
-        )
+        style_tag.string = f"""/* Tree-sitter syntax highlighting styles */
+{all_styles}
+.comment {{ color: #3a7a3a; }}
+"""
 
         # Add it to the head
         head = soup.find("head")

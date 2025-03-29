@@ -446,6 +446,104 @@ extern "c" fn Node::language(self : Node) -> Language =
   "moonbit_ts_node_language"
 #+END_SRC
 
+* 在 moon 中构建 Tree-sitter
+
+Tree-sitter 支持 amalgamtion 构建，即作为一个单独的 C 文件进行编译。对
+于这样的一个单独的 C 文件，我们可以在 ~moon.pkg.json~ 中指定
+~"native-stub"~ 来让 ~moon~ 替我们编译它。
+
+#+BEGIN_SRC json
+{
+  "native-stub": ["lib.c"]
+}
+#+END_SRC
+
+不幸的是，这并不能工作。编译器会提示找不到 ~tree_sitter/api.h~ 这个头文件。
+
+#+BEGIN_SRC
+alloc.c:2:10: fatal error: 'tree_sitter/api.h' file not found
+    2 | #include "tree_sitter/api.h"
+      |          ^~~~~~~~~~~~~~~~~~~
+1 error generated.
+error: failed to run build for target Native
+#+END_SRC
+
+** 处理 include 目录
+
+虽然 Tree-sitter 没有第三方依赖，但是 Tree-sitter 仍然有自己的 include
+目录。
+
+#+BEGIN_SRC
+src/tree-sitter/lib
+├── include
+│   └── tree_sitter
+│       └── api.h
+└── src
+    ├── ...
+    └── wasm
+        └── ...
+#+END_SRC
+
+这些目录的路径需要在构建 Tree-sitter 的时候通过 ~-I~ 选项传入 C 编译器，
+来指示 C 编译器在对应目录寻找头文件。
+
+** ~stub-cc-flags~
+
+幸运的是， ~moon~ 在 ~moon.pkg.json~ 中提供了 ~stub-cc-flags~ 这一选项，
+用来指定在构建 stub 文件的时候传给 C 编译器的选项。
+
+#+BEGIN_SRC json
+{
+  "link": {
+    "native": {
+      "stub-cc-flags": "-Isrc/tree-sitter/lib/include"
+    }
+  }
+}
+#+END_SRC
+
+** build NAND test
+
+在设置 ~stub-cc-flags~ 后，我们发现运行 ~moon test~ 成功了，然而 ~moon
+build~ 却会失败，提示我们找不到 ~main~ 。通过给 ~moon~ 添加 ~-v~ 选项
+进行观测，我们发现 ~moon build~ 总是会构建一个可执行文件，即使当前包不
+是 ~main~ 包。当我们尝试给 ~cc-flags~ 加上 ~-c~ 选项来阻止 C 编译器进
+行链接，我们会发现 ~moon test~ 失败了。
+
+#+BEGIN_QUOTE
+在 native link flags 存在的情况下， ~moon build~ 和 ~moon test~ 不能同
+时成功。
+#+END_QUOTE
+
+** build AND test
+
+在进一步的试验过程中，我们发现，只要不出现任何的 native link flags ，
+~moon build~ 和 ~moon test~ 就能够同时成功。因此，我们需要消除
+Tree-sitter 构建时对 include 目录的依赖。
+
+我们可以通过将头文件目录拷贝到 C 文件所在目录，解决对 ~-I~ 选项的依赖：
+
+#+BEGIN_SRC
+src/tree-sitter/lib
+└── src
+    ├── tree_sitter
+    │   └── api.h
+    ├── ...
+    └── wasm
+        └── ...
+#+END_SRC
+
+同时，在没有 native link flags 的情况下， ~moon~ 会使用 TinyCC 来构建
+项目，使用 ~tcc -run~ 来运行测试。TinyCC 较快的编译速度，能够缩短整个
+项目的编译时间，提升开发效率。
+
+** Takeaways：避免使用 native link flags
+
+1. 通过预处理，确保没有 out-of-source 的头文件。
+2. 通过预处理，确保所有的宏都是通过 ~#define~ 来定义。
+3. 必要时（例如需要链接外部依赖），可以通过将 ~"cc"~ 设置为自定义脚本，
+   来劫持并修改传入的构建参数。
+
 * 使用 MoonBit 的 Tree-sitter 绑定
 
 MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。下面是一

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh" xml:lang="zh">
 <head>
-<!-- 2025-03-28 Fri 23:15 -->
+<!-- 2025-03-29 Sat 16:29 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>使用 MoonBit 和 Tree-sitter 构建 Code Linter</title>
@@ -214,73 +214,82 @@ page-break-inside: avoid;
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org634b0a7">1. Tree-sitter 的介绍</a></li>
-<li><a href="#org480fea4">2. MoonBit 的引用计数机制</a>
+<li><a href="#org570d638">1. Tree-sitter 的介绍</a></li>
+<li><a href="#org25e75c5">2. MoonBit 的引用计数机制</a>
 <ul>
-<li><a href="#org642063e">2.1. 作用域生命周期</a>
+<li><a href="#orgdc15d2c">2.1. 作用域生命周期</a>
 <ul>
-<li><a href="#org7e76a60">2.1.1. 提前释放所有权</a></li>
+<li><a href="#orgbedffe4">2.1.1. 提前释放所有权</a></li>
 </ul>
 </li>
-<li><a href="#org52c1f98">2.2. 函数调用</a>
+<li><a href="#org75a5638">2.2. 函数调用</a>
 <ul>
-<li><a href="#orgf99490b">2.2.1. One Last Move</a></li>
-<li><a href="#orga476940">2.2.2. 借用</a></li>
+<li><a href="#orga6e9201">2.2.1. One Last Move</a></li>
+<li><a href="#org3b4b3dd">2.2.2. 借用</a></li>
 </ul>
 </li>
-<li><a href="#orgfe700e8">2.3. 函数返回</a>
+<li><a href="#org9fde04b">2.3. 函数返回</a>
 <ul>
-<li><a href="#org4f4554c">2.3.1. 返回值，移动</a></li>
+<li><a href="#org9c85e06">2.3.1. 返回值，移动</a></li>
 </ul>
 </li>
-<li><a href="#org84bf639">2.4. 聚合数据类型</a>
+<li><a href="#org34deb29">2.4. 聚合数据类型</a>
 <ul>
-<li><a href="#org5681a94">2.4.1. 聚合数据类型中的借用和移动</a></li>
-<li><a href="#orgab4ceff">2.4.2. 递归释放所有权</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#org4eda4d6">3. Tree-sitter 和一些 C 库的生命周期管理</a>
-<ul>
-<li><a href="#org15ca2e9">3.1. 参数传递</a></li>
-<li><a href="#orgdeaf91b">3.2. 返回值</a></li>
-<li><a href="#org5d5ddb7">3.3. 聚合数据类型</a></li>
-</ul>
-</li>
-<li><a href="#orgb998e37">4. 在 MoonBit 中绑定 Tree-sitter</a>
-<ul>
-<li><a href="#org42ebc7d">4.1. 外部类型</a>
-<ul>
-<li><a href="#org29dad3b">4.1.1. <code>@tree_sitter.Language</code></a></li>
-</ul>
-</li>
-<li><a href="#orga9a53a8">4.2. 抽象类型</a>
-<ul>
-<li><a href="#org98405f0">4.2.1. <code>Node</code> 的类型定义</a></li>
-<li><a href="#org4e12123">4.2.2. <code>Node</code> 类型的值的构造</a></li>
-<li><a href="#orga7d46d1">4.2.3. <code>Node</code> 类型的值的析构</a></li>
+<li><a href="#org01ab314">2.4.1. 聚合数据类型中的借用和移动</a></li>
+<li><a href="#org117c12d">2.4.2. 递归释放所有权</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org3f2b453">5. 使用 MoonBit 的 Tree-sitter 绑定</a>
+<li><a href="#orgd89d664">3. Tree-sitter 和一些 C 库的生命周期管理</a>
 <ul>
-<li><a href="#org8231665">5.1. <code>tonyfettes/tree_sitter/sexp</code></a></li>
-<li><a href="#orga332b08">5.2. 代码检查（Lint）</a>
-<ul>
-<li><a href="#org2d5db67">5.2.1. 使用 <code>Node</code> API 遍历语法树</a></li>
-<li><a href="#org16f5360">5.2.2. 使用 Query</a></li>
+<li><a href="#org7902727">3.1. 参数传递</a></li>
+<li><a href="#org552a02a">3.2. 返回值</a></li>
+<li><a href="#org2f964f9">3.3. 聚合数据类型</a></li>
 </ul>
 </li>
-<li><a href="#orga269307">5.3. 代码重构（Refactor）</a></li>
+<li><a href="#org817d349">4. 在 MoonBit 中绑定 Tree-sitter</a>
+<ul>
+<li><a href="#org1d43e1b">4.1. 外部类型</a>
+<ul>
+<li><a href="#org8658a3f">4.1.1. <code>@tree_sitter.Language</code></a></li>
+</ul>
+</li>
+<li><a href="#orgbca7378">4.2. 抽象类型</a>
+<ul>
+<li><a href="#org539d3ab">4.2.1. <code>Node</code> 的类型定义</a></li>
+<li><a href="#org1b352e8">4.2.2. <code>Node</code> 类型的值的构造</a></li>
+<li><a href="#orgd895e6d">4.2.3. <code>Node</code> 类型的值的析构</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orga9268ef">5. 在 moon 中构建 Tree-sitter</a>
+<ul>
+<li><a href="#orgec84291">5.1. 处理 include 目录</a></li>
+<li><a href="#org2241733">5.2. <code>stub-cc-flags</code></a></li>
+<li><a href="#org32dc2ac">5.3. build NAND test</a></li>
+<li><a href="#org8285e96">5.4. build AND test</a></li>
+<li><a href="#org70f47d0">5.5. Takeaways：避免使用 native link flags</a></li>
+</ul>
+</li>
+<li><a href="#org7f62037">6. 使用 MoonBit 的 Tree-sitter 绑定</a>
+<ul>
+<li><a href="#org74d9494">6.1. <code>tonyfettes/tree_sitter/sexp</code></a></li>
+<li><a href="#orge641d33">6.2. 代码检查（Lint）</a>
+<ul>
+<li><a href="#org978dde9">6.2.1. 使用 <code>Node</code> API 遍历语法树</a></li>
+<li><a href="#orgb7b8915">6.2.2. 使用 Query</a></li>
+</ul>
+</li>
+<li><a href="#orgb7bf692">6.3. 代码重构（Refactor）</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org634b0a7" class="outline-2">
-<h2 id="org634b0a7"><span class="section-number-2">1.</span> Tree-sitter 的介绍</h2>
+<div id="outline-container-org570d638" class="outline-2">
+<h2 id="org570d638"><span class="section-number-2">1.</span> Tree-sitter 的介绍</h2>
 <div class="outline-text-2" id="text-1">
 <blockquote>
 <p>
@@ -311,12 +320,12 @@ GitHub Copilot，Cline 等 AI 代码助手也利用 Tree-sitter 来实现符号�
 </p>
 </div>
 </div>
-<div id="outline-container-org480fea4" class="outline-2">
-<h2 id="org480fea4"><span class="section-number-2">2.</span> MoonBit 的引用计数机制</h2>
+<div id="outline-container-org25e75c5" class="outline-2">
+<h2 id="org25e75c5"><span class="section-number-2">2.</span> MoonBit 的引用计数机制</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org642063e" class="outline-3">
-<h3 id="org642063e"><span class="section-number-3">2.1.</span> 作用域生命周期</h3>
+<div id="outline-container-orgdc15d2c" class="outline-3">
+<h3 id="orgdc15d2c"><span class="section-number-3">2.1.</span> 作用域生命周期</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 一个对象在作用域结束的时候结束它的生命周期。
@@ -332,8 +341,8 @@ GitHub Copilot，Cline 等 AI 代码助手也利用 Tree-sitter 来实现符号�
 </pre>
 </div>
 </div>
-<div id="outline-container-org7e76a60" class="outline-4">
-<h4 id="org7e76a60"><span class="section-number-4">2.1.1.</span> 提前释放所有权</h4>
+<div id="outline-container-orgbedffe4" class="outline-4">
+<h4 id="orgbedffe4"><span class="section-number-4">2.1.1.</span> 提前释放所有权</h4>
 <div class="outline-text-4" id="text-2-1-1">
 <p>
 然而，一些局部对象 <b>实际</b> 的生命周期可能会短于作用域。因此，我们可以在一个对象在该作用域内最后一次使用时进行 <code>decref</code> 。
@@ -351,8 +360,8 @@ GitHub Copilot，Cline 等 AI 代码助手也利用 Tree-sitter 来实现符号�
 </div>
 </div>
 </div>
-<div id="outline-container-org52c1f98" class="outline-3">
-<h3 id="org52c1f98"><span class="section-number-3">2.2.</span> 函数调用</h3>
+<div id="outline-container-org75a5638" class="outline-3">
+<h3 id="org75a5638"><span class="section-number-3">2.2.</span> 函数调用</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 MoonBit 的所有权方案是 callee owned 。这意味着对象所有权会被转移到调用函数中，如果对象的引用计数在函数调用中归零，则由该函数负责释放内存。参数在传入 MoonBit 函数之前会先调用一次 <code>incref</code> 。该参数在传入函数之后成为函数作用域里面的局部对象，因此会在函数作用域结束的时候进行
@@ -375,8 +384,8 @@ fn main {
 </pre>
 </div>
 </div>
-<div id="outline-container-orgf99490b" class="outline-4">
-<h4 id="orgf99490b"><span class="section-number-4">2.2.1.</span> One Last Move</h4>
+<div id="outline-container-orga6e9201" class="outline-4">
+<h4 id="orga6e9201"><span class="section-number-4">2.2.1.</span> One Last Move</h4>
 <div class="outline-text-4" id="text-2-2-1">
 <p>
 如果一个局部对象在当前作用域内的最后一次使用是作为参数传入一个函数，那么在调用函数前对该对象的 <code>incref</code> 可以和最后一次使用引入的 <code>decref</code> 抵消。此时，我们可以认为该对象被 <i>移动</i> 进入了函数作用域。
@@ -396,8 +405,8 @@ fn main {
 </div>
 </div>
 </div>
-<div id="outline-container-orga476940" class="outline-4">
-<h4 id="orga476940"><span class="section-number-4">2.2.2.</span> 借用</h4>
+<div id="outline-container-org3b4b3dd" class="outline-4">
+<h4 id="org3b4b3dd"><span class="section-number-4">2.2.2.</span> 借用</h4>
 <div class="outline-text-4" id="text-2-2-2">
 <p>
 我们发现，对于那些不是最后一次使用该对象的函数调用，该对象的引用计数在
@@ -425,8 +434,8 @@ fn main {
 </div>
 </div>
 </div>
-<div id="outline-container-orgfe700e8" class="outline-3">
-<h3 id="orgfe700e8"><span class="section-number-3">2.3.</span> 函数返回</h3>
+<div id="outline-container-org9fde04b" class="outline-3">
+<h3 id="org9fde04b"><span class="section-number-3">2.3.</span> 函数返回</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 函数的返回值会在返回之前调用一次 <code>incref</code> 。
@@ -447,8 +456,8 @@ fn main {
 </pre>
 </div>
 </div>
-<div id="outline-container-org4f4554c" class="outline-4">
-<h4 id="org4f4554c"><span class="section-number-4">2.3.1.</span> 返回值，移动</h4>
+<div id="outline-container-org9c85e06" class="outline-4">
+<h4 id="org9c85e06"><span class="section-number-4">2.3.1.</span> 返回值，移动</h4>
 <div class="outline-text-4" id="text-2-3-1">
 <p>
 注意，被返回的对象的生命周期会在返回以后结束。所以，该对象会在
@@ -470,8 +479,8 @@ fn main {
 </div>
 </div>
 </div>
-<div id="outline-container-org84bf639" class="outline-3">
-<h3 id="org84bf639"><span class="section-number-3">2.4.</span> 聚合数据类型</h3>
+<div id="outline-container-org34deb29" class="outline-3">
+<h3 id="org34deb29"><span class="section-number-3">2.4.</span> 聚合数据类型</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有权。
@@ -500,8 +509,8 @@ MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有
 </pre>
 </div>
 </div>
-<div id="outline-container-org5681a94" class="outline-4">
-<h4 id="org5681a94"><span class="section-number-4">2.4.1.</span> 聚合数据类型中的借用和移动</h4>
+<div id="outline-container-org01ab314" class="outline-4">
+<h4 id="org01ab314"><span class="section-number-4">2.4.1.</span> 聚合数据类型中的借用和移动</h4>
 <div class="outline-text-4" id="text-2-4-1">
 <p>
 类似的，取决于该次构造是否是作用域中对该对象的最后一次使用，我们可以分别认为该对象被 <i>借用</i> 进入了这个对象，或者被 <i>移动</i> 进入了这个对象。需要注意的是，不同于函数调用的借用，此处的借用拥有和构造出来的对象相同的生命周期。
@@ -518,8 +527,8 @@ MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有
 </div>
 </div>
 </div>
-<div id="outline-container-orgab4ceff" class="outline-4">
-<h4 id="orgab4ceff"><span class="section-number-4">2.4.2.</span> 递归释放所有权</h4>
+<div id="outline-container-org117c12d" class="outline-4">
+<h4 id="org117c12d"><span class="section-number-4">2.4.2.</span> 递归释放所有权</h4>
 <div class="outline-text-4" id="text-2-4-2">
 <p>
 当一个对象的生命周期结束的时候，MoonBit 会对它的每个成员调用 <code>decref</code>
@@ -544,15 +553,15 @@ MoonBit 中，聚合数据类型的对象拥有对其成员的（共享）所有
 </div>
 </div>
 </div>
-<div id="outline-container-org4eda4d6" class="outline-2">
-<h2 id="org4eda4d6"><span class="section-number-2">3.</span> Tree-sitter 和一些 C 库的生命周期管理</h2>
+<div id="outline-container-orgd89d664" class="outline-2">
+<h2 id="orgd89d664"><span class="section-number-2">3.</span> Tree-sitter 和一些 C 库的生命周期管理</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 在 C 中，内存对象的管理完全交由程序员来决定。然而，不少 C 库都有着借用、移动、所有权等概念。
 </p>
 </div>
-<div id="outline-container-org15ca2e9" class="outline-3">
-<h3 id="org15ca2e9"><span class="section-number-3">3.1.</span> 参数传递</h3>
+<div id="outline-container-org7902727" class="outline-3">
+<h3 id="org7902727"><span class="section-number-3">3.1.</span> 参数传递</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 不同于 MoonBit 采用的 callee owned 的所有权方案，
@@ -574,8 +583,8 @@ Tree-sitter 中采取了 caller owned 的所有权方案，即函数不参与参
 </p>
 </div>
 </div>
-<div id="outline-container-orgdeaf91b" class="outline-3">
-<h3 id="orgdeaf91b"><span class="section-number-3">3.2.</span> 返回值</h3>
+<div id="outline-container-org552a02a" class="outline-3">
+<h3 id="org552a02a"><span class="section-number-3">3.2.</span> 返回值</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 然而，并不是所有的 API 都会将所有权交给调用者。如果函数返回的是通过
@@ -593,8 +602,8 @@ Tree-sitter 中采取了 caller owned 的所有权方案，即函数不参与参
 </div>
 </div>
 </div>
-<div id="outline-container-org5d5ddb7" class="outline-3">
-<h3 id="org5d5ddb7"><span class="section-number-3">3.3.</span> 聚合数据类型</h3>
+<div id="outline-container-org2f964f9" class="outline-3">
+<h3 id="org2f964f9"><span class="section-number-3">3.3.</span> 聚合数据类型</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 类似的，在聚合数据类型中，带有 <code>const</code> 修饰的指针说明这是一个借用，而没有被修饰的指针代表对该对象的所有权。
@@ -616,8 +625,8 @@ typedef struct TSQueryCursorState {
 </div>
 </div>
 </div>
-<div id="outline-container-orgb998e37" class="outline-2">
-<h2 id="orgb998e37"><span class="section-number-2">4.</span> 在 MoonBit 中绑定 Tree-sitter</h2>
+<div id="outline-container-org817d349" class="outline-2">
+<h2 id="org817d349"><span class="section-number-2">4.</span> 在 MoonBit 中绑定 Tree-sitter</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 我们可以从上面的讨论发现，MoonBit 的内存管理和 Tree-sitter 有很大的不同：
@@ -639,8 +648,8 @@ caller owned 的所有权传递。</li>
 为了方便在 MoonBit 中实现 C 的 FFI 绑定，MoonBit 提供了两种对外部数据类型的抽象：外部类型（external type）和抽象类型（abstract type）。
 </p>
 </div>
-<div id="outline-container-org42ebc7d" class="outline-3">
-<h3 id="org42ebc7d"><span class="section-number-3">4.1.</span> 外部类型</h3>
+<div id="outline-container-org1d43e1b" class="outline-3">
+<h3 id="org1d43e1b"><span class="section-number-3">4.1.</span> 外部类型</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 外部类型可以通过如下方式定义：
@@ -665,8 +674,8 @@ caller owned 的所有权传递。</li>
 外部类型在 C 代码中表示为指针（ <code>void *</code> ），在 MoonBit 侧可以放在接受或者返回指针的地方。
 </p>
 </div>
-<div id="outline-container-org29dad3b" class="outline-4">
-<h4 id="org29dad3b"><span class="section-number-4">4.1.1.</span> <code>@tree_sitter.Language</code></h4>
+<div id="outline-container-org8658a3f" class="outline-4">
+<h4 id="org8658a3f"><span class="section-number-4">4.1.1.</span> <code>@tree_sitter.Language</code></h4>
 <div class="outline-text-4" id="text-4-1-1">
 <p>
 Tree-sitter 中，我们从各个语言拿到的 <code>TSLanguage</code> 对象都是静态分配的，因此，我们可以将其绑定为外部类型，从而避免传递该对象时对其进行
@@ -674,12 +683,12 @@ Tree-sitter 中，我们从各个语言拿到的 <code>TSLanguage</code> 对象�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-c" id="orge4987e4">const TSLanguage *tree_sitter_json(void);
+<pre class="src src-c" id="orgf0c74fa">const TSLanguage *tree_sitter_json(void);
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-moonbit" id="orgc16c665">extern type Language
+<pre class="src src-moonbit" id="orgda6ffb7">extern type Language
 extern "c" fn tree_sitter_json() -&gt; Language =
   "tree_sitter_json"
 </pre>
@@ -691,8 +700,8 @@ extern "c" fn tree_sitter_json() -&gt; Language =
 </div>
 </div>
 </div>
-<div id="outline-container-orga9a53a8" class="outline-3">
-<h3 id="orga9a53a8"><span class="section-number-3">4.2.</span> 抽象类型</h3>
+<div id="outline-container-orgbca7378" class="outline-3">
+<h3 id="orgbca7378"><span class="section-number-3">4.2.</span> 抽象类型</h3>
 <div class="outline-text-3" id="text-4-2">
 <p>
 抽象类型可以通过如下的方式进行定义：
@@ -715,8 +724,8 @@ extern "c" fn tree_sitter_json() -&gt; Language =
 </pre>
 </div>
 </div>
-<div id="outline-container-org98405f0" class="outline-4">
-<h4 id="org98405f0"><span class="section-number-4">4.2.1.</span> <code>Node</code> 的类型定义</h4>
+<div id="outline-container-org539d3ab" class="outline-4">
+<h4 id="org539d3ab"><span class="section-number-4">4.2.1.</span> <code>Node</code> 的类型定义</h4>
 <div class="outline-text-4" id="text-4-2-1">
 <p>
 在 Tree-sitter 中， <code>TSNode</code> 表示语法树上的一个节点。
@@ -747,8 +756,8 @@ Tree-sitter 中，借用不拥有所有权，所以我们需要确保对应的�
 </div>
 </div>
 </div>
-<div id="outline-container-org4e12123" class="outline-4">
-<h4 id="org4e12123"><span class="section-number-4">4.2.2.</span> <code>Node</code> 类型的值的构造</h4>
+<div id="outline-container-org1b352e8" class="outline-4">
+<h4 id="org1b352e8"><span class="section-number-4">4.2.2.</span> <code>Node</code> 类型的值的构造</h4>
 <div class="outline-text-4" id="text-4-2-2">
 <p>
 我们通过调用 <code>moonbit_make_external_object</code> 来构造合法的
@@ -774,8 +783,8 @@ moonbit_ts_tree_root_node(MoonBitTSTree *tree) {
 </div>
 </div>
 </div>
-<div id="outline-container-orga7d46d1" class="outline-4">
-<h4 id="orga7d46d1"><span class="section-number-4">4.2.3.</span> <code>Node</code> 类型的值的析构</h4>
+<div id="outline-container-orgd895e6d" class="outline-4">
+<h4 id="orgd895e6d"><span class="section-number-4">4.2.3.</span> <code>Node</code> 类型的值的析构</h4>
 <div class="outline-text-4" id="text-4-2-3">
 <p>
 同时，我们需要在 <code>MoonBitTSNode</code> 被释放的时候，维护存储的
@@ -806,9 +815,136 @@ extern "c" fn Node::language(self : Node) -&gt; Language =
 </div>
 </div>
 </div>
-<div id="outline-container-org3f2b453" class="outline-2">
-<h2 id="org3f2b453"><span class="section-number-2">5.</span> 使用 MoonBit 的 Tree-sitter 绑定</h2>
+<div id="outline-container-orga9268ef" class="outline-2">
+<h2 id="orga9268ef"><span class="section-number-2">5.</span> 在 moon 中构建 Tree-sitter</h2>
 <div class="outline-text-2" id="text-5">
+<p>
+Tree-sitter 支持 amalgamtion 构建，即作为一个单独的 C 文件进行编译。对于这样的一个单独的 C 文件，我们可以在 <code>moon.pkg.json</code> 中指定
+<code>"native-stub"</code> 来让 <code>moon</code> 替我们编译它。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json">{
+  "native-stub": ["lib.c"]
+}
+</pre>
+</div>
+
+<p>
+不幸的是，这并不能工作。编译器会提示找不到 <code>tree_sitter/api.h</code> 这个头文件。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nil">alloc.c:2:10: fatal error: 'tree_sitter/api.h' file not found
+    2 | #include "tree_sitter/api.h"
+      |          ^~~~~~~~~~~~~~~~~~~
+1 error generated.
+error: failed to run build for target Native
+</pre>
+</div>
+</div>
+<div id="outline-container-orgec84291" class="outline-3">
+<h3 id="orgec84291"><span class="section-number-3">5.1.</span> 处理 include 目录</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+虽然 Tree-sitter 没有第三方依赖，但是 Tree-sitter 仍然有自己的 include
+目录。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nil">src/tree-sitter/lib
+├── include
+│   └── tree_sitter
+│       └── api.h
+└── src
+    ├── ...
+    └── wasm
+        └── ...
+</pre>
+</div>
+
+<p>
+这些目录的路径需要在构建 Tree-sitter 的时候通过 <code>-I</code> 选项传入 C 编译器，来指示 C 编译器在对应目录寻找头文件。
+</p>
+</div>
+</div>
+<div id="outline-container-org2241733" class="outline-3">
+<h3 id="org2241733"><span class="section-number-3">5.2.</span> <code>stub-cc-flags</code></h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+幸运的是， <code>moon</code> 在 <code>moon.pkg.json</code> 中提供了 <code>stub-cc-flags</code> 这一选项，用来指定在构建 stub 文件的时候传给 C 编译器的选项。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json">{
+  "link": {
+    "native": {
+      "stub-cc-flags": "-Isrc/tree-sitter/lib/include"
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org32dc2ac" class="outline-3">
+<h3 id="org32dc2ac"><span class="section-number-3">5.3.</span> build NAND test</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+在设置 <code>stub-cc-flags</code> 后，我们发现运行 <code>moon test</code> 成功了，然而 <code>moon
+build</code> 却会失败，提示我们找不到 <code>main</code> 。通过给 <code>moon</code> 添加 <code>-v</code> 选项进行观测，我们发现 <code>moon build</code> 总是会构建一个可执行文件，即使当前包不是 <code>main</code> 包。当我们尝试给 <code>cc-flags</code> 加上 <code>-c</code> 选项来阻止 C 编译器进行链接，我们会发现 <code>moon test</code> 失败了。
+</p>
+
+<blockquote>
+<p>
+在 native link flags 存在的情况下， <code>moon build</code> 和 <code>moon test</code> 不能同时成功。
+</p>
+</blockquote>
+</div>
+</div>
+<div id="outline-container-org8285e96" class="outline-3">
+<h3 id="org8285e96"><span class="section-number-3">5.4.</span> build AND test</h3>
+<div class="outline-text-3" id="text-5-4">
+<p>
+在进一步的试验过程中，我们发现，只要不出现任何的 native link flags ，
+<code>moon build</code> 和 <code>moon test</code> 就能够同时成功。因此，我们需要消除
+Tree-sitter 构建时对 include 目录的依赖。
+</p>
+
+<p>
+我们可以通过将头文件目录拷贝到 C 文件所在目录，解决对 <code>-I</code> 选项的依赖：
+</p>
+
+<div class="org-src-container">
+<pre class="src src-nil">src/tree-sitter/lib
+└── src
+    ├── tree_sitter
+    │   └── api.h
+    ├── ...
+    └── wasm
+        └── ...
+</pre>
+</div>
+
+<p>
+同时，在没有 native link flags 的情况下， <code>moon</code> 会使用 TinyCC 来构建项目，使用 <code>tcc -run</code> 来运行测试。TinyCC 较快的编译速度，能够缩短整个项目的编译时间，提升开发效率。
+</p>
+</div>
+</div>
+<div id="outline-container-org70f47d0" class="outline-3">
+<h3 id="org70f47d0"><span class="section-number-3">5.5.</span> Takeaways：避免使用 native link flags</h3>
+<div class="outline-text-3" id="text-5-5">
+<ol class="org-ol">
+<li>通过预处理，确保没有 out-of-source 的头文件。</li>
+<li>通过预处理，确保所有的宏都是通过 <code>#define</code> 来定义。</li>
+<li>必要时（例如需要链接外部依赖），可以通过将 <code>"cc"</code> 设置为自定义脚本，来劫持并修改传入的构建参数。</li>
+</ol>
+</div>
+</div>
+</div>
+<div id="outline-container-org7f62037" class="outline-2">
+<h2 id="org7f62037"><span class="section-number-2">6.</span> 使用 MoonBit 的 Tree-sitter 绑定</h2>
+<div class="outline-text-2" id="text-6">
 <p>
 MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。下面是一个简单的 parse MoonBit 源码的代码：
 </p>
@@ -840,9 +976,9 @@ MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。�
 </pre>
 </div>
 </div>
-<div id="outline-container-org8231665" class="outline-3">
-<h3 id="org8231665"><span class="section-number-3">5.1.</span> <code>tonyfettes/tree_sitter/sexp</code></h3>
-<div class="outline-text-3" id="text-5-1">
+<div id="outline-container-org74d9494" class="outline-3">
+<h3 id="org74d9494"><span class="section-number-3">6.1.</span> <code>tonyfettes/tree_sitter/sexp</code></h3>
+<div class="outline-text-3" id="text-6-1">
 <p>
 我们提供了一个简单的 S 表达式的 parser 和 printer ，用来将输出打印成更人类可读的形式。
 </p>
@@ -869,7 +1005,7 @@ MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。�
 </div>
 
 <div class="org-src-container">
-<pre class="src src-query" id="org34c61dd">(structure
+<pre class="src src-query" id="org85a681d">(structure
  (structure_item
   (function_definition
    (function_identifier
@@ -881,13 +1017,13 @@ MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。�
 </div>
 </div>
 </div>
-<div id="outline-container-orga332b08" class="outline-3">
-<h3 id="orga332b08"><span class="section-number-3">5.2.</span> 代码检查（Lint）</h3>
-<div class="outline-text-3" id="text-5-2">
+<div id="outline-container-orge641d33" class="outline-3">
+<h3 id="orge641d33"><span class="section-number-3">6.2.</span> 代码检查（Lint）</h3>
+<div class="outline-text-3" id="text-6-2">
 </div>
-<div id="outline-container-org2d5db67" class="outline-4">
-<h4 id="org2d5db67"><span class="section-number-4">5.2.1.</span> 使用 <code>Node</code> API 遍历语法树</h4>
-<div class="outline-text-4" id="text-5-2-1">
+<div id="outline-container-org978dde9" class="outline-4">
+<h4 id="org978dde9"><span class="section-number-4">6.2.1.</span> 使用 <code>Node</code> API 遍历语法树</h4>
+<div class="outline-text-4" id="text-6-2-1">
 <p>
 通过 <code>tree.root_node()</code> 拿到语法树的根节点以后，我们就可以通过 <code>Node</code>
 相关的 API ，递归地检查语法树中的节点，来寻找可能出现的错误。
@@ -921,9 +1057,9 @@ MoonBit 的 Tree-sitter 绑定提供了一套和 C API 比较接近的接口。�
 </div>
 </div>
 </div>
-<div id="outline-container-org16f5360" class="outline-4">
-<h4 id="org16f5360"><span class="section-number-4">5.2.2.</span> 使用 Query</h4>
-<div class="outline-text-4" id="text-5-2-2">
+<div id="outline-container-orgb7b8915" class="outline-4">
+<h4 id="orgb7b8915"><span class="section-number-4">6.2.2.</span> 使用 Query</h4>
+<div class="outline-text-4" id="text-6-2-2">
 <p>
 虽然这种方式非常灵活，但是写起来还是有些麻烦。Tree-sitter 为我们提供了
 query 功能，允许我们通过书写 query ，来寻找符合 query 中模式的节点。
@@ -965,9 +1101,9 @@ query 来完成。
 </div>
 </div>
 </div>
-<div id="outline-container-orga269307" class="outline-3">
-<h3 id="orga269307"><span class="section-number-3">5.3.</span> 代码重构（Refactor）</h3>
-<div class="outline-text-3" id="text-5-3">
+<div id="outline-container-orgb7bf692" class="outline-3">
+<h3 id="orgb7bf692"><span class="section-number-3">6.3.</span> 代码重构（Refactor）</h3>
+<div class="outline-text-3" id="text-6-3">
 <p>
 除了检查一些简单的逻辑错误以外，我们还能够在 Tree-sitter 的基础上实现错误的自动修复，和进行代码的现代化重构（modernization）。
 </p>
