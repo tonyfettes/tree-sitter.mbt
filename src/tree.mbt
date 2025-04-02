@@ -6,6 +6,7 @@ type Tree
 ///
 /// You need to copy a syntax tree in order to use it on more than one thread at
 /// a time, as syntax trees are not thread safe.
+#borrow(self)
 pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 
 ///|

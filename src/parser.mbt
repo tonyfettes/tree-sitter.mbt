@@ -268,6 +268,7 @@ pub fn Parser::parse_string(
 /// `parse` or other parsing functions. If you don't want to resume,
 /// and instead intend to use this parser to parse some other document, you must
 /// call `reset` first.
+#borrow(self)
 pub extern "c" fn Parser::reset(self : Parser) = "moonbit_ts_parser_reset"
 
 ///|

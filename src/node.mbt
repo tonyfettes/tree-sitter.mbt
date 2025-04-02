@@ -2,6 +2,7 @@
 type Node
 
 ///|
+#borrow(self)
 extern "c" fn Node::_type(self : Node) -> Bytes = "moonbit_ts_node_type"
 
 ///|
@@ -12,13 +13,16 @@ pub fn Node::type_(self : Node) -> String {
 
 ///|
 /// Get the node's type as a numerical id.
+#borrow(self)
 pub extern "c" fn Node::symbol(self : Node) -> Symbol = "moonbit_ts_node_symbol"
 
 ///|
 /// Get the node's language.
+#borrow(self)
 pub extern "c" fn Node::language(self : Node) -> Language = "moonbit_ts_node_language"
 
 ///|
+#borrow(self)
 extern "c" fn Node::_grammar_type(self : Node) -> Bytes = "moonbit_ts_node_grammar_type"
 
 ///|
@@ -31,21 +35,26 @@ pub fn Node::grammar_type(self : Node) -> String {
 /// Get the node's type as a numerical id as it appears in the grammar ignoring
 /// aliases. This should be used in `Language::next_state` instead of
 /// `Node::symbol`.
+#borrow(self)
 pub extern "c" fn Node::grammar_symbol(self : Node) -> Symbol = "moonbit_ts_node_grammar_symbol"
 
 ///|
 /// Get the node's start byte.
+#borrow(self)
 pub extern "c" fn Node::start_byte(self : Node) -> Int = "moonbit_ts_node_start_byte"
 
 ///|
 /// Get the node's start position in terms of rows and columns.
+#borrow(self)
 pub extern "c" fn Node::start_point(self : Node) -> Point = "moonbit_ts_node_start_point"
 
 ///|
 /// Get the node's end byte.
+#borrow(self)
 pub extern "c" fn Node::end_byte(self : Node) -> Int = "moonbit_ts_node_end_byte"
 
 ///|
+#borrow(self)
 extern "c" fn Node::_string(self : Node) -> Bytes = "moonbit_ts_node_string"
 
 ///|
@@ -61,52 +70,63 @@ pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Un
 
 ///|
 /// Get the node's end position in terms of rows and columns.
+#borrow(self)
 pub extern "c" fn Node::end_point(self : Node) -> Point = "moonbit_ts_node_end_point"
 
 ///|
 /// Check if the node is null. Functions like `Node::child` and
 /// `Node::next_sibling` will return a null node to indicate that no such node
 /// was found.
+#borrow(self)
 extern "c" fn Node::is_null(self : Node) -> Bool = "moonbit_ts_node_is_null"
 
 ///|
 /// Check if the node is *named*. Named nodes correspond to named rules in the
 /// grammar, whereas *anonymous* nodes correspond to string literals in the
 /// grammar.
+#borrow(self)
 pub extern "c" fn Node::is_named(self : Node) -> Bool = "moonbit_ts_node_is_named"
 
 ///|
 /// Check if the node is *missing*. Missing nodes are inserted by the parser in
 /// order to recover from certain kinds of syntax errors.
+#borrow(self)
 pub extern "c" fn Node::is_missing(self : Node) -> Bool = "moonbit_ts_node_is_missing"
 
 ///|
 /// Check if the node is *extra*. Extra nodes represent things like comments,
 /// which are not required the grammar, but can appear anywhere.
+#borrow(self)
 pub extern "c" fn Node::is_extra(self : Node) -> Bool = "moonbit_ts_node_is_extra"
 
 ///|
 /// Check if a syntax node has been edited.
+#borrow(self)
 pub extern "c" fn Node::has_changes(self : Node) -> Bool = "moonbit_ts_node_has_changes"
 
 ///|
 /// Check if the node is a syntax error or contains any syntax errors.
+#borrow(self)
 pub extern "c" fn Node::has_error(self : Node) -> Bool = "moonbit_ts_node_has_error"
 
 ///|
 /// Check if the node is a syntax error.
+#borrow(self)
 pub extern "c" fn Node::is_error(self : Node) -> Bool = "moonbit_ts_node_is_error"
 
 ///|
 /// Get this node's parse state.
+#borrow(self)
 pub extern "c" fn Node::parse_state(self : Node) -> StateId = "moonbit_ts_node_parse_state"
 
 ///|
 /// Get the parse state after this node.
+#borrow(self)
 pub extern "c" fn Node::next_parse_state(self : Node) -> StateId = "moonbit_ts_node_next_parse_state"
 
 ///|
 /// Get the node's immediate parent.
+#borrow(self)
 extern "c" fn Node::_parent(self : Node) -> Node = "moonbit_ts_node_parent"
 
 ///|
@@ -125,6 +145,7 @@ pub fn Node::parent(self : Node) -> Node? {
 /// Get the node that contains `descendant`.
 ///
 /// Note that this can return `descendant` itself.
+#borrow(self, descendant)
 extern "c" fn Node::_child_with_descendant(
   self : Node,
   descendant : Node
@@ -144,6 +165,7 @@ pub fn Node::child_with_descendant(self : Node, descendant : Node) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_child(self : Node, index : UInt) -> Node = "moonbit_ts_node_child"
 
 ///|
@@ -186,6 +208,7 @@ pub fn Node::children(self : Node) -> Iter[Node] {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_field_name_for_child(
   self : Node,
   child_index : UInt
@@ -209,6 +232,7 @@ pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_field_name_for_named_child(
   self : Node,
   child_index : UInt
@@ -235,6 +259,7 @@ pub fn Node::field_name_for_named_child(
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_child_count(self : Node) -> UInt = "moonbit_ts_node_child_count"
 
 ///|
@@ -244,6 +269,7 @@ pub fn Node::child_count(self : Node) -> Int {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_named_child(self : Node, child_index : UInt) -> Node = "moonbit_ts_node_named_child"
 
 ///|
@@ -261,6 +287,7 @@ pub fn Node::named_child(self : Node, child_index : Int) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_named_child_count(self : Node) -> UInt = "moonbit_ts_node_named_child_count"
 
 ///|
@@ -287,6 +314,7 @@ pub fn Node::named_children(self : Node) -> Iter[Node] {
 
 ///|
 /// Get the node's child with the given field name.
+#borrow(self, name)
 extern "c" fn Node::_child_by_field_name(self : Node, name : Bytes) -> Node = "moonbit_ts_node_child_by_field_name"
 
 ///|
@@ -302,6 +330,7 @@ pub fn Node::child_by_field_name(self : Node, name : String) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_child_by_field_id(self : Node, id : FieldId) -> Node = "moonbit_ts_node_child_by_field_id"
 
 ///|
@@ -319,6 +348,7 @@ pub fn Node::child_by_field_id(self : Node, id : FieldId) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_next_sibling(self : Node) -> Node = "moonbit_ts_node_next_sibling"
 
 ///|
@@ -333,6 +363,7 @@ pub fn Node::next_sibling(self : Node) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_prev_sibling(self : Node) -> Node = "moonbit_ts_node_prev_sibling"
 
 ///|
@@ -347,6 +378,7 @@ pub fn Node::prev_sibling(self : Node) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_next_named_sibling(self : Node) -> Node = "moonbit_ts_node_next_named_sibling"
 
 ///|
@@ -361,6 +393,7 @@ pub fn Node::next_named_sibling(self : Node) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_prev_named_sibling(self : Node) -> Node = "moonbit_ts_node_prev_named_sibling"
 
 ///|
@@ -375,6 +408,7 @@ pub fn Node::prev_named_sibling(self : Node) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_first_child_for_byte(self : Node, byte : UInt) -> Node = "moonbit_ts_node_first_child_for_byte"
 
 ///|
@@ -390,6 +424,7 @@ pub fn Node::first_child_for_byte(self : Node, byte : Int) -> Node? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Node::_first_named_child_for_byte(
   self : Node,
   byte : UInt
@@ -409,6 +444,7 @@ pub fn Node::first_named_child_for_byte(self : Node, byte : Int) -> Node? {
 
 ///|
 /// Get the node's number of descendants, including one for the node itself.
+#borrow(self)
 pub extern "c" fn Node::descendant_count(self : Node) -> Int = "moonbit_ts_node_descendant_count"
 
 ///|
@@ -436,6 +472,7 @@ pub fn Node::descendant_for_byte_range(
 }
 
 ///|
+#borrow(self, start_point, end_point)
 extern "c" fn Node::_descendant_for_point_range(
   self : Node,
   start_point : Point,
@@ -466,10 +503,12 @@ pub fn Node::descendant_for_point_range(
 /// afterward will already reflect the edit. You only need to use `Node::edit`
 /// when you have a `Node` instance that you want to keep and continue to use
 /// after an edit.
+#borrow(self, edit)
 pub extern "c" fn Node::edit(self : Node, edit : InputEdit) -> Unit = "moonbit_ts_node_edit"
 
 ///|
 /// Check if two nodes are identical.
+#borrow(self, other)
 pub extern "c" fn Node::eq(self : Node, other : Node) -> Bool = "moonbit_ts_node_eq"
 
 ///|
