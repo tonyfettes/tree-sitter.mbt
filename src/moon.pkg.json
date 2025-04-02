@@ -7,7 +7,7 @@
     }
   ],
   "import": [
-    "moonbitlang/x/encoding",
+    "tonyfettes/encoding",
     "tonyfettes/c",
     "tonyfettes/tree_sitter/grammar",
     "tonyfettes/tree_sitter/node_types",
