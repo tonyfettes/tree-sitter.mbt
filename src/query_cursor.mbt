@@ -26,6 +26,7 @@ type QueryCursor
 pub extern "c" fn QueryCursor::new() -> QueryCursor = "moonbit_ts_query_cursor_new"
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_exec(
   self : QueryCursor,
   query : Query,
@@ -33,6 +34,7 @@ extern "c" fn QueryCursor::_exec(
 ) = "moonbit_ts_query_cursor_exec"
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_exec_with_options(
   self : QueryCursor,
   query : Query,
@@ -79,11 +81,13 @@ pub fn QueryCursor::exec(
 /// matches. This maximum capacity is optional — by default, query cursors allow
 /// any number of pending matches, dynamically allocating new space for them as
 /// needed as the query is executed.
+#borrow(self)
 pub extern "c" fn QueryCursor::did_exceed_match_limit(
   self : QueryCursor
 ) -> Bool = "moonbit_ts_query_cursor_did_exceed_match_limit"
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_match_limit(self : QueryCursor) -> UInt = "moonbit_ts_query_cursor_match_limit"
 
 ///|
@@ -95,6 +99,7 @@ pub fn QueryCursor::match_limit(self : QueryCursor) -> Int {
 }
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_set_match_limit(self : QueryCursor, limit : UInt) = "moonbit_ts_query_cursor_set_match_limit"
 
 ///|
@@ -106,6 +111,7 @@ pub fn QueryCursor::set_match_limit(self : QueryCursor, limit : Int) -> Unit {
 }
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_set_byte_range(
   self : QueryCursor,
   start_byte : UInt,
@@ -136,6 +142,7 @@ pub fn QueryCursor::set_byte_range(
 /// This means that a match may be returned even if some of its captures fall
 /// outside the specified range, as long as at least part of the match
 /// overlaps with the range.
+#borrow(self, start_point, end_point)
 pub extern "c" fn QueryCursor::set_point_range(
   self : QueryCursor,
   start_point : Point,
@@ -159,12 +166,15 @@ pub struct QueryMatch {
 priv type QueryMatch_
 
 ///|
+#borrow(self)
 extern "c" fn QueryMatch_::id(self : QueryMatch_) -> UInt = "moonbit_ts_query_match_id"
 
 ///|
+#borrow(self)
 extern "c" fn QueryMatch_::pattern_index(self : QueryMatch_) -> UInt = "moonbit_ts_query_match_pattern_index"
 
 ///|
+#borrow(self)
 extern "c" fn QueryMatch_::capture_count(self : QueryMatch_) -> UInt16 = "moonbit_ts_query_match_capture_count"
 
 ///|
@@ -174,6 +184,7 @@ extern "c" fn QueryMatch_::captures_get_node(
 ) -> Node = "moonbit_ts_query_match_captures_get_node"
 
 ///|
+#borrow(self)
 extern "c" fn QueryMatch_::captures_get_index(
   self : QueryMatch_,
   index : UInt
@@ -206,6 +217,7 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_remove_match(self : QueryCursor, match_id : UInt) = "moonbit_ts_query_cursor_remove_match"
 
 ///|
@@ -236,6 +248,7 @@ pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
 }
 
 ///|
+#borrow(self)
 extern "c" fn QueryCursor::_set_max_start_depth(
   self : QueryCursor,
   max_start_depth : UInt

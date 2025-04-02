@@ -14,20 +14,31 @@ pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
 
 ///|
-extern "c" fn Tree::_root_node_with_offset(self : Tree, offset : UInt) -> Node = "moonbit_ts_tree_root_node_with_offset"
+#borrow(self, offset_extent)
+extern "c" fn Tree::_root_node_with_offset(
+  self : Tree,
+  offset_bytes : UInt,
+  offset_extent : Point
+) -> Node = "moonbit_ts_tree_root_node_with_offset"
 
 ///|
 /// Get the root node of the syntax tree, but with its position
 /// shifted forward by the given offset.
-pub fn Tree::root_node_with_offset(self : Tree, offset : Int) -> Node {
-  self._root_node_with_offset(int_to_uint(offset))
+pub fn Tree::root_node_with_offset(
+  self : Tree,
+  offset_bytes : Int,
+  offset_extent : Point
+) -> Node {
+  self._root_node_with_offset(int_to_uint(offset_bytes), offset_extent)
 }
 
 ///|
 /// Get the language that was used to parse the syntax tree.
+#borrow(self)
 pub extern "c" fn Tree::language(self : Tree) -> Language = "moonbit_ts_tree_language"
 
 ///|
+#borrow(self)
 extern "c" fn Tree::_included_ranges(self : Tree) -> FixedArray[UInt] = "moonbit_ts_tree_included_ranges"
 
 ///|
@@ -50,9 +61,11 @@ fn Tree::included_ranges(self : Tree) -> Array[Range] {
 ///
 /// You must describe the edit both in terms of byte offsets and in terms of
 /// (row, column) coordinates.
+#borrow(self, edit)
 pub extern "c" fn Tree::edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edit"
 
 ///|
+#borrow(self, other)
 extern "c" fn Tree::_get_changed_ranges(
   self : Tree,
   other : Tree
