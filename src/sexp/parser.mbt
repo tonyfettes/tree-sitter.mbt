@@ -31,7 +31,7 @@ fn parse_list(
         string.write_char(char)
         continue source
       }
-      [] as source => raise SexpError::UnterminatedString(source)
+      [.. source] => raise SexpError::UnterminatedString(source)
     }
   }
 
@@ -44,7 +44,7 @@ fn parse_list(
         symbol.write_char(char)
         continue source
       }
-      source => return source
+      [.. source] => return source
     }
   }
 
@@ -61,7 +61,7 @@ fn parse_list(
       sexp.push(List(list))
       match parse_list!(source, list) {
         [')', .. source] => continue source
-        source => raise SexpError::UnterminatedList(source)
+        [.. source] => raise SexpError::UnterminatedList(source)
       }
     }
     ['[', .. source] => {
@@ -77,7 +77,7 @@ fn parse_list(
       sexp.push(List(list))
       match parse_list!(source, list) {
         ['}', .. source] => continue source
-        source => raise SexpError::UnterminatedList(source)
+        [.. source] => raise SexpError::UnterminatedList(source)
       }
     }
     ['a'..<'z' | 'A'..<'Z' | '0'..<'9' | '_' as char, .. source] => {
@@ -98,13 +98,13 @@ fn parse_list(
             [] => raise SexpError::MissingValue(source)
           }
         }
-        source => {
+        [.. source] => {
           sexp.push(Atom(Symbol(symbol.to_string())))
           continue source
         }
       }
     }
-    source => return source
+    [.. source] => return source
   }
 }
 
