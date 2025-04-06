@@ -3,12 +3,12 @@ type Node
 
 ///|
 #borrow(self)
-extern "c" fn Node::_type(self : Node) -> Bytes = "moonbit_ts_node_type"
+extern "c" fn Node::_type(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_type"
 
 ///|
 /// Get the node's type as a string.
 pub fn Node::type_(self : Node) -> String {
-  @encoding.decoder(UTF8).decode_lossy(self._type())
+  return decode_c_string(self._type()).unwrap()
 }
 
 ///|
@@ -23,12 +23,12 @@ pub extern "c" fn Node::language(self : Node) -> Language = "moonbit_ts_node_lan
 
 ///|
 #borrow(self)
-extern "c" fn Node::_grammar_type(self : Node) -> Bytes = "moonbit_ts_node_grammar_type"
+extern "c" fn Node::_grammar_type(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_grammar_type"
 
 ///|
 /// Get the node's type as it appears in the grammar ignoring aliases as a string.
 pub fn Node::grammar_type(self : Node) -> String {
-  @encoding.decoder(UTF8).decode_lossy(self._grammar_type())
+  return decode_c_string(self._grammar_type()).unwrap()
 }
 
 ///|
@@ -55,12 +55,12 @@ pub extern "c" fn Node::end_byte(self : Node) -> Int = "moonbit_ts_node_end_byte
 
 ///|
 #borrow(self)
-extern "c" fn Node::_string(self : Node) -> Bytes = "moonbit_ts_node_string"
+extern "c" fn Node::_string(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_string"
 
 ///|
 /// Get an S-expression representing the node as a string.
 pub fn Node::string(self : Node) -> String {
-  @encoding.decoder(UTF8).decode_lossy(self._string())
+  return decode_c_string(self._string()).unwrap()
 }
 
 ///|

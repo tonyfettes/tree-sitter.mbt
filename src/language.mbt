@@ -55,10 +55,37 @@ extern "c" fn Language::field_count(self : Language) -> Int = "moonbit_ts_langua
 
 ///|
 /// Get the field name string for the given numerical id.
-extern "c" fn Language::field_name_for_id(
+extern "c" fn Language::_field_name_for_id(
   self : Language,
   id : FieldId
-) -> Bytes = "moonbit_ts_language_field_name_for_id"
+) -> @c.Pointer[Byte] = "moonbit_ts_language_field_name_for_id"
+
+///|
+fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> String? {
+  if c_string.is_null() {
+    return None
+  }
+  let buffer = @buffer.new()
+  match length {
+    None =>
+      for i = 0; c_string[i] != 0; i = i + 1 {
+        buffer.write_byte(c_string[i])
+      }
+    Some(length) =>
+      for i = 0; i < length; i = i + 1 {
+        buffer.write_byte(c_string[i])
+      }
+  }
+  let name = buffer.contents()
+  let name = @encoding.decoder(UTF8).decode_lossy(name)
+  Some(name)
+}
+
+///|
+pub fn Language::field_name_for_id(self : Language, id : FieldId) -> String? {
+  let name = Language::_field_name_for_id(self, id)
+  return decode_c_string(name)
+}
 
 ///|
 /// Get the numerical id for the given field name string.
@@ -87,13 +114,16 @@ pub extern "c" fn Language::subtypes(self : Language) -> Array[Symbol] = "moonbi
 
 ///|
 /// Get a node type string for the given numerical id.
-extern "c" fn Language::symbol_name_(self : Language, symbol : Symbol) -> Bytes = "moonbit_ts_language_symbol_name"
+extern "c" fn Language::symbol_name_(
+  self : Language,
+  symbol : Symbol
+) -> @c.Pointer[Byte] = "moonbit_ts_language_symbol_name"
 
 ///|
 /// Get a node type string for the given numerical id.
 pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String {
   let name_bytes = Language::symbol_name_(self, symbol)
-  return @encoding.decoder(UTF8).decode_lossy(name_bytes)
+  return decode_c_string(name_bytes).unwrap()
 }
 
 ///|
@@ -212,20 +242,13 @@ pub extern "c" fn Language::next_state(
 ) -> StateId = "moonbit_ts_language_next_state"
 
 ///|
-extern "c" fn Language::name_(self : @tree_sitter_language.Language) -> @c.Pointer[Byte] = "moonbit_ts_language_name"
+extern "c" fn Language::_name(
+  self : @tree_sitter_language.Language
+) -> @c.Pointer[Byte] = "moonbit_ts_language_name"
 
 ///|
 /// Get the name of this language. This returns `None` in older parsers.
 pub fn Language::name(self : Language) -> String? {
-  let name = Language::name_(self._)
-  if name.is_null() {
-    return None
-  }
-  let buffer = @buffer.new()
-  for i = 0; name[i] != 0; i = i + 1 {
-    buffer.write_byte(name[i])
-  }
-  let name = buffer.contents()
-  let name = @encoding.decoder(UTF8).decode_lossy(name)
-  Some(name)
+  let name = Language::_name(self._)
+  return decode_c_string(name)
 }

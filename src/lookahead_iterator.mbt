@@ -74,13 +74,13 @@ pub extern "c" fn LookaheadIterator::current_symbol(
 ///|
 extern "c" fn LookaheadIterator::_current_symbol_name(
   self : LookaheadIterator
-) -> Bytes = "moonbit_ts_lookahead_iterator_current_symbol_name"
+) -> @c.Pointer[Byte] = "moonbit_ts_lookahead_iterator_current_symbol_name"
 
 ///|
 /// Get the current symbol type of the lookahead iterator as a string.
 pub fn LookaheadIterator::current_symbol_name(
   self : LookaheadIterator
-) -> String {
+) -> String? {
   let bytes = LookaheadIterator::_current_symbol_name(self)
-  @encoding.decoder(UTF8).decode_lossy(bytes)
+  decode_c_string(bytes)
 }

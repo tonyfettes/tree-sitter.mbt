@@ -78,13 +78,9 @@ moonbit_make_bytes_sz(size_t size, int value) {
   return moonbit_make_bytes(moonbit_size_to_int(size), value);
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id) {
-  const char *name = ts_language_field_name_for_id(self, id);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_language_field_name_for_id(self, id);
 }
 
 TSFieldId
@@ -1077,13 +1073,13 @@ moonbit_ts_query_is_pattern_guaranteed_at_step(
   return result;
 }
 
-moonbit_bytes_t
-moonbit_ts_query_capture_name_for_id(MoonBitTSQuery *self, uint32_t index) {
-  uint32_t length;
-  const char *name = ts_query_capture_name_for_id(self->query, index, &length);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+const char *
+moonbit_ts_query_capture_name_for_id(
+  MoonBitTSQuery *self,
+  uint32_t index,
+  uint32_t *length
+) {
+  return ts_query_capture_name_for_id(self->query, index, length);
 }
 
 static_assert_type_equal(TSQuantifier, uint32_t);
@@ -1100,13 +1096,13 @@ moonbit_ts_query_capture_quantifier_for_id(
   return quantifier;
 }
 
-moonbit_bytes_t
-moonbit_ts_query_string_value_for_id(MoonBitTSQuery *self, uint32_t index) {
-  uint32_t length;
-  const char *value = ts_query_string_value_for_id(self->query, index, &length);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, value, length);
-  return bytes;
+const char *
+moonbit_ts_query_string_value_for_id(
+  MoonBitTSQuery *self,
+  uint32_t index,
+  uint32_t *length
+) {
+  return ts_query_string_value_for_id(self->query, index, length);
 }
 
 void
@@ -1439,13 +1435,9 @@ moonbit_ts_lookahead_iterator_current_symbol(const TSLookaheadIterator *self) {
   return ts_lookahead_iterator_current_symbol(self);
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_lookahead_iterator_current_symbol_name(
   const TSLookaheadIterator *self
 ) {
-  const char *name = ts_lookahead_iterator_current_symbol_name(self);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_lookahead_iterator_current_symbol_name(self);
 }

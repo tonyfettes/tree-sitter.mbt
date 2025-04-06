@@ -252,19 +252,21 @@ pub fn Query::is_pattern_guaranteed_at_step(
 }
 
 ///|
-#borrow(self)
+#borrow(self, length)
 extern "c" fn Query::_capture_name_for_id(
   self : Query,
-  capture_id : UInt
-) -> Bytes = "moonbit_ts_query_capture_name_for_id"
+  capture_id : UInt,
+  length : FixedArray[UInt]
+) -> @c.Pointer[Byte] = "moonbit_ts_query_capture_name_for_id"
 
 ///|
 /// Get the name of one of the query's captures. Each capture is associated with a
 /// numeric id based on the order that it appeared in the query's source.
 pub fn Query::capture_name_for_id(self : Query, capture_id : Int) -> String {
   let capture_id = int_to_uint(capture_id)
-  let name = Query::_capture_name_for_id(self, capture_id)
-  @encoding.decoder(UTF8).decode_lossy(name)
+  let length : FixedArray[UInt] = [0U]
+  let name = Query::_capture_name_for_id(self, capture_id, length)
+  return decode_c_string(name, length=length[0].reinterpret_as_int()).unwrap()
 }
 
 ///|
@@ -312,19 +314,21 @@ pub fn Query::capture_quantifier_for_id(
 }
 
 ///|
-#borrow(self)
+#borrow(self, length)
 extern "c" fn Query::_string_value_for_id(
   self : Query,
-  string_id : UInt
-) -> Bytes = "moonbit_ts_query_string_value_for_id"
+  string_id : UInt,
+  length : FixedArray[UInt]
+) -> @c.Pointer[Byte] = "moonbit_ts_query_string_value_for_id"
 
 ///|
 /// Get the value of one of the query's string literals. Each string is associated with a
 /// numeric id based on the order that it appeared in the query's source.
 pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
   let string_id = int_to_uint(string_id)
-  let value = Query::_string_value_for_id(self, string_id)
-  @encoding.decoder(UTF8).decode_lossy(value)
+  let length : FixedArray[UInt] = [0U]
+  let value = Query::_string_value_for_id(self, string_id, length)
+  return decode_c_string(value, length=length[0].reinterpret_as_int()).unwrap()
 }
 
 ///|
