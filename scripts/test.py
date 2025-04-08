@@ -79,7 +79,7 @@ def main():
         env["MOON_CC"] = flags["cc"] + " /DEBUG /fsanitize=address"
     else:
         env["MOON_CC"] = flags["cc"] + " -g -fsanitize=address"
-        env["MOON_AR"] = "ar"
+        env["MOON_AR"] = "/usr/bin/ar"
     if platform.system() != "Windows":
         env["ASAN_OPTIONS"] = "detect_leaks=1"
         env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
