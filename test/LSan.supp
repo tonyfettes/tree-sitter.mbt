@@ -1,1 +1,1 @@
-leak:libclang_rt.asan_osx_dynamic.dylib
+leak:libobjc.A.dylib
