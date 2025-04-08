@@ -1,32 +1,100 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-import shutil
-import json
+from os import wait
+from pathlib import PurePath, Path, PurePosixPath
+import re
+from typing import Optional, Union
+
+class Project:
+    include: list[Path]
+    source: Path
+    target: Path
+    prefix: str
+    copied: set[Path]
+
+    def __init__(
+        self, source: Path, target: Path, include: list[Path] = [], prefix: str = ""
+    ):
+        self.source = source
+        self.target = target
+        self.include = include
+        self.prefix = prefix
+        self.copied = set()
+
+    def mangle(self, source: PurePath) -> str:
+        return "#".join([self.prefix, *source.parts])
+
+    def relocate(self, source: Path, content: str) -> str:
+        include_directories = [(self.source / source).parent, *self.include]
+        headers = []
+
+        def relocate(header: PurePosixPath) -> PurePosixPath:
+            for directory in include_directories:
+                resolved = ((directory / header).resolve()).relative_to(
+                    self.source.resolve()
+                )
+                if not (self.source / resolved).exists():
+                    continue
+                relocated = self.mangle(resolved)
+                if not (self.target / relocated).exists():
+                    self.copy(resolved, relocate=False)
+                    headers.append(resolved)
+                return PurePosixPath(relocated)
+            return header
+
+        def replace(match: re.Match) -> str:
+            indent = match.group("indent")
+            header: str = match.group("header")
+            relocated = relocate(PurePosixPath(header))
+            return f'#{indent}include "{relocated.as_posix()}"'
+
+        content = re.sub(r'#(?P<indent>\s*)include "(?P<header>.*?)"', replace, content)
+
+        for source in headers:
+            self.copy(source)
+
+        return content
+
+    def condition(self, condition: str, content: str) -> str:
+        return f"""#if {condition}
+{content}
+#endif
+"""
+
+    def copy(
+        self,
+        source: Path,
+        prefix: Optional[Path] = None,
+        suffix: Optional[Path] = None,
+        relocate: bool = True,
+        condition: Optional[str] = None,
+    ):
+        target = self.mangle(source)
+        content = (self.source / source).read_text(encoding="utf-8")
+        if prefix is not None:
+            content = prefix.read_text() + content
+        if suffix is not None:
+            content = content + suffix.read_text()
+        if relocate:
+            content = self.relocate(source, content)
+        if condition is not None:
+            content = self.condition(condition, content)
+        print(f"COPY {self.source / source} -> {self.target / target}")
+        (self.target / target).write_text(content, encoding="utf-8", newline="\n")
+        self.copied.add(Path(target))
+
+
+def configure(project: Project):
+    project.copy(Path("lib") / "src" / "lib.c", suffix=Path("src") / "tree-sitter.c")
 
 
 def main():
-    src_path = Path("src")
-    dst_path = src_path / "tree-sitter-lib"
-    if dst_path.exists():
-        shutil.rmtree(dst_path)
-    shutil.copytree(src_path / "tree-sitter" / "lib" / "src", dst_path)
-    shutil.copytree(
-        src_path / "tree-sitter" / "lib" / "include" / "tree_sitter",
-        dst_path / "tree_sitter",
-    )
-    lib_c_path = dst_path / "lib.c"
-    lib_c_text = lib_c_path.read_text()
-    stub_path = src_path / "tree-sitter.c"
-    stub_text = stub_path.read_text()
-    (dst_path / "lib.c").write_text(lib_c_text + stub_text)
-    (dst_path / "moon.pkg.json").write_text(
-        json.dumps(
-            {"native-stub": ["lib.c"], "support-targets": ["native"]},
-            indent=2,
-        )
-        + "\n"
-    )
+    source = Path("src") / "tree-sitter"
+    target = Path("src")
+    target.mkdir(parents=True, exist_ok=True)
+    include = [source / "lib" / "include", source / "src"]
+    project = Project(source, target, include=include, prefix="tree-sitter")
+    configure(project)
 
 
 if __name__ == "__main__":
