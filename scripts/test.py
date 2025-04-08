@@ -36,9 +36,9 @@ def linux_flags():
 def windows_flags():
     return {
         "stub-cc": "cl.exe",
-        "stub-cc-flags": "/DEBUG",
+        "stub-cc-flags": "/DEBUG /fsanitize=address",
         "cc": "cl.exe",
-        "cc-flags": "/DEBUG",
+        "cc-flags": "/DEBUG /fsanitize=address",
     }
 
 
@@ -75,9 +75,7 @@ def main():
     print(moon_pkg_path.read_text())
     print("----------------------------------------------")
     env = os.environ.copy()
-    if platform.system() == "Windows":
-        env["MOON_CC"] = flags["cc"] + " /DEBUG /fsanitize=address"
-    else:
+    if platform.system() != "Windows":
         env["MOON_CC"] = flags["cc"] + " -g -fsanitize=address"
         env["MOON_AR"] = "/usr/bin/ar"
     if platform.system() != "Windows":
