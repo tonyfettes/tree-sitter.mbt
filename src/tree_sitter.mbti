@@ -1,7 +1,9 @@
-package tonyfettes/tree_sitter
+package "tonyfettes/tree_sitter"
 
-alias @moonbitlang/core/builtin as @builtin
-alias @tonyfettes/tree_sitter_language as @tree_sitter_language
+import(
+  "moonbitlang/core/builtin"
+  "tonyfettes/tree_sitter_language"
+)
 
 // Values
 const LANGUAGE_VERSION : Int = 15
@@ -39,6 +41,7 @@ impl Language {
   copy(Self) -> Self
   delete(Self) -> Unit
   field_id_for_name(Self, String) -> Int
+  field_name_for_id(Self, FieldId) -> String?
   metadata(Self) -> LanguageMetadata
   name(Self) -> String?
   next_state(Self, StateId, Symbol) -> StateId
@@ -70,7 +73,7 @@ type Logger
 type LookaheadIterator
 impl LookaheadIterator {
   current_symbol(Self) -> Symbol
-  current_symbol_name(Self) -> String
+  current_symbol_name(Self) -> String?
   delete(Self) -> Unit
   language(Self) -> Language
   new(Language, StateId) -> Self?
@@ -252,7 +255,7 @@ impl Tree {
   get_changed_ranges(Self, Self) -> Array[Range]
   language(Self) -> Language
   root_node(Self) -> Node
-  root_node_with_offset(Self, Int) -> Node
+  root_node_with_offset(Self, Int, Point) -> Node
 }
 
 type TreeCursor
