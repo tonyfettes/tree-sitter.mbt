@@ -79,7 +79,7 @@ class Project:
         if condition is not None:
             content = self.condition(condition, content)
         print(f"COPY {self.source / source} -> {self.target / target}")
-        (self.target / target).write_text(content, encoding="utf-8", newline="\n")
+        (self.target / target).write_text(content, encoding="utf-8")
         self.copied.add(Path(target))
 
 
