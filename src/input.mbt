@@ -1,12 +1,12 @@
 ///|
 struct Input[DecodeFunction] {
-  read : (UInt, Point) -> Bytes
+  read : (UInt, Point) -> @bytes.View
   decode : DecodeFunction
 }
 
 ///|
 pub fn Input::new[DecodeFunction : DecodeFunction](
-  read : (Int, Point) -> Bytes,
+  read : (Int, Point) -> @bytes.View,
   decode : DecodeFunction
 ) -> Input[DecodeFunction] {
   {
