@@ -33,6 +33,7 @@ type Symbol UInt16
 
 ///|
 /// Get the numerical id for the given node type string.
+#borrow(name)
 extern "c" fn Language::symbol_for_name_(
   self : Language,
   name : Bytes
@@ -88,6 +89,7 @@ pub fn Language::field_name_for_id(self : Language, id : FieldId) -> String? {
 
 ///|
 /// Get the numerical id for the given field name string.
+#borrow(name)
 extern "c" fn Language::_field_id_for_name(
   self : Language,
   name : Bytes

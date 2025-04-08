@@ -37,6 +37,7 @@ fn QueryError::from(offset : UInt, type_ : UInt) -> QueryError {
 }
 
 ///|
+#borrow(source, error)
 extern "c" fn Query::_new(
   language : Language,
   source : Bytes,
@@ -63,6 +64,7 @@ pub fn Query::new(language : Language, source : String) -> Query!QueryError {
 
 ///|
 /// Get the number of patterns in the query.
+#borrow(self)
 extern "c" fn Query::_pattern_count(self : Query) -> UInt = "moonbit_ts_query_pattern_count"
 
 ///|
@@ -73,6 +75,7 @@ pub fn Query::pattern_count(self : Query) -> Int {
 
 ///|
 /// Get the number of captures in the query.
+#borrow(self)
 extern "c" fn Query::_capture_count(self : Query) -> UInt = "moonbit_ts_query_capture_count"
 
 ///|
@@ -83,6 +86,7 @@ pub fn Query::capture_count(self : Query) -> Int {
 
 ///|
 /// Get the number of string literals in the query.
+#borrow(self)
 extern "c" fn Query::_string_count(self : Query) -> UInt = "moonbit_ts_query_string_count"
 
 ///|
@@ -92,6 +96,7 @@ pub fn Query::string_count(self : Query) -> Int {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_start_byte_for_pattern(
   self : Query,
   pattern_index : UInt
@@ -108,6 +113,7 @@ pub fn Query::start_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_end_byte_for_pattern(
   self : Query,
   pattern_index : UInt
@@ -124,6 +130,7 @@ pub fn Query::end_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_predicates_for_pattern(
   self : Query,
   pattern_index : UInt
@@ -197,6 +204,7 @@ pub fn Query::predicates_for_pattern(
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_is_pattern_rooted(
   self : Query,
   pattern_index : UInt
@@ -209,6 +217,7 @@ pub fn Query::is_pattern_rooted(self : Query, pattern_index : Int) -> Bool {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_is_pattern_non_local(
   self : Query,
   pattern_index : UInt
@@ -226,6 +235,7 @@ pub fn Query::is_pattern_non_local(self : Query, pattern_index : Int) -> Bool {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_is_pattern_guaranteed_at_step(
   self : Query,
   byte_offset : UInt
@@ -242,18 +252,21 @@ pub fn Query::is_pattern_guaranteed_at_step(
 }
 
 ///|
+#borrow(self, length)
 extern "c" fn Query::_capture_name_for_id(
   self : Query,
-  capture_id : UInt
-) -> Bytes = "moonbit_ts_query_capture_name_for_id"
+  capture_id : UInt,
+  length : FixedArray[UInt]
+) -> @c.Pointer[Byte] = "moonbit_ts_query_capture_name_for_id"
 
 ///|
 /// Get the name of one of the query's captures. Each capture is associated with a
 /// numeric id based on the order that it appeared in the query's source.
 pub fn Query::capture_name_for_id(self : Query, capture_id : Int) -> String {
   let capture_id = int_to_uint(capture_id)
-  let name = Query::_capture_name_for_id(self, capture_id)
-  @encoding.decoder(UTF8).decode_lossy(name)
+  let length : FixedArray[UInt] = [0U]
+  let name = Query::_capture_name_for_id(self, capture_id, length)
+  return decode_c_string(name, length=length[0].reinterpret_as_int()).unwrap()
 }
 
 ///|
@@ -278,6 +291,7 @@ fn Quantifier::of_uint(value : UInt) -> Quantifier {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_capture_quantifier_for_id(
   self : Query,
   pattern_index : UInt,
@@ -300,21 +314,25 @@ pub fn Query::capture_quantifier_for_id(
 }
 
 ///|
+#borrow(self, length)
 extern "c" fn Query::_string_value_for_id(
   self : Query,
-  string_id : UInt
-) -> Bytes = "moonbit_ts_query_string_value_for_id"
+  string_id : UInt,
+  length : FixedArray[UInt]
+) -> @c.Pointer[Byte] = "moonbit_ts_query_string_value_for_id"
 
 ///|
 /// Get the value of one of the query's string literals. Each string is associated with a
 /// numeric id based on the order that it appeared in the query's source.
 pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
   let string_id = int_to_uint(string_id)
-  let value = Query::_string_value_for_id(self, string_id)
-  @encoding.decoder(UTF8).decode_lossy(value)
+  let length : FixedArray[UInt] = [0U]
+  let value = Query::_string_value_for_id(self, string_id, length)
+  return decode_c_string(value, length=length[0].reinterpret_as_int()).unwrap()
 }
 
 ///|
+#borrow(self, name)
 extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_query_disable_capture"
 
 ///|
@@ -329,6 +347,7 @@ pub fn Query::disable_capture(self : Query, name : String) -> Unit {
 }
 
 ///|
+#borrow(self)
 extern "c" fn Query::_disable_pattern(self : Query, pattern_index : UInt) = "moonbit_ts_query_disable_pattern"
 
 ///|

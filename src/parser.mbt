@@ -14,6 +14,7 @@ pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
 /// Tree-sitter CLI. Check the language's ABI version using Language::abi_version
 /// and compare it to this library's `LANGUAGE_VERSION` and
 /// `MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
+#borrow(self)
 pub extern "c" fn Parser::set_language(
   self : Parser,
   language : Language
@@ -34,6 +35,7 @@ pub const LANGUAGE_VERSION = 15
 pub const MIN_COMPATIBLE_LANGUAGE_VERSION = 13
 
 ///|
+#borrow(self, ranges)
 extern "c" fn Parser::_set_included_ranges(
   self : Parser,
   ranges : FixedArray[UInt]
@@ -76,6 +78,7 @@ pub fn Parser::set_included_ranges(
 }
 
 ///|
+#borrow(self)
 extern "c" fn Parser::_included_ranges(self : Parser) -> FixedArray[UInt] = "moonbit_ts_parser_included_ranges"
 
 ///|
@@ -94,9 +97,11 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree.
+// @move input
+#borrow(self, old_tree)
 extern "c" fn Parser::_parse(
   self : Parser,
-  old_tree : @c.Nullable[Tree],
+  old_tree : Tree?,
   input : (UInt, Point) -> Bytes,
   encoding : InputEncoding,
   decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]]
@@ -125,6 +130,9 @@ pub fn ParseOptions::new(
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree, with some options.
+// @move input
+// @move progress_callback
+#borrow(self)
 extern "c" fn Parser::_parse_with_options(
   self : Parser,
   old_tree : @c.Nullable[Tree],
@@ -195,14 +203,10 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
-    return self._parse(
-      @c.Nullable::of(old_tree),
-      input.read,
-      input_encoding,
-      decode,
-    ).to()
+    return self._parse(old_tree, input.read, input_encoding, decode).to()
   }
-  self._parse_with_options(
+  self
+  ._parse_with_options(
     @c.Nullable::of(old_tree),
     input.read,
     input_encoding.to_uint(),
@@ -211,10 +215,12 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       let current_byte_offset = uint_to_int(current_byte_offset)
       (options.progress_callback)({ current_byte_offset, has_error })
     },
-  ).to()
+  )
+  .to()
 }
 
 ///|
+#borrow(self, string)
 extern "c" fn Parser::_parse_bytes(
   self : Parser,
   old_tree : @c.Nullable[Tree],
@@ -222,6 +228,7 @@ extern "c" fn Parser::_parse_bytes(
 ) -> Tree = "moonbit_ts_parser_parse_string"
 
 ///|
+#borrow(self, string)
 extern "c" fn Parser::_parse_bytes_encoding(
   self : Parser,
   old_tree : @c.Nullable[Tree],
@@ -268,6 +275,7 @@ pub fn Parser::parse_string(
 /// `parse` or other parsing functions. If you don't want to resume,
 /// and instead intend to use this parser to parse some other document, you must
 /// call `reset` first.
+#borrow(self)
 pub extern "c" fn Parser::reset(self : Parser) = "moonbit_ts_parser_reset"
 
 ///|
@@ -312,8 +320,10 @@ fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
 /// The parser does not take ownership over the logger payload. If a logger was
 /// previously assigned, the caller is responsible for releasing any memory
 /// owned by the previous logger.
+#borrow(self)
 pub extern "c" fn Parser::set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
 
 ///|
 /// Get the parser's current logger.
+#borrow(self)
 pub extern "c" fn Parser::logger(self : Parser) -> Logger = "moonbit_ts_parser_logger"

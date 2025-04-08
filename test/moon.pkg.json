@@ -7,5 +7,13 @@
     "tonyfettes/tree_sitter_yaml",
     "moonbitlang/x/encoding",
     "moonbitlang/x/sys"
-  ]
+  ],
+  "link": {
+    "native": {
+      "stub-cc": "/opt/homebrew/opt/llvm/bin/clang",
+      "stub-cc-flags": "-g -fsanitize=address",
+      "cc": "/opt/homebrew/opt/llvm/bin/clang",
+      "cc-flags": "-g -fsanitize=address"
+    }
+  }
 }
