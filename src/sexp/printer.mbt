@@ -1,5 +1,9 @@
 ///|
-pub fn print(list : Array[Sexp], logger : &Logger, indent~ : Int = 0) -> Unit {
+fn print_to(
+  list : Array[Sexp],
+  logger : &Logger,
+  indent~ : Int = 0
+) -> Unit {
   for i, sexp in list {
     sexp.print(logger, indent~)
     if i < list.length() - 1 {
@@ -9,6 +13,13 @@ pub fn print(list : Array[Sexp], logger : &Logger, indent~ : Int = 0) -> Unit {
       }
     }
   }
+}
+
+///|
+pub fn print(list : Array[Sexp]) -> String {
+  let buffer = StringBuilder::new()
+  print_to(list, buffer)
+  return buffer.to_string()
 }
 
 ///|
@@ -22,7 +33,7 @@ pub fn Sexp::print(self : Sexp, logger : &Logger, indent~ : Int = 0) -> Unit {
     }
     List(list) => {
       logger.write_char('(')
-      print(list, logger, indent=indent + 1)
+      print_to(list, logger, indent=indent + 1)
       logger.write_char(')')
     }
   }
