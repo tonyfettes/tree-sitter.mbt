@@ -244,8 +244,12 @@ moonbit_ts_input_read(
   TSPoint *point =
     (TSPoint *)moonbit_make_int32_array(sizeof(TSPoint) / sizeof(int32_t), 0);
   *point = position;
+  moonbit_incref(input);
   moonbit_bytes_t bytes = input->read(input, byte, point);
   *bytes_read = Moonbit_array_length(bytes);
+  if (*bytes_read == 0) {
+    moonbit_decref(input);
+  }
   return (const char *)bytes;
 }
 
