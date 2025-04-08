@@ -1,4 +1,11 @@
 {
+  "pre-build": [
+    {
+      "input": [],
+      "output": "tree-sitter#lib#src#lib.c",
+      "command": "python3 scripts/prepare.py"
+    }
+  ],
   "import": [
     "tonyfettes/encoding",
     "tonyfettes/c",
