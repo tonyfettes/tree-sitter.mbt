@@ -79,13 +79,9 @@ moonbit_make_bytes_sz(size_t size, int value) {
   return moonbit_make_bytes(moonbit_size_to_int(size), value);
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id) {
-  const char *name = ts_language_field_name_for_id(self, id);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_language_field_name_for_id(self, id);
 }
 
 TSFieldId
@@ -118,13 +114,9 @@ moonbit_ts_language_subtypes(const TSLanguage *self, TSSymbol supertype) {
   return copy;
 }
 
-moonbit_bytes_t
+const char *
 moonbit_ts_language_symbol_name(const TSLanguage *self, TSSymbol symbol) {
-  const char *name = ts_language_symbol_name(self, symbol);
-  size_t length = strlen(name);
-  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
-  memcpy(bytes, name, length);
-  return bytes;
+  return ts_language_symbol_name(self, symbol);
 }
 
 static_assert_type_equal(TSSymbolType, uint32_t);
