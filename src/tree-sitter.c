@@ -279,10 +279,7 @@ moonbit_ts_parser_parse(
     .encoding = encoding,
     .decode = decode
   };
-  TSTree *ts_old_tree = NULL;
-  if (old_tree) {
-    ts_old_tree = old_tree->tree;
-  }
+  TSTree *ts_old_tree = old_tree ? old_tree->tree : NULL;
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(TSTree *)
   );
@@ -326,10 +323,7 @@ moonbit_ts_parser_parse_with_options(
     .payload = progress_callback,
     .progress_callback = moonbit_ts_parse_options_progress_callback
   };
-  TSTree *ts_old_tree = NULL;
-  if (old_tree) {
-    ts_old_tree = old_tree->tree;
-  }
+  TSTree *ts_old_tree = old_tree ? old_tree->tree : NULL;
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
@@ -345,16 +339,13 @@ moonbit_ts_parser_parse_string(
   moonbit_bytes_t bytes
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  TSTree *old_ts_tree = NULL;
-  if (old_tree) {
-    old_ts_tree = old_tree->tree;
-  }
+  TSTree *ts_old_tree = old_tree ? old_tree->tree : NULL;
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
-  moonbit_ts_trace("old_ts_tree = %p\n", (void *)old_ts_tree);
+  moonbit_ts_trace("ts_old_tree = %p\n", (void *)ts_old_tree);
   tree->tree = ts_parser_parse_string(
-    self->parser, old_ts_tree, (const char *)bytes, length
+    self->parser, ts_old_tree, (const char *)bytes, length
   );
   moonbit_ts_trace("tree->tree = %p\n", (void *)tree->tree);
   return tree;
@@ -368,16 +359,13 @@ moonbit_ts_parser_parse_string_encoding(
   TSInputEncoding encoding
 ) {
   uint32_t length = Moonbit_array_length(bytes);
-  TSTree *old_ts_tree = NULL;
-  if (old_tree) {
-    old_ts_tree = old_tree->tree;
-  }
+  TSTree *ts_old_tree = old_tree ? old_tree->tree : NULL;
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
   moonbit_ts_trace("tree = %p\n", (void *)tree);
   tree->tree = ts_parser_parse_string_encoding(
-    self->parser, old_ts_tree, (const char *)bytes, length, encoding
+    self->parser, ts_old_tree, (const char *)bytes, length, encoding
   );
   moonbit_ts_trace("tree->tree = %p\n", (void *)tree->tree);
   return tree;
