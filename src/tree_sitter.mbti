@@ -40,6 +40,7 @@ impl Language {
   abi_version(Self) -> Int
   copy(Self) -> Self
   delete(Self) -> Unit
+  field_count(Self) -> Int
   field_id_for_name(Self, String) -> Int
   field_name_for_id(Self, FieldId) -> String?
   metadata(Self) -> LanguageMetadata
@@ -109,10 +110,13 @@ impl Node {
   is_extra(Self) -> Bool
   is_missing(Self) -> Bool
   is_named(Self) -> Bool
+  is_null(Self) -> Bool
   language(Self) -> Language
   named_child(Self, Int) -> Self?
   named_child_count(Self) -> Int
   named_children(Self) -> Iter[Self]
+  named_descendant_for_byte_range(Self, Int, Int) -> Self?
+  named_descendant_for_point_range(Self, Point, Point) -> Self?
   next_named_sibling(Self) -> Self?
   next_parse_state(Self) -> StateId
   next_sibling(Self) -> Self?
@@ -253,6 +257,7 @@ impl Tree {
   copy(Self) -> Self
   edit(Self, InputEdit) -> Unit
   get_changed_ranges(Self, Self) -> Array[Range]
+  included_ranges(Self) -> Array[Range]
   language(Self) -> Language
   root_node(Self) -> Node
   root_node_with_offset(Self, Int, Point) -> Node
@@ -288,8 +293,7 @@ pub typealias QueryPredicate = Array[QueryPredicateStep]
 
 // Traits
 pub(open) trait DecodeFunction {
-  input_encoding(Self) -> InputEncoding
+  input_encoding(Self) -> InputEncoding = _
   decode(Bytes) -> DecodeResult?
 }
-impl DecodeFunction::input_encoding
 

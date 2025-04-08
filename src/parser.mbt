@@ -2,8 +2,17 @@
 type Parser
 
 ///|
+extern "c" fn ts_parser_new() -> Parser = "moonbit_ts_parser_new"
+
+///|
 /// Create a new parser.
-pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
+pub fn Parser::new() -> Parser {
+  ts_parser_new()
+}
+
+///|
+#borrow(self)
+extern "c" fn ts_parser_set_language(self : Parser, language : Language) = "moonbit_ts_parser_set_language"
 
 ///|
 /// Set the language that the parser should use for parsing.
@@ -14,11 +23,9 @@ pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
 /// Tree-sitter CLI. Check the language's ABI version using Language::abi_version
 /// and compare it to this library's `LANGUAGE_VERSION` and
 /// `MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
-#borrow(self)
-pub extern "c" fn Parser::set_language(
-  self : Parser,
-  language : Language
-) -> Unit = "moonbit_ts_parser_set_language"
+pub fn Parser::set_language(self : Parser, language : Language) -> Unit {
+  ts_parser_set_language(self, language)
+}
 
 ///|
 /// The latest ABI version that is supported by the current version of the
@@ -36,7 +43,7 @@ pub const MIN_COMPATIBLE_LANGUAGE_VERSION = 13
 
 ///|
 #borrow(self, ranges)
-extern "c" fn Parser::_set_included_ranges(
+extern "c" fn ts_parser_set_included_ranges(
   self : Parser,
   ranges : FixedArray[UInt]
 ) -> Bool = "moonbit_ts_parser_set_included_ranges"
@@ -74,17 +81,17 @@ pub fn Parser::set_included_ranges(
     flatten_ranges[i * 6 + 4] = range._[4]
     flatten_ranges[i * 6 + 5] = range._[5]
   }
-  return self._set_included_ranges(flatten_ranges)
+  return ts_parser_set_included_ranges(self, flatten_ranges)
 }
 
 ///|
 #borrow(self)
-extern "c" fn Parser::_included_ranges(self : Parser) -> FixedArray[UInt] = "moonbit_ts_parser_included_ranges"
+extern "c" fn ts_parser_included_ranges(self : Parser) -> FixedArray[UInt] = "moonbit_ts_parser_included_ranges"
 
 ///|
 /// Get the ranges of text that the parser will include when parsing.
 pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
-  let flatten_ranges = self._included_ranges()
+  let flatten_ranges = ts_parser_included_ranges(self)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::_new(
       Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
@@ -99,7 +106,7 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 /// Use the parser to parse some source code and create a syntax tree.
 // @move input
 #borrow(self, old_tree)
-extern "c" fn Parser::_parse(
+extern "c" fn ts_parser_parse(
   self : Parser,
   old_tree : Tree?,
   input : (UInt, Point) -> Bytes,
@@ -133,7 +140,7 @@ pub fn ParseOptions::new(
 // @move input
 // @move progress_callback
 #borrow(self)
-extern "c" fn Parser::_parse_with_options(
+extern "c" fn ts_parser_parse_with_options(
   self : Parser,
   old_tree : @c.Nullable[Tree],
   input : (UInt, Point) -> Bytes,
@@ -203,10 +210,10 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
-    return self._parse(old_tree, input.read, input_encoding, decode).to()
+    return ts_parser_parse(self, old_tree, input.read, input_encoding, decode).to()
   }
-  self
-  ._parse_with_options(
+  ts_parser_parse_with_options(
+    self,
     @c.Nullable::of(old_tree),
     input.read,
     input_encoding.to_uint(),
@@ -215,23 +222,22 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       let current_byte_offset = uint_to_int(current_byte_offset)
       (options.progress_callback)({ current_byte_offset, has_error })
     },
-  )
-  .to()
+  ).to()
 }
 
 ///|
 #borrow(self, string)
-extern "c" fn Parser::_parse_bytes(
+extern "c" fn ts_parser_parse_bytes(
   self : Parser,
-  old_tree : @c.Nullable[Tree],
+  old_tree : Tree?,
   string : Bytes
 ) -> Tree = "moonbit_ts_parser_parse_string"
 
 ///|
 #borrow(self, string)
-extern "c" fn Parser::_parse_bytes_encoding(
+extern "c" fn ts_parser_parse_bytes_encoding(
   self : Parser,
-  old_tree : @c.Nullable[Tree],
+  old_tree : Tree?,
   string : Bytes,
   encoding : UInt
 ) -> Tree = "moonbit_ts_parser_parse_string_encoding"
@@ -247,11 +253,10 @@ pub fn Parser::parse_bytes(
   bytes : Bytes,
   encoding? : InputEncoding
 ) -> Tree {
-  let old_tree = @c.Nullable::of(old_tree)
   match encoding {
-    None => self._parse_bytes(old_tree, bytes)
+    None => ts_parser_parse_bytes(self, old_tree, bytes)
     Some(encoding) =>
-      self._parse_bytes_encoding(old_tree, bytes, encoding.to_uint())
+      ts_parser_parse_bytes_encoding(self, old_tree, bytes, encoding.to_uint())
   }
 }
 
@@ -264,8 +269,12 @@ pub fn Parser::parse_string(
   old_tree : Tree?,
   string : String
 ) -> Tree {
-  self._parse_bytes(@c.Nullable::of(old_tree), @encoding.encode(UTF8, string))
+  ts_parser_parse_bytes(self, old_tree, @encoding.encode(UTF8, string))
 }
+
+///|
+#borrow(self)
+extern "c" fn ts_parser_reset(self : Parser) = "moonbit_ts_parser_reset"
 
 ///|
 /// Instruct the parser to start the next parse from the beginning.
@@ -275,8 +284,9 @@ pub fn Parser::parse_string(
 /// `parse` or other parsing functions. If you don't want to resume,
 /// and instead intend to use this parser to parse some other document, you must
 /// call `reset` first.
-#borrow(self)
-pub extern "c" fn Parser::reset(self : Parser) = "moonbit_ts_parser_reset"
+pub fn Parser::reset(self : Parser) -> Unit {
+  ts_parser_reset(self)
+}
 
 ///|
 pub enum LogType {
@@ -315,15 +325,25 @@ fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
 }
 
 ///|
+#borrow(self)
+extern "c" fn ts_parser_set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
+
+///|
 /// Set the logger that a parser should use during parsing.
 ///
 /// The parser does not take ownership over the logger payload. If a logger was
 /// previously assigned, the caller is responsible for releasing any memory
 /// owned by the previous logger.
+pub fn Parser::set_logger(self : Parser, logger : Logger) -> Unit {
+  ts_parser_set_logger(self, logger)
+}
+
+///|
 #borrow(self)
-pub extern "c" fn Parser::set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
+extern "c" fn ts_parser_logger(self : Parser) -> Logger = "moonbit_ts_parser_logger"
 
 ///|
 /// Get the parser's current logger.
-#borrow(self)
-pub extern "c" fn Parser::logger(self : Parser) -> Logger = "moonbit_ts_parser_logger"
+pub fn Parser::logger(self : Parser) -> Logger {
+  ts_parser_logger(self)
+}

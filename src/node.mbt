@@ -18,14 +18,24 @@ pub fn Node::type_(self : Node) -> String {
 }
 
 ///|
-/// Get the node's type as a numerical id.
 #borrow(self, tree)
 extern "c" fn ts_node_symbol(self : TSNode, tree : Tree) -> Symbol = "moonbit_ts_node_symbol"
 
 ///|
-/// Get the node's language.
+/// Get the node's type as a numerical id.
+pub fn Node::symbol(self : Node) -> Symbol {
+  return ts_node_symbol(self.node, self.tree)
+}
+
+///|
 #borrow(self, tree)
 extern "c" fn ts_node_language(self : TSNode, tree : Tree) -> Language = "moonbit_ts_node_language"
+
+///|
+/// Get the node's language.
+pub fn Node::language(self : Node) -> Language {
+  return ts_node_language(self.node, self.tree)
+}
 
 ///|
 #borrow(self, tree)
