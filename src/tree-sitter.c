@@ -56,7 +56,7 @@ TSSymbol
 moonbit_ts_language_symbol_for_name(
   const TSLanguage *self,
   moonbit_bytes_t name,
-  bool is_named
+  int32_t is_named
 ) {
   uint32_t length = Moonbit_array_length(name);
   TSSymbol symbol =
@@ -190,7 +190,7 @@ moonbit_ts_parser_language(MoonBitTSParser *parser) {
   return ts_parser_language(parser->parser);
 }
 
-bool
+int32_t
 moonbit_ts_parser_set_language(MoonBitTSParser *parser, TSLanguage *language) {
   return ts_parser_set_language(parser->parser, language);
 }
@@ -201,7 +201,7 @@ moonbit_size_to_uint(size_t value) {
   return (uint32_t)value;
 }
 
-bool
+int32_t
 moonbit_ts_parser_set_included_ranges(
   MoonBitTSParser *parser,
   uint32_t *ranges
@@ -312,10 +312,10 @@ moonbit_ts_parser_parse(
 }
 
 struct MoonBitTSParseOptionsProgressCallback {
-  bool (*progress_callback)(
+  int32_t (*progress_callback)(
     struct MoonBitTSParseOptionsProgressCallback *callback,
     uint32_t current_byte_offset,
-    bool has_error
+    int32_t has_error
   );
 };
 
@@ -583,43 +583,45 @@ moonbit_ts_node_string(MoonBitTSNode *self, MoonBitTSTree *tree) {
   return bytes;
 }
 
-bool
+int32_t
 moonbit_ts_node_is_null(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
-  return ts_node_is_null(self->node);
+  bool result = ts_node_is_null(self->node);
+  moonbit_ts_trace("result = %d\n", result);
+  return result;
 }
 
-bool
+int32_t
 moonbit_ts_node_is_named(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_is_named(self->node);
 }
 
-bool
+int32_t
 moonbit_ts_node_is_missing(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_is_missing(self->node);
 }
 
-bool
+int32_t
 moonbit_ts_node_is_extra(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_is_extra(self->node);
 }
 
-bool
+int32_t
 moonbit_ts_node_has_changes(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_has_changes(self->node);
 }
 
-bool
+int32_t
 moonbit_ts_node_has_error(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_has_error(self->node);
 }
 
-bool
+int32_t
 moonbit_ts_node_is_error(MoonBitTSNode *self, MoonBitTSTree *tree) {
   moonbit_ts_ignore(tree);
   return ts_node_is_error(self->node);
@@ -851,7 +853,7 @@ moonbit_ts_node_edit(
   ts_node_edit(&self->node, edit);
 }
 
-bool
+int32_t
 moonbit_ts_node_eq(
   MoonBitTSNode *self,
   MoonBitTSTree *self_tree,
@@ -912,22 +914,22 @@ moonbit_ts_tree_cursor_current_field_id(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_current_field_id(&self->cursor);
 }
 
-bool
+int32_t
 moonbit_ts_tree_cursor_goto_parent(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_goto_parent(&self->cursor);
 }
 
-bool
+int32_t
 moonbit_ts_tree_cursor_goto_next_sibling(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_goto_next_sibling(&self->cursor);
 }
 
-bool
+int32_t
 moonbit_ts_tree_cursor_goto_first_child(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_goto_first_child(&self->cursor);
 }
 
-bool
+int32_t
 moonbit_ts_tree_cursor_goto_last_child(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_goto_last_child(&self->cursor);
 }
@@ -1062,7 +1064,7 @@ moonbit_ts_query_predicates_for_pattern(
   return copy;
 }
 
-bool
+int32_t
 moonbit_ts_query_is_pattern_rooted(
   MoonBitTSQuery *self,
   uint32_t pattern_index
@@ -1071,7 +1073,7 @@ moonbit_ts_query_is_pattern_rooted(
   return result;
 }
 
-bool
+int32_t
 moonbit_ts_query_is_pattern_non_local(
   MoonBitTSQuery *self,
   uint32_t pattern_index
@@ -1080,7 +1082,7 @@ moonbit_ts_query_is_pattern_non_local(
   return result;
 }
 
-bool
+int32_t
 moonbit_ts_query_is_pattern_guaranteed_at_step(
   MoonBitTSQuery *self,
   uint32_t byte_offset
@@ -1169,7 +1171,7 @@ moonbit_ts_query_cursor_exec(
 }
 
 typedef struct MoonBitTSQueryCursorProgressCallback {
-  bool (*progress_callback)(
+  int32_t (*progress_callback)(
     struct MoonBitTSQueryCursorProgressCallback *callback,
     uint32_t current_byte_offset
   );
@@ -1198,7 +1200,7 @@ moonbit_ts_query_cursor_exec_with_options(
   );
 }
 
-bool
+int32_t
 moonbit_ts_query_cursor_did_exceed_match_limit(MoonBitTSQueryCursor *self) {
   return ts_query_cursor_did_exceed_match_limit(self->cursor);
 }
@@ -1347,7 +1349,7 @@ moonbit_ts_lookahead_iterator_delete(TSLookaheadIterator *self) {
   ts_lookahead_iterator_delete(self);
 }
 
-bool
+int32_t
 moonbit_ts_lookahead_iterator_reset_state(
   TSLookaheadIterator *self,
   TSStateId state
@@ -1355,7 +1357,7 @@ moonbit_ts_lookahead_iterator_reset_state(
   return ts_lookahead_iterator_reset_state(self, state);
 }
 
-bool
+int32_t
 moonbit_ts_lookahead_iterator_reset(
   TSLookaheadIterator *self,
   TSLanguage *language,
@@ -1369,7 +1371,7 @@ moonbit_ts_lookahead_iterator_language(const TSLookaheadIterator *self) {
   return ts_lookahead_iterator_language(self);
 }
 
-bool
+int32_t
 moonbit_ts_lookahead_iterator_next(TSLookaheadIterator *self) {
   return ts_lookahead_iterator_next(self);
 }
