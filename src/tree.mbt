@@ -2,23 +2,25 @@
 type Tree
 
 ///|
+#borrow(self)
+extern "c" fn ts_tree_copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
+
+///|
 /// Create a shallow copy of the syntax tree. This is very fast.
 ///
 /// You need to copy a syntax tree in order to use it on more than one thread at
 /// a time, as syntax trees are not thread safe.
-#borrow(self)
-pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
+pub fn Tree::copy(self : Tree) -> Tree {
+  ts_tree_copy(self)
+}
 
 ///|
 #borrow(self)
 extern "c" fn ts_tree_root_node(self : Tree) -> TSNode = "moonbit_ts_tree_root_node"
 
-/// Get the root node of the syntax tree.
+///| Get the root node of the syntax tree.
 pub fn Tree::root_node(self : Tree) -> Node {
-  Node::{
-    node: ts_tree_root_node(self),
-    tree: self,
-  }
+  Node::{ node: ts_tree_root_node(self), tree: self }
 }
 
 ///|
@@ -41,9 +43,14 @@ pub fn Tree::root_node_with_offset(
 }
 
 ///|
-/// Get the language that was used to parse the syntax tree.
 #borrow(self)
-pub extern "c" fn Tree::language(self : Tree) -> Language = "moonbit_ts_tree_language"
+extern "c" fn ts_tree_language(self : Tree) -> Language = "moonbit_ts_tree_language"
+
+///|
+/// Get the language that was used to parse the syntax tree.
+pub fn Tree::language(self : Tree) -> Language {
+  ts_tree_language(self)
+}
 
 ///|
 #borrow(self)
@@ -64,13 +71,18 @@ pub fn Tree::included_ranges(self : Tree) -> Array[Range] {
 }
 
 ///|
+#borrow(self, edit)
+extern "c" fn ts_tree_edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edit"
+
+///|
 /// Edit the syntax tree to keep it in sync with source code that has been
 /// edited.
 ///
 /// You must describe the edit both in terms of byte offsets and in terms of
 /// (row, column) coordinates.
-#borrow(self, edit)
-pub extern "c" fn Tree::edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edit"
+pub fn Tree::edit(self : Tree, edit : InputEdit) -> Unit {
+  ts_tree_edit(self, edit)
+}
 
 ///|
 #borrow(self, other)
