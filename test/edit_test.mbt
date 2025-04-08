@@ -46,20 +46,17 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
       captures_texts[query.capture_name_for_id(capture.index)] = text
     }
     guard captures_texts["name"] is Some(name) else {
-      println("Error: missing name")
-      @sys.exit(1)
+      fail!("Error: missing name")
     }
     guard captures_texts["search"] is Some(search) else {
-      println("Error: missing search")
-      @sys.exit(1)
+      fail!("Error: missing search")
     }
     let search : String = match search.trim_space() {
       ['|', '\n', .. search] => [..search]
       search => search
     }
     guard captures_texts["replace"] is Some(replace) else {
-      println("Error: missing replace")
-      @sys.exit(1)
+      fail!("Error: missing replace")
     }
     let replace : String = match replace.trim_space() {
       ['|', '\n', .. replace] => [..replace]

@@ -5,7 +5,14 @@
     "tonyfettes/tree_sitter_markdown",
     "tonyfettes/tree_sitter_json",
     "tonyfettes/tree_sitter_yaml",
-    "moonbitlang/x/encoding",
-    "moonbitlang/x/sys"
-  ]
+    "tonyfettes/encoding"
+  ],
+  "link": {
+    "native": {
+      "stub-cc": "/opt/homebrew/opt/llvm/bin/clang",
+      "stub-cc-flags": "-g -fsanitize=address",
+      "cc": "/opt/homebrew/opt/llvm/bin/clang",
+      "cc-flags": "-g -fsanitize=address"
+    }
+  }
 }

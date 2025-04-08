@@ -5,12 +5,12 @@
     "tonyfettes/tree_sitter": {
       "path": ".."
     },
-    "moonbitlang/x": "0.4.23",
     "tonyfettes/tree_sitter_moonbit": "0.1.8",
     "tonyfettes/tree_sitter_json": "0.1.7",
     "tonyfettes/tree_sitter_markdown": "0.1.8",
     "tonyfettes/c": "0.1.9",
-    "tonyfettes/tree_sitter_yaml": "0.1.7"
+    "tonyfettes/tree_sitter_yaml": "0.1.7",
+    "tonyfettes/encoding": "0.1.0"
   },
   "readme": "README.md",
   "repository": "",
