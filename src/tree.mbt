@@ -10,12 +10,20 @@ type Tree
 pub extern "c" fn Tree::copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 
 ///|
+#borrow(self)
+extern "c" fn ts_tree_root_node(self : Tree) -> TSNode = "moonbit_ts_tree_root_node"
+
 /// Get the root node of the syntax tree.
-pub extern "c" fn Tree::root_node(self : Tree) -> Node = "moonbit_ts_tree_root_node"
+pub fn Tree::root_node(self : Tree) -> Node {
+  Node::{
+    node: ts_tree_root_node(self),
+    tree: self,
+  }
+}
 
 ///|
 #borrow(self, offset_extent)
-extern "c" fn Tree::_root_node_with_offset(
+extern "c" fn ts_tree_root_node_with_offset(
   self : Tree,
   offset_bytes : UInt,
   offset_extent : Point
@@ -29,7 +37,7 @@ pub fn Tree::root_node_with_offset(
   offset_bytes : Int,
   offset_extent : Point
 ) -> Node {
-  self._root_node_with_offset(int_to_uint(offset_bytes), offset_extent)
+  ts_tree_root_node_with_offset(self, int_to_uint(offset_bytes), offset_extent)
 }
 
 ///|
@@ -39,12 +47,12 @@ pub extern "c" fn Tree::language(self : Tree) -> Language = "moonbit_ts_tree_lan
 
 ///|
 #borrow(self)
-extern "c" fn Tree::_included_ranges(self : Tree) -> FixedArray[UInt] = "moonbit_ts_tree_included_ranges"
+extern "c" fn ts_tree_included_ranges(self : Tree) -> FixedArray[UInt] = "moonbit_ts_tree_included_ranges"
 
 ///|
 /// Get the array of included ranges that was used to parse the syntax tree.
-fn Tree::included_ranges(self : Tree) -> Array[Range] {
-  let flatten_ranges = self._included_ranges()
+pub fn Tree::included_ranges(self : Tree) -> Array[Range] {
+  let flatten_ranges = ts_tree_included_ranges(self)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::_new(
       Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
@@ -66,7 +74,7 @@ pub extern "c" fn Tree::edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_e
 
 ///|
 #borrow(self, other)
-extern "c" fn Tree::_get_changed_ranges(
+extern "c" fn ts_tree_get_changed_ranges(
   self : Tree,
   other : Tree
 ) -> FixedArray[UInt] = "moonbit_ts_tree_get_changed_ranges"
@@ -88,7 +96,7 @@ extern "c" fn Tree::_get_changed_ranges(
 /// Note that the returned ranges may be slightly larger than the exact changed areas,
 /// but Tree-sitter attempts to make them as small as possible.
 pub fn Tree::get_changed_ranges(self : Tree, other : Tree) -> Array[Range] {
-  let flatten_ranges = self._get_changed_ranges(other)
+  let flatten_ranges = ts_tree_get_changed_ranges(self, other)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::_new(
       Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),

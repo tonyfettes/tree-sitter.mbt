@@ -1,66 +1,97 @@
 ///|
-type Node
+priv type TSNode Bytes
 
 ///|
-#borrow(self)
-extern "c" fn Node::_type(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_type"
+struct Node {
+  node : TSNode
+  tree : Tree
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_type(self : TSNode, tree : Tree) -> @c.Pointer[Byte] = "moonbit_ts_node_type"
 
 ///|
 /// Get the node's type as a string.
 pub fn Node::type_(self : Node) -> String {
-  return decode_c_string(self._type()).unwrap()
+  return decode_c_string(ts_node_type(self.node, self.tree)).unwrap()
 }
 
 ///|
 /// Get the node's type as a numerical id.
-#borrow(self)
-pub extern "c" fn Node::symbol(self : Node) -> Symbol = "moonbit_ts_node_symbol"
+#borrow(self, tree)
+extern "c" fn ts_node_symbol(self : TSNode, tree : Tree) -> Symbol = "moonbit_ts_node_symbol"
 
 ///|
 /// Get the node's language.
-#borrow(self)
-pub extern "c" fn Node::language(self : Node) -> Language = "moonbit_ts_node_language"
+#borrow(self, tree)
+extern "c" fn ts_node_language(self : TSNode, tree : Tree) -> Language = "moonbit_ts_node_language"
 
 ///|
-#borrow(self)
-extern "c" fn Node::_grammar_type(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_grammar_type"
+#borrow(self, tree)
+extern "c" fn ts_node_grammar_type(
+  self : TSNode,
+  tree : Tree
+) -> @c.Pointer[Byte] = "moonbit_ts_node_grammar_type"
 
 ///|
 /// Get the node's type as it appears in the grammar ignoring aliases as a string.
 pub fn Node::grammar_type(self : Node) -> String {
-  return decode_c_string(self._grammar_type()).unwrap()
+  return decode_c_string(ts_node_grammar_type(self.node, self.tree)).unwrap()
 }
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_grammar_symbol(self : TSNode, tree : Tree) -> Symbol = "moonbit_ts_node_grammar_symbol"
 
 ///|
 /// Get the node's type as a numerical id as it appears in the grammar ignoring
 /// aliases. This should be used in `Language::next_state` instead of
 /// `Node::symbol`.
-#borrow(self)
-pub extern "c" fn Node::grammar_symbol(self : Node) -> Symbol = "moonbit_ts_node_grammar_symbol"
+pub fn Node::grammar_symbol(self : Node) -> Symbol {
+  return ts_node_grammar_symbol(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_start_byte(self : TSNode, tree : Tree) -> Int = "moonbit_ts_node_start_byte"
 
 ///|
 /// Get the node's start byte.
-#borrow(self)
-pub extern "c" fn Node::start_byte(self : Node) -> Int = "moonbit_ts_node_start_byte"
+pub fn Node::start_byte(self : Node) -> Int {
+  return ts_node_start_byte(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_start_point(self : TSNode, tree : Tree) -> Point = "moonbit_ts_node_start_point"
 
 ///|
 /// Get the node's start position in terms of rows and columns.
-#borrow(self)
-pub extern "c" fn Node::start_point(self : Node) -> Point = "moonbit_ts_node_start_point"
+pub fn Node::start_point(self : Node) -> Point {
+  return ts_node_start_point(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_end_byte(self : TSNode, tree : Tree) -> Int = "moonbit_ts_node_end_byte"
 
 ///|
 /// Get the node's end byte.
-#borrow(self)
-pub extern "c" fn Node::end_byte(self : Node) -> Int = "moonbit_ts_node_end_byte"
+pub fn Node::end_byte(self : Node) -> Int {
+  return ts_node_end_byte(self.node, self.tree)
+}
 
 ///|
-#borrow(self)
-extern "c" fn Node::_string(self : Node) -> @c.Pointer[Byte] = "moonbit_ts_node_string"
+#borrow(self, tree)
+extern "c" fn ts_node_string(self : TSNode, tree : Tree) -> Bytes = "moonbit_ts_node_string"
 
 ///|
 /// Get an S-expression representing the node as a string.
 pub fn Node::string(self : Node) -> String {
-  return decode_c_string(self._string()).unwrap()
+  return @encoding.decoder(UTF8).decode_lossy(
+    ts_node_string(self.node, self.tree),
+  )
 }
 
 ///|
@@ -70,103 +101,156 @@ pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Un
 
 ///|
 /// Get the node's end position in terms of rows and columns.
-#borrow(self)
-pub extern "c" fn Node::end_point(self : Node) -> Point = "moonbit_ts_node_end_point"
+#borrow(self, tree)
+extern "c" fn ts_node_end_point(self : TSNode, tree : Tree) -> Point = "moonbit_ts_node_end_point"
+
+///|
+pub fn Node::end_point(self : Node) -> Point {
+  return ts_node_end_point(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_is_null(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_is_null"
 
 ///|
 /// Check if the node is null. Functions like `Node::child` and
 /// `Node::next_sibling` will return a null node to indicate that no such node
 /// was found.
-#borrow(self)
-extern "c" fn Node::is_null(self : Node) -> Bool = "moonbit_ts_node_is_null"
+pub fn Node::is_null(self : Node) -> Bool {
+  return ts_node_is_null(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_is_named(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_is_named"
 
 ///|
 /// Check if the node is *named*. Named nodes correspond to named rules in the
 /// grammar, whereas *anonymous* nodes correspond to string literals in the
 /// grammar.
-#borrow(self)
-pub extern "c" fn Node::is_named(self : Node) -> Bool = "moonbit_ts_node_is_named"
+pub fn Node::is_named(self : Node) -> Bool {
+  return ts_node_is_named(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_is_missing(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_is_missing"
 
 ///|
 /// Check if the node is *missing*. Missing nodes are inserted by the parser in
 /// order to recover from certain kinds of syntax errors.
-#borrow(self)
-pub extern "c" fn Node::is_missing(self : Node) -> Bool = "moonbit_ts_node_is_missing"
+pub fn Node::is_missing(self : Node) -> Bool {
+  return ts_node_is_missing(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_is_extra(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_is_extra"
 
 ///|
 /// Check if the node is *extra*. Extra nodes represent things like comments,
 /// which are not required the grammar, but can appear anywhere.
-#borrow(self)
-pub extern "c" fn Node::is_extra(self : Node) -> Bool = "moonbit_ts_node_is_extra"
+pub fn Node::is_extra(self : Node) -> Bool {
+  return ts_node_is_extra(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_has_changes(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_has_changes"
 
 ///|
 /// Check if a syntax node has been edited.
-#borrow(self)
-pub extern "c" fn Node::has_changes(self : Node) -> Bool = "moonbit_ts_node_has_changes"
+pub fn Node::has_changes(self : Node) -> Bool {
+  return ts_node_has_changes(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_has_error(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_has_error"
 
 ///|
 /// Check if the node is a syntax error or contains any syntax errors.
-#borrow(self)
-pub extern "c" fn Node::has_error(self : Node) -> Bool = "moonbit_ts_node_has_error"
+pub fn Node::has_error(self : Node) -> Bool {
+  return ts_node_has_error(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_is_error(self : TSNode, tree : Tree) -> Bool = "moonbit_ts_node_is_error"
 
 ///|
 /// Check if the node is a syntax error.
-#borrow(self)
-pub extern "c" fn Node::is_error(self : Node) -> Bool = "moonbit_ts_node_is_error"
+pub fn Node::is_error(self : Node) -> Bool {
+  return ts_node_is_error(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_parse_state(self : TSNode, tree : Tree) -> StateId = "moonbit_ts_node_parse_state"
 
 ///|
 /// Get this node's parse state.
-#borrow(self)
-pub extern "c" fn Node::parse_state(self : Node) -> StateId = "moonbit_ts_node_parse_state"
+pub fn Node::parse_state(self : Node) -> StateId {
+  return ts_node_parse_state(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_next_parse_state(self : TSNode, tree : Tree) -> StateId = "moonbit_ts_node_next_parse_state"
 
 ///|
 /// Get the parse state after this node.
-#borrow(self)
-pub extern "c" fn Node::next_parse_state(self : Node) -> StateId = "moonbit_ts_node_next_parse_state"
+pub fn Node::next_parse_state(self : Node) -> StateId {
+  return ts_node_next_parse_state(self.node, self.tree)
+}
 
 ///|
-/// Get the node's immediate parent.
-#borrow(self)
-extern "c" fn Node::_parent(self : Node) -> Node = "moonbit_ts_node_parent"
+#borrow(self, tree)
+extern "c" fn ts_node_parent(self : TSNode, tree : Tree) -> TSNode = "moonbit_ts_node_parent"
 
 ///|
 /// Get the node's immediate parent.
 /// Prefer `Node::child_with_descendant` for iterating over the node's ancestors.
 pub fn Node::parent(self : Node) -> Node? {
-  let parent = self._parent()
-  if parent.is_null() {
+  let parent = ts_node_parent(self.node, self.tree)
+  if ts_node_is_null(parent, self.tree) {
     None
   } else {
-    Some(parent)
+    Some({ ..self, node: parent })
   }
 }
 
 ///|
-/// Get the node that contains `descendant`.
-///
-/// Note that this can return `descendant` itself.
-#borrow(self, descendant)
-extern "c" fn Node::_child_with_descendant(
-  self : Node,
-  descendant : Node
-) -> Node = "moonbit_ts_node_child_with_descendant"
+#borrow(self, self_tree, descendant, descendant_tree)
+extern "c" fn ts_node_child_with_descendant(
+  self : TSNode,
+  self_tree : Tree,
+  descendant : TSNode,
+  descendant_tree : Tree
+) -> TSNode = "moonbit_ts_node_child_with_descendant"
 
 ///|
 /// Get the node that contains `descendant`.
 ///
 /// Note that this can return `descendant` itself.
 pub fn Node::child_with_descendant(self : Node, descendant : Node) -> Node? {
-  let child = self._child_with_descendant(descendant)
-  if child.is_null() {
+  let child = ts_node_child_with_descendant(
+    self.node,
+    self.tree,
+    descendant.node,
+    descendant.tree,
+  )
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_child(self : Node, index : UInt) -> Node = "moonbit_ts_node_child"
+#borrow(self, tree)
+extern "c" fn ts_node_child(self : TSNode, tree : Tree, index : UInt) -> TSNode = "moonbit_ts_node_child"
 
 ///|
 fn int_to_uint(value : Int) -> UInt {
@@ -185,11 +269,11 @@ fn uint_to_int(value : UInt) -> Int {
 /// child.
 pub fn Node::child(self : Node, index : Int) -> Node? {
   let index = int_to_uint(index)
-  let child = self._child(index)
-  if child.is_null() {
+  let child = ts_node_child(self.node, self.tree, index)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
@@ -197,8 +281,9 @@ pub fn Node::child(self : Node, index : Int) -> Node? {
 /// Get all children of the node.
 pub fn Node::children(self : Node) -> Iter[Node] {
   Iter::new(fn(yield_) {
-    for i in 0U..<self._child_count() {
-      match yield_(self._child(i)) {
+    for i in 0U..<ts_node_child_count(self.node, self.tree) {
+      let child = ts_node_child(self.node, self.tree, i)
+      match yield_({ ..self, node: child }) {
         IterEnd => return IterEnd
         IterContinue => continue
       }
@@ -208,9 +293,10 @@ pub fn Node::children(self : Node) -> Iter[Node] {
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_field_name_for_child(
-  self : Node,
+#borrow(self, tree)
+extern "c" fn ts_node_field_name_for_child(
+  self : TSNode,
+  tree : Tree,
   child_index : UInt
 ) -> @c.Pointer[Byte] = "moonbit_ts_node_field_name_for_child"
 
@@ -219,7 +305,11 @@ extern "c" fn Node::_field_name_for_child(
 /// the first child. Returns `None`, if no field is found.
 pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
   let child_index = int_to_uint(child_index)
-  let field_name = self._field_name_for_child(child_index)
+  let field_name = ts_node_field_name_for_child(
+    self.node,
+    self.tree,
+    child_index,
+  )
   if field_name.is_null() {
     return None
   }
@@ -232,9 +322,10 @@ pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_field_name_for_named_child(
-  self : Node,
+#borrow(self, tree)
+extern "c" fn ts_node_field_name_for_named_child(
+  self : TSNode,
+  tree : Tree,
   child_index : UInt
 ) -> @c.Pointer[Byte] = "moonbit_ts_node_field_name_for_named_child"
 
@@ -246,7 +337,11 @@ pub fn Node::field_name_for_named_child(
   child_index : Int
 ) -> String? {
   let child_index = int_to_uint(child_index)
-  let field_name = self._field_name_for_named_child(child_index)
+  let field_name = ts_node_field_name_for_named_child(
+    self.node,
+    self.tree,
+    child_index,
+  )
   if field_name.is_null() {
     return None
   }
@@ -259,18 +354,22 @@ pub fn Node::field_name_for_named_child(
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_child_count(self : Node) -> UInt = "moonbit_ts_node_child_count"
+#borrow(self, tree)
+extern "c" fn ts_node_child_count(self : TSNode, tree : Tree) -> UInt = "moonbit_ts_node_child_count"
 
 ///|
 /// Get the node's number of children.
 pub fn Node::child_count(self : Node) -> Int {
-  uint_to_int(self._child_count())
+  uint_to_int(ts_node_child_count(self.node, self.tree))
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_named_child(self : Node, child_index : UInt) -> Node = "moonbit_ts_node_named_child"
+#borrow(self, tree)
+extern "c" fn ts_node_named_child(
+  self : TSNode,
+  tree : Tree,
+  child_index : UInt
+) -> TSNode = "moonbit_ts_node_named_child"
 
 ///|
 /// Get the node's *named* child at the given index.
@@ -278,32 +377,33 @@ extern "c" fn Node::_named_child(self : Node, child_index : UInt) -> Node = "moo
 /// See also `Node::is_named`.
 pub fn Node::named_child(self : Node, child_index : Int) -> Node? {
   let child_index = int_to_uint(child_index)
-  let child = self._named_child(child_index)
-  if child.is_null() {
+  let child = ts_node_named_child(self.node, self.tree, child_index)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_named_child_count(self : Node) -> UInt = "moonbit_ts_node_named_child_count"
+#borrow(self, tree)
+extern "c" fn ts_node_named_child_count(self : TSNode, tree : Tree) -> UInt = "moonbit_ts_node_named_child_count"
 
 ///|
 /// Get the node's number of *named* children.
 ///
 /// See also `Node::is_named`.
 pub fn Node::named_child_count(self : Node) -> Int {
-  uint_to_int(self._named_child_count())
+  uint_to_int(ts_node_named_child_count(self.node, self.tree))
 }
 
 ///|
 /// Get all named children of the node.
 pub fn Node::named_children(self : Node) -> Iter[Node] {
   Iter::new(fn(yield_) {
-    for i in 0U..<self._named_child_count() {
-      match yield_(self._named_child(i)) {
+    for i in 0U..<ts_node_named_child_count(self.node, self.tree) {
+      let child = ts_node_named_child(self.node, self.tree, i)
+      match yield_({ ..self, node: child }) {
         IterEnd => return IterEnd
         IterContinue => continue
       }
@@ -314,24 +414,32 @@ pub fn Node::named_children(self : Node) -> Iter[Node] {
 
 ///|
 /// Get the node's child with the given field name.
-#borrow(self, name)
-extern "c" fn Node::_child_by_field_name(self : Node, name : Bytes) -> Node = "moonbit_ts_node_child_by_field_name"
+#borrow(self, tree, name)
+extern "c" fn ts_node_child_by_field_name(
+  self : TSNode,
+  tree : Tree,
+  name : Bytes
+) -> TSNode = "moonbit_ts_node_child_by_field_name"
 
 ///|
 /// Get the node's child with the given field name.
 pub fn Node::child_by_field_name(self : Node, name : String) -> Node? {
   let name_bytes = @encoding.encode(UTF8, name)
-  let child = self._child_by_field_name(name_bytes)
-  if child.is_null() {
+  let child = ts_node_child_by_field_name(self.node, self.tree, name_bytes)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_child_by_field_id(self : Node, id : FieldId) -> Node = "moonbit_ts_node_child_by_field_id"
+#borrow(self, tree)
+extern "c" fn ts_node_child_by_field_id(
+  self : TSNode,
+  tree : Tree,
+  id : FieldId
+) -> TSNode = "moonbit_ts_node_child_by_field_id"
 
 ///|
 /// Get the node's child with the given numerical field id.
@@ -339,120 +447,132 @@ extern "c" fn Node::_child_by_field_id(self : Node, id : FieldId) -> Node = "moo
 /// You can convert a field name to an id using the
 /// `Language::field_id_for_name` function.
 pub fn Node::child_by_field_id(self : Node, id : FieldId) -> Node? {
-  let child = self._child_by_field_id(id)
-  if child.is_null() {
+  let child = ts_node_child_by_field_id(self.node, self.tree, id)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_next_sibling(self : Node) -> Node = "moonbit_ts_node_next_sibling"
+#borrow(self, tree)
+extern "c" fn ts_node_next_sibling(self : TSNode, tree : Tree) -> TSNode = "moonbit_ts_node_next_sibling"
 
 ///|
 /// Get the node's next sibling.
 pub fn Node::next_sibling(self : Node) -> Node? {
-  let next_sibling = self._next_sibling()
-  if next_sibling.is_null() {
+  let next_sibling = ts_node_next_sibling(self.node, self.tree)
+  if ts_node_is_null(next_sibling, self.tree) {
     None
   } else {
-    Some(next_sibling)
+    Some({ ..self, node: next_sibling })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_prev_sibling(self : Node) -> Node = "moonbit_ts_node_prev_sibling"
+#borrow(self, tree)
+extern "c" fn ts_node_prev_sibling(self : TSNode, tree : Tree) -> TSNode = "moonbit_ts_node_prev_sibling"
 
 ///|
 /// Get the node's previous sibling.
 pub fn Node::prev_sibling(self : Node) -> Node? {
-  let prev_sibling = self._prev_sibling()
-  if prev_sibling.is_null() {
+  let prev_sibling = ts_node_prev_sibling(self.node, self.tree)
+  if ts_node_is_null(prev_sibling, self.tree) {
     None
   } else {
-    Some(prev_sibling)
+    Some({ ..self, node: prev_sibling })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_next_named_sibling(self : Node) -> Node = "moonbit_ts_node_next_named_sibling"
+#borrow(self, tree)
+extern "c" fn ts_node_next_named_sibling(self : TSNode, tree : Tree) -> TSNode = "moonbit_ts_node_next_named_sibling"
 
 ///|
 /// Get the node's next *named* sibling.
 pub fn Node::next_named_sibling(self : Node) -> Node? {
-  let next_named_sibling = self._next_named_sibling()
-  if next_named_sibling.is_null() {
+  let next_named_sibling = ts_node_next_named_sibling(self.node, self.tree)
+  if ts_node_is_null(next_named_sibling, self.tree) {
     None
   } else {
-    Some(next_named_sibling)
+    Some({ ..self, node: next_named_sibling })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_prev_named_sibling(self : Node) -> Node = "moonbit_ts_node_prev_named_sibling"
+#borrow(self, tree)
+extern "c" fn ts_node_prev_named_sibling(self : TSNode, tree : Tree) -> TSNode = "moonbit_ts_node_prev_named_sibling"
 
 ///|
 /// Get the node's previous *named* sibling.
 pub fn Node::prev_named_sibling(self : Node) -> Node? {
-  let prev_named_sibling = self._prev_named_sibling()
-  if prev_named_sibling.is_null() {
+  let prev_named_sibling = ts_node_prev_named_sibling(self.node, self.tree)
+  if ts_node_is_null(prev_named_sibling, self.tree) {
     None
   } else {
-    Some(prev_named_sibling)
+    Some({ ..self, node: prev_named_sibling })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_first_child_for_byte(self : Node, byte : UInt) -> Node = "moonbit_ts_node_first_child_for_byte"
+#borrow(self, tree)
+extern "c" fn ts_node_first_child_for_byte(
+  self : TSNode,
+  tree : Tree,
+  byte : UInt
+) -> TSNode = "moonbit_ts_node_first_child_for_byte"
 
 ///|
 /// Get the node's first child that contains or starts after the given byte offset.
 pub fn Node::first_child_for_byte(self : Node, byte : Int) -> Node? {
   let byte = int_to_uint(byte)
-  let child = self._first_child_for_byte(byte)
-  if child.is_null() {
+  let child = ts_node_first_child_for_byte(self.node, self.tree, byte)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-#borrow(self)
-extern "c" fn Node::_first_named_child_for_byte(
-  self : Node,
+#borrow(self, tree)
+extern "c" fn ts_node_first_named_child_for_byte(
+  self : TSNode,
+  tree : Tree,
   byte : UInt
-) -> Node = "moonbit_ts_node_first_named_child_for_byte"
+) -> TSNode = "moonbit_ts_node_first_named_child_for_byte"
 
 ///|
 /// Get the node's first named child that contains or starts after the given byte offset.
 pub fn Node::first_named_child_for_byte(self : Node, byte : Int) -> Node? {
   let byte = int_to_uint(byte)
-  let child = self._first_child_for_byte(byte)
-  if child.is_null() {
+  let child = ts_node_first_named_child_for_byte(self.node, self.tree, byte)
+  if ts_node_is_null(child, self.tree) {
     None
   } else {
-    Some(child)
+    Some({ ..self, node: child })
   }
 }
 
 ///|
-/// Get the node's number of descendants, including one for the node itself.
-#borrow(self)
-pub extern "c" fn Node::descendant_count(self : Node) -> Int = "moonbit_ts_node_descendant_count"
+#borrow(self, tree)
+extern "c" fn ts_node_descendant_count(self : TSNode, tree : Tree) -> Int = "moonbit_ts_node_descendant_count"
 
 ///|
-extern "c" fn Node::_descendant_for_byte_range(
-  self : Node,
+/// Get the node's number of descendants, including one for the node itself.
+pub fn Node::descendant_count(self : Node) -> Int {
+  return ts_node_descendant_count(self.node, self.tree)
+}
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_descendant_for_byte_range(
+  self : TSNode,
+  tree : Tree,
   start_byte : UInt,
   end_byte : UInt
-) -> Node = "moonbit_ts_node_descendant_for_byte_range"
+) -> TSNode = "moonbit_ts_node_descendant_for_byte_range"
 
 ///|
 /// Get the smallest node within this node that spans the given range of bytes.
@@ -463,21 +583,27 @@ pub fn Node::descendant_for_byte_range(
 ) -> Node? {
   let start_byte = int_to_uint(start_byte)
   let end_byte = int_to_uint(end_byte)
-  let descendant = self._descendant_for_byte_range(start_byte, end_byte)
-  if descendant.is_null() {
+  let descendant = ts_node_descendant_for_byte_range(
+    self.node,
+    self.tree,
+    start_byte,
+    end_byte,
+  )
+  if ts_node_is_null(descendant, self.tree) {
     None
   } else {
-    Some(descendant)
+    Some({ ..self, node: descendant })
   }
 }
 
 ///|
-#borrow(self, start_point, end_point)
-extern "c" fn Node::_descendant_for_point_range(
-  self : Node,
+#borrow(self, tree, start_point, end_point)
+extern "c" fn ts_node_descendant_for_point_range(
+  self : TSNode,
+  tree : Tree,
   start_point : Point,
   end_point : Point
-) -> Node = "moonbit_ts_node_descendant_for_point_range"
+) -> TSNode = "moonbit_ts_node_descendant_for_point_range"
 
 ///|
 /// Get the smallest node within this node that spans the given range of
@@ -487,13 +613,84 @@ pub fn Node::descendant_for_point_range(
   start_point : Point,
   end_point : Point
 ) -> Node? {
-  let descendant = self._descendant_for_point_range(start_point, end_point)
-  if descendant.is_null() {
+  let descendant = ts_node_descendant_for_point_range(
+    self.node,
+    self.tree,
+    start_point,
+    end_point,
+  )
+  if ts_node_is_null(descendant, self.tree) {
     None
   } else {
-    Some(descendant)
+    Some({ ..self, node: descendant })
   }
 }
+
+///|
+#borrow(self, tree)
+extern "c" fn ts_node_named_descendant_for_byte_range(
+  self : TSNode,
+  tree : Tree,
+  start_byte : UInt,
+  end_byte : UInt
+) -> TSNode = "moonbit_ts_node_named_descendant_for_byte_range"
+
+///|
+/// Get the smallest named node within this node that spans the given range of
+/// bytes.
+pub fn Node::named_descendant_for_byte_range(
+  self : Node,
+  start_byte : Int,
+  end_byte : Int
+) -> Node? {
+  let start_byte = int_to_uint(start_byte)
+  let end_byte = int_to_uint(end_byte)
+  let descendant = ts_node_named_descendant_for_byte_range(
+    self.node,
+    self.tree,
+    start_byte,
+    end_byte,
+  )
+  if ts_node_is_null(descendant, self.tree) {
+    None
+  } else {
+    Some({ ..self, node: descendant })
+  }
+}
+
+///|
+#borrow(self, tree, start_point, end_point)
+extern "c" fn ts_node_named_descendant_for_point_range(
+  self : TSNode,
+  tree : Tree,
+  start_point : Point,
+  end_point : Point
+) -> TSNode = "moonbit_ts_node_named_descendant_for_point_range"
+
+///|
+/// Get the smallest named node within this node that spans the given
+/// (row, column) positions.
+pub fn Node::named_descendant_for_point_range(
+  self : Node,
+  start_point : Point,
+  end_point : Point
+) -> Node? {
+  let descendant = ts_node_named_descendant_for_point_range(
+    self.node,
+    self.tree,
+    start_point,
+    end_point,
+  )
+  if ts_node_is_null(descendant, self.tree) {
+    None
+  } else {
+    Some({ ..self, node: descendant })
+  }
+}
+
+///|
+#borrow(self, tree, edit)
+extern "c" fn ts_node_edit(self : TSNode, tree : Tree, edit : InputEdit) = "moonbit_ts_node_edit"
 
 ///|
 /// Edit the node to keep it in-sync with source code that has been edited.
@@ -503,15 +700,26 @@ pub fn Node::descendant_for_point_range(
 /// afterward will already reflect the edit. You only need to use `Node::edit`
 /// when you have a `Node` instance that you want to keep and continue to use
 /// after an edit.
-#borrow(self, edit)
-pub extern "c" fn Node::edit(self : Node, edit : InputEdit) -> Unit = "moonbit_ts_node_edit"
+pub fn Node::edit(self : Node, edit : InputEdit) -> Unit {
+  ts_node_edit(self.node, self.tree, edit)
+}
+
+///|
+#borrow(self, self_tree, other, other_tree)
+extern "c" fn ts_node_eq(
+  self : TSNode,
+  self_tree : Tree,
+  other : TSNode,
+  other_tree : Tree
+) -> Bool = "moonbit_ts_node_eq"
 
 ///|
 /// Check if two nodes are identical.
-#borrow(self, other)
-pub extern "c" fn Node::eq(self : Node, other : Node) -> Bool = "moonbit_ts_node_eq"
+pub fn Node::eq(self : Node, other : Node) -> Bool {
+  ts_node_eq(self.node, self.tree, other.node, other.tree)
+}
 
 ///|
 impl Eq for Node with op_equal(self, other) -> Bool {
-  self.eq(other)
+  ts_node_eq(self.node, self.tree, other.node, other.tree)
 }

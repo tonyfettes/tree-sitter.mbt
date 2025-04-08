@@ -1,5 +1,14 @@
 ///|
-type TreeCursor
+priv type TSTreeCursor
+
+///|
+struct TreeCursor {
+  cursor : TSTreeCursor
+  tree : Tree
+}
+
+///|
+extern "c" fn ts_tree_cursor_new(node : TSNode) -> TSTreeCursor = "moonbit_ts_tree_cursor_new"
 
 ///|
 /// Create a new tree cursor starting from the given node.
@@ -10,30 +19,55 @@ type TreeCursor
 ///
 /// Note that the given node is considered the root of the cursor,
 /// and the cursor cannot walk outside this node.
-pub extern "c" fn TreeCursor::new(node : Node) -> TreeCursor = "moonbit_ts_tree_cursor_new"
+pub fn TreeCursor::new(node : Node) -> TreeCursor {
+  let cursor = ts_tree_cursor_new(node.node)
+  TreeCursor::{ cursor, tree: node.tree }
+}
+
+///|
+#borrow(self, node)
+extern "c" fn ts_tree_cursor_reset(self : TSTreeCursor, node : Node) = "moonbit_ts_tree_cursor_reset"
 
 ///|
 /// Re-initialize a tree cursor to start at the original node that the cursor was
 /// constructed with.
-#borrow(self, node)
-pub extern "c" fn TreeCursor::reset(self : TreeCursor, node : Node) = "moonbit_ts_tree_cursor_reset"
+pub fn TreeCursor::reset(self : TreeCursor, node : Node) -> Unit {
+  ts_tree_cursor_reset(self.cursor, node)
+}
+
+///|
+#borrow(self, other)
+extern "c" fn ts_tree_cursor_reset_to(
+  self : TSTreeCursor,
+  other : TSTreeCursor
+) = "moonbit_ts_tree_cursor_reset_to"
 
 ///|
 /// Re-initialize a tree cursor to the same position as another cursor.
 ///
 /// Unlike TreeCursor::reset, this will not lose parent information and
 /// allows reusing already created cursors.
-#borrow(self, other)
-pub extern "c" fn TreeCursor::reset_to(self : TreeCursor, other : TreeCursor) = "moonbit_ts_tree_cursor_reset_to"
-
-///|
-/// Get the tree cursor's current node.
-pub extern "c" fn TreeCursor::current_node(self : TreeCursor) -> Node = "moonbit_ts_tree_cursor_current_node"
+pub fn TreeCursor::reset_to(self : TreeCursor, other : TreeCursor) -> Unit {
+  ts_tree_cursor_reset_to(self.cursor, other.cursor)
+}
 
 ///|
 #borrow(self)
-extern "c" fn TreeCursor::_current_field_name(
-  self : TreeCursor
+extern "c" fn ts_tree_cursor_current_node(self : TSTreeCursor) -> TSNode = "moonbit_ts_tree_cursor_current_node"
+
+///|
+/// Get the tree cursor's current node.
+pub fn TreeCursor::current_node(self : TreeCursor) -> Node {
+  return Node::{
+    node: ts_tree_cursor_current_node(self.cursor),
+    tree: self.tree,
+  }
+}
+
+///|
+#borrow(self)
+extern "c" fn ts_tree_cursor_current_field_name(
+  self : TSTreeCursor
 ) -> @c.Pointer[Byte] = "moonbit_ts_tree_cursor_current_field_name"
 
 ///|
@@ -42,7 +76,7 @@ extern "c" fn TreeCursor::_current_field_name(
 /// This returns `None` if the current node doesn't have a field.
 /// See also `Node::child_by_field_name`.
 pub fn TreeCursor::current_field_name(self : TreeCursor) -> String? {
-  let name = self._current_field_name()
+  let name = ts_tree_cursor_current_field_name(self.cursor)
   if name.is_null() {
     return None
   }
@@ -56,12 +90,21 @@ pub fn TreeCursor::current_field_name(self : TreeCursor) -> String? {
 }
 
 ///|
+#borrow(self)
+extern "c" fn ts_tree_cursor_current_field_id(self : TSTreeCursor) -> FieldId = "moonbit_ts_tree_cursor_current_field_id"
+
+///|
 /// Get the field id of the tree cursor's current node.
 ///
 /// This returns zero if the current node doesn't have a field.
 /// See also `Node::child_by_field_id`, `Language::field_id_for_name`.
+pub fn TreeCursor::current_field_id(self : TreeCursor) -> FieldId {
+  ts_tree_cursor_current_field_id(self.cursor)
+}
+
+///|
 #borrow(self)
-pub extern "c" fn TreeCursor::current_field_id(self : TreeCursor) -> FieldId = "moonbit_ts_tree_cursor_current_field_id"
+extern "c" fn ts_tree_cursor_goto_parent(self : TSTreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_parent"
 
 ///|
 /// Move the cursor to the parent of its current node.
@@ -71,8 +114,13 @@ pub extern "c" fn TreeCursor::current_field_id(self : TreeCursor) -> FieldId = "
 ///
 /// Note that the node the cursor was constructed with is considered the root
 /// of the cursor, and the cursor cannot walk outside this node.
+pub fn TreeCursor::goto_parent(self : TreeCursor) -> Bool {
+  ts_tree_cursor_goto_parent(self.cursor)
+}
+
+///|
 #borrow(self)
-pub extern "c" fn TreeCursor::goto_parent(self : TreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_parent"
+extern "c" fn ts_tree_cursor_goto_next_sibling(self : TSTreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_next_sibling"
 
 ///|
 /// Move the cursor to the next sibling of its current node.
@@ -82,8 +130,13 @@ pub extern "c" fn TreeCursor::goto_parent(self : TreeCursor) -> Bool = "moonbit_
 ///
 /// Note that the node the cursor was constructed with is considered the root
 /// of the cursor, and the cursor cannot walk outside this node.
+pub fn TreeCursor::goto_next_sibling(self : TreeCursor) -> Bool {
+  ts_tree_cursor_goto_next_sibling(self.cursor)
+}
+
+///|
 #borrow(self)
-pub extern "c" fn TreeCursor::goto_next_sibling(self : TreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_next_sibling"
+extern "c" fn ts_tree_cursor_goto_previous_sibling(self : TSTreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_previous_sibling"
 
 ///|
 /// Move the cursor to the previous sibling of its current node.
@@ -96,15 +149,26 @@ pub extern "c" fn TreeCursor::goto_next_sibling(self : TreeCursor) -> Bool = "mo
 /// iterate through all the children up to the previous sibling node to recalculate
 /// its position. Also note that the node the cursor was constructed with is
 /// considered the root of the cursor, and the cursor cannot walk outside this node.
+pub fn TreeCursor::goto_previous_sibling(self : TreeCursor) -> Bool {
+  ts_tree_cursor_goto_previous_sibling(self.cursor)
+}
+
+///|
 #borrow(self)
-pub extern "c" fn TreeCursor::goto_previous_sibling(self : TreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_previous_sibling"
+extern "c" fn ts_tree_cursor_goto_first_child(self : TSTreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_first_child"
 
 ///|
 /// Move the cursor to the first child of its current node.
 ///
 /// This returns `true` if the cursor successfully moved, and returns `false`
 /// if there were no children.
-pub extern "c" fn TreeCursor::goto_first_child(self : TreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_first_child"
+pub fn TreeCursor::goto_first_child(self : TreeCursor) -> Bool {
+  ts_tree_cursor_goto_first_child(self.cursor)
+}
+
+///|
+#borrow(self)
+extern "c" fn ts_tree_cursor_goto_last_child(self : TSTreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_last_child"
 
 ///|
 /// Move the cursor to the last child of its current node.
@@ -115,16 +179,14 @@ pub extern "c" fn TreeCursor::goto_first_child(self : TreeCursor) -> Bool = "moo
 /// Note that this function may be slower than TreeCursor::goto_first_child
 /// because it needs to iterate through all the children to compute the child's
 /// position.
-#borrow(self)
-pub extern "c" fn TreeCursor::goto_last_child(self : TreeCursor) -> Bool = "moonbit_ts_tree_cursor_goto_last_child"
+pub fn TreeCursor::goto_last_child(self : TreeCursor) -> Bool {
+  ts_tree_cursor_goto_last_child(self.cursor)
+}
 
 ///|
-/// Move the cursor to the node that is the nth descendant of
-/// the original node that the cursor was constructed with, where
-/// zero represents the original node itself.
 #borrow(self)
-extern "c" fn TreeCursor::_goto_descendant(
-  self : TreeCursor,
+extern "c" fn ts_tree_cursor_goto_descendant(
+  self : TSTreeCursor,
   goal_descendant_index : UInt
 ) -> Unit = "moonbit_ts_tree_cursor_goto_descendant"
 
@@ -136,44 +198,40 @@ pub fn TreeCursor::goto_descendant(
   self : TreeCursor,
   goal_descendant_index : Int
 ) -> Unit {
-  self._goto_descendant(int_to_uint(goal_descendant_index))
+  ts_tree_cursor_goto_descendant(
+    self.cursor,
+    int_to_uint(goal_descendant_index),
+  )
 }
 
 ///|
-/// Get the index of the cursor's current node out of all of the
-/// descendants of the original node that the cursor was constructed with.
 #borrow(self)
-extern "c" fn TreeCursor::_current_descendant_index(self : TreeCursor) -> UInt = "moonbit_ts_tree_cursor_current_descendant_index"
+extern "c" fn ts_tree_cursor_current_descendant_index(
+  self : TSTreeCursor
+) -> UInt = "moonbit_ts_tree_cursor_current_descendant_index"
 
 ///|
 /// Get the index of the cursor's current node out of all of the
 /// descendants of the original node that the cursor was constructed with.
 pub fn TreeCursor::current_descendant_index(self : TreeCursor) -> Int {
-  uint_to_int(self._current_descendant_index())
+  uint_to_int(ts_tree_cursor_current_descendant_index(self.cursor))
 }
 
 ///|
-/// Get the depth of the cursor's current node relative to the original
-/// node that the cursor was constructed with.
 #borrow(self)
-extern "c" fn TreeCursor::_current_depth(self : TreeCursor) -> UInt = "moonbit_ts_tree_cursor_current_depth"
+extern "c" fn ts_tree_cursor_current_depth(self : TSTreeCursor) -> UInt = "moonbit_ts_tree_cursor_current_depth"
 
 ///|
 /// Get the depth of the cursor's current node relative to the original
 /// node that the cursor was constructed with.
 pub fn TreeCursor::current_depth(self : TreeCursor) -> Int {
-  uint_to_int(self._current_depth())
+  uint_to_int(ts_tree_cursor_current_depth(self.cursor))
 }
 
 ///|
-/// Move the cursor to the first child of its current node that contains or starts after
-/// the given byte offset.
-///
-/// This returns the index of the child node if one was found, and returns -1
-/// if no such child was found.
 #borrow(self)
-extern "c" fn TreeCursor::_goto_first_child_for_byte(
-  self : TreeCursor,
+extern "c" fn ts_tree_cursor_goto_first_child_for_byte(
+  self : TSTreeCursor,
   goal_byte : UInt
 ) -> Bool = "moonbit_ts_tree_cursor_goto_first_child_for_byte"
 
@@ -187,8 +245,15 @@ pub fn TreeCursor::goto_first_child_for_byte(
   self : TreeCursor,
   goal_byte : Int
 ) -> Bool {
-  self._goto_first_child_for_byte(int_to_uint(goal_byte))
+  ts_tree_cursor_goto_first_child_for_byte(self.cursor, int_to_uint(goal_byte))
 }
+
+///|
+#borrow(self, goal_point)
+extern "c" fn ts_tree_cursor_goto_first_child_for_point(
+  self : TSTreeCursor,
+  goal_point : Point
+) -> Bool = "moonbit_ts_tree_cursor_goto_first_child_for_point"
 
 ///|
 /// Move the cursor to the first child of its current node that contains or starts after
@@ -196,11 +261,19 @@ pub fn TreeCursor::goto_first_child_for_byte(
 ///
 /// This returns the index of the child node if one was found, and returns -1
 /// if no such child was found.
-#borrow(self, goal_point)
-pub extern "c" fn TreeCursor::goto_first_child_for_point(
+pub fn TreeCursor::goto_first_child_for_point(
   self : TreeCursor,
   goal_point : Point
-) -> Bool = "moonbit_ts_tree_cursor_goto_first_child_for_point"
+) -> Bool {
+  ts_tree_cursor_goto_first_child_for_point(self.cursor, goal_point)
+}
 
 ///|
-pub extern "c" fn TreeCursor::copy(self : TreeCursor) -> TreeCursor = "moonbit_ts_tree_cursor_copy"
+#borrow(self)
+extern "c" fn ts_tree_cursor_copy(self : TSTreeCursor) -> TSTreeCursor = "moonbit_ts_tree_cursor_copy"
+
+///|
+pub fn TreeCursor::copy(self : TreeCursor) -> TreeCursor {
+  let cursor = ts_tree_cursor_copy(self.cursor)
+  TreeCursor::{ cursor, tree: self.tree }
+}

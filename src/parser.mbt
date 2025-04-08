@@ -14,6 +14,7 @@ pub extern "c" fn Parser::new() -> Parser = "moonbit_ts_parser_new"
 /// Tree-sitter CLI. Check the language's ABI version using Language::abi_version
 /// and compare it to this library's `LANGUAGE_VERSION` and
 /// `MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
+#borrow(self)
 pub extern "c" fn Parser::set_language(
   self : Parser,
   language : Language
@@ -96,7 +97,8 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree.
-#borrow(self)
+// @move input
+#borrow(self, old_tree)
 extern "c" fn Parser::_parse(
   self : Parser,
   old_tree : Tree?,
@@ -128,6 +130,8 @@ pub fn ParseOptions::new(
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree, with some options.
+// @move input
+// @move progress_callback
 #borrow(self)
 extern "c" fn Parser::_parse_with_options(
   self : Parser,
