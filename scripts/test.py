@@ -14,17 +14,32 @@ def macos_flags():
         llvm_prefix = llvm_prefix.strip()
         clang_path = Path(llvm_prefix) / "bin" / "clang"
         if clang_path.exists():
-            return {"cc": str(clang_path), "cc-flags": "-g -fsanitize=address"}
+            return {"cc": str(clang_path), "cc-flags": "-g"}
     print("Warning: No LLVM installation found, using GCC-14")
-    return {"cc": "gcc-14", "cc-flags": "-g -fsanitize=address"}
+    return {
+        "stub-cc": "gcc-14",
+        "stub-cc-flags": "-g",
+        "cc": "gcc-14",
+        "cc-flags": "-g",
+    }
 
 
 def linux_flags():
-    return {"cc": "gcc", "cc-flags": "-g -fsanitize=address"}
+    return {
+        "stub-cc": "gcc",
+        "stub-cc-flags": "-g",
+        "cc": "gcc",
+        "cc-flags": "-g",
+    }
 
 
 def windows_flags():
-    return {"cc": "cl.exe", "cc-flags": "/fsanitize=address /DEBUG"}
+    return {
+        "stub-cc": "cl.exe",
+        "stub-cc-flags": "/DEBUG",
+        "cc": "cl.exe",
+        "cc-flags": "/DEBUG",
+    }
 
 
 def remove_pre_build(path: Path):
@@ -60,12 +75,17 @@ def main():
     print(moon_pkg_path.read_text())
     print("----------------------------------------------")
     env = os.environ.copy()
+    if platform.system() == "Windows":
+        env["MOON_CC"] = flags["cc"] + " /DEBUG /fsanitize=address"
+    else:
+        env["MOON_CC"] = flags["cc"] + " -g -fsanitize=address"
+        env["MOON_AR"] = "ar"
     if platform.system() != "Windows":
         env["ASAN_OPTIONS"] = "detect_leaks=1"
         env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
     try:
         subprocess.run(
-            ["moon", "test", "--target", "native"], check=True, cwd=test_path, env=env
+            ["moon", "test", "--target", "native", "-v"], check=True, cwd=test_path, env=env
         )
     finally:
         moon_pkg_path.write_text(moon_pkg_text)
