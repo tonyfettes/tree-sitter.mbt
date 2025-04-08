@@ -348,7 +348,7 @@ moonbit_ts_parser_parse_string(
   MoonBitTSTree *tree = (MoonBitTSTree *)moonbit_make_external_object(
     moonbit_ts_tree_delete, sizeof(MoonBitTSTree *)
   );
-  moonbit_ts_trace("tree = %p\n", (void *)tree);
+  moonbit_ts_trace("old_ts_tree = %p\n", (void *)old_ts_tree);
   tree->tree = ts_parser_parse_string(
     self->parser, old_ts_tree, (const char *)bytes, length
   );
@@ -1183,62 +1183,38 @@ moonbit_ts_query_cursor_exec_with_options(
 }
 
 bool
-moonbit_ts_query_cursor_did_exceed_match_limit(
-  MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree
-) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
+moonbit_ts_query_cursor_did_exceed_match_limit(MoonBitTSQueryCursor *self) {
   return ts_query_cursor_did_exceed_match_limit(self->cursor);
 }
 
 uint32_t
-moonbit_ts_query_cursor_match_limit(
-  MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree
-) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
+moonbit_ts_query_cursor_match_limit(MoonBitTSQueryCursor *self) {
   return ts_query_cursor_match_limit(self->cursor);
 }
 
 void
 moonbit_ts_query_cursor_set_match_limit(
   MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree,
   uint32_t limit
 ) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
   ts_query_cursor_set_match_limit(self->cursor, limit);
 }
 
 void
 moonbit_ts_query_cursor_set_byte_range(
   MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree,
   uint32_t start_byte,
   uint32_t end_byte
 ) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
   ts_query_cursor_set_byte_range(self->cursor, start_byte, end_byte);
 }
 
 void
 moonbit_ts_query_cursor_set_point_range(
   MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree,
   TSPoint *start_point,
   TSPoint *end_point
 ) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
   ts_query_cursor_set_point_range(self->cursor, *start_point, *end_point);
 }
 
@@ -1306,12 +1282,8 @@ moonbit_ts_query_cursor_next_capture(
 void
 moonbit_ts_query_cursor_set_max_start_depth(
   MoonBitTSQueryCursor *self,
-  MoonBitTSQuery *query,
-  MoonBitTSTree *tree,
   uint32_t max_start_depth
 ) {
-  moonbit_ts_ignore(query);
-  moonbit_ts_ignore(tree);
   ts_query_cursor_set_max_start_depth(self->cursor, max_start_depth);
 }
 

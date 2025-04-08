@@ -104,11 +104,10 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree.
-// @move input
 #borrow(self, old_tree)
 extern "c" fn ts_parser_parse(
   self : Parser,
-  old_tree : Tree?,
+  old_tree : Tree,
   input : (UInt, Point) -> Bytes,
   encoding : InputEncoding,
   decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]]
@@ -137,12 +136,10 @@ pub fn ParseOptions::new(
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree, with some options.
-// @move input
-// @move progress_callback
-#borrow(self)
+#borrow(self, old_tree)
 extern "c" fn ts_parser_parse_with_options(
   self : Parser,
-  old_tree : @c.Nullable[Tree],
+  old_tree : Tree,
   input : (UInt, Point) -> Bytes,
   encoding : UInt,
   decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]],
@@ -210,11 +207,17 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
-    return ts_parser_parse(self, old_tree, input.read, input_encoding, decode).to()
+    return ts_parser_parse(
+      self,
+      old_tree.or(Tree::null()),
+      input.read,
+      input_encoding,
+      decode,
+    ).to()
   }
   ts_parser_parse_with_options(
     self,
-    @c.Nullable::of(old_tree),
+    old_tree.or(Tree::null()),
     input.read,
     input_encoding.to_uint(),
     decode,
@@ -226,18 +229,18 @@ pub fn Parser::parse[Encoding : DecodeFunction](
 }
 
 ///|
-#borrow(self, string)
+#borrow(self, old_tree, string)
 extern "c" fn ts_parser_parse_bytes(
   self : Parser,
-  old_tree : Tree?,
+  old_tree : Tree,
   string : Bytes
 ) -> Tree = "moonbit_ts_parser_parse_string"
 
 ///|
-#borrow(self, string)
+#borrow(self, old_tree, string)
 extern "c" fn ts_parser_parse_bytes_encoding(
   self : Parser,
-  old_tree : Tree?,
+  old_tree : Tree,
   string : Bytes,
   encoding : UInt
 ) -> Tree = "moonbit_ts_parser_parse_string_encoding"
@@ -254,9 +257,14 @@ pub fn Parser::parse_bytes(
   encoding? : InputEncoding
 ) -> Tree {
   match encoding {
-    None => ts_parser_parse_bytes(self, old_tree, bytes)
+    None => ts_parser_parse_bytes(self, old_tree.or(Tree::null()), bytes)
     Some(encoding) =>
-      ts_parser_parse_bytes_encoding(self, old_tree, bytes, encoding.to_uint())
+      ts_parser_parse_bytes_encoding(
+        self,
+        old_tree.or(Tree::null()),
+        bytes,
+        encoding.to_uint(),
+      )
   }
 }
 
@@ -269,7 +277,11 @@ pub fn Parser::parse_string(
   old_tree : Tree?,
   string : String
 ) -> Tree {
-  ts_parser_parse_bytes(self, old_tree, @encoding.encode(UTF8, string))
+  ts_parser_parse_bytes(
+    self,
+    old_tree.or(Tree::null()),
+    @encoding.encode(UTF8, string),
+  )
 }
 
 ///|

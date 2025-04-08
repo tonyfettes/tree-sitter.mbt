@@ -1,6 +1,8 @@
 ///|
 type Tree
 
+extern "c" fn Tree::null() -> Tree = "moonbit_c_null"
+
 ///|
 #borrow(self)
 extern "c" fn ts_tree_copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"

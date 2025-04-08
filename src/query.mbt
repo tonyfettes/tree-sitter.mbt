@@ -1,6 +1,8 @@
 ///|
 type Query
 
+extern "c" fn Query::null() -> Query = "moonbit_c_null"
+
 ///|
 type! QueryError {
   Syntax(UInt)
