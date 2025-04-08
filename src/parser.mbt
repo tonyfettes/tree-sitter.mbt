@@ -112,7 +112,7 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 extern "c" fn ts_parser_parse(
   self : Parser,
   old_tree : Tree,
-  input : (UInt, Point) -> Bytes,
+  input : (UInt, Point, FixedArray[UInt]) -> Bytes,
   encoding : InputEncoding,
   decode : @c.Nullable[
     FuncRef[(@c.Pointer[Byte], UInt, @c.Pointer[Int]) -> Int],
@@ -147,7 +147,7 @@ pub fn ParseOptions::new(
 extern "c" fn ts_parser_parse_with_options(
   self : Parser,
   old_tree : Tree,
-  input : (UInt, Point) -> Bytes,
+  input : (UInt, Point, FixedArray[UInt]) -> Bytes,
   encoding : UInt,
   decode : @c.Nullable[
     FuncRef[(@c.Pointer[Byte], UInt, @c.Pointer[Int]) -> Int],
@@ -221,19 +221,35 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       })
     _ => @c.Nullable::none()
   }
+  let mut chunk = None
+  let read : (UInt, Point, FixedArray[UInt]) -> Bytes = fn(
+    offset : UInt,
+    point : Point,
+    range : FixedArray[UInt]
+  ) {
+    let bytes_view = (input.read)(offset, point)
+    let bytes_start = bytes_view.start_offset()
+    let bytes_length = bytes_view.length()
+    range[0] = int_to_uint(bytes_start)
+    range[1] = int_to_uint(bytes_length)
+    let bytes_data = bytes_view.data()
+    if chunk is Some(chunk) && physical_equal(chunk, bytes_data) {
+      return bytes_data
+    }
+    if bytes_length != 0 {
+      chunk = Some(bytes_data)
+    } else {
+      chunk = None
+    }
+    return bytes_data
+  }
   guard options is Some(options) else {
-    ts_parser_parse(
-      self,
-      old_tree.or(ts_tree_null()),
-      input.read,
-      encoding,
-      decode,
-    ).to_option()
+    ts_parser_parse(self, old_tree.or(ts_tree_null()), read, encoding, decode).to_option()
   }
   ts_parser_parse_with_options(
     self,
     old_tree.or(ts_tree_null()),
-    input.read,
+    read,
     encoding.to_uint(),
     decode,
     fn(current_byte_offset, has_error) {

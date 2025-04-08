@@ -8,7 +8,7 @@
 #ifdef DEBUG
 #include <stdio.h>
 #define moonbit_ts_trace(format, ...)                                          \
-  fprintf(stderr, "%s: " format, __func__, __VA_ARGS__)
+  fprintf(stdout, "%s: " format, __func__ __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define moonbit_ts_trace(...)
 #endif
@@ -225,11 +225,17 @@ moonbit_ts_parser_included_ranges(MoonBitTSParser *self) {
   return copy;
 }
 
+typedef struct MoonBitTSInputReadRange {
+  uint32_t offset;
+  uint32_t length;
+} MoonBitTSInputReadRange;
+
 struct MoonBitTSInputRead {
   moonbit_bytes_t (*read)(
     struct MoonBitTSInputRead *payload,
     uint32_t byte,
-    TSPoint *position
+    TSPoint *position,
+    MoonBitTSInputReadRange *range
   );
 };
 
@@ -241,16 +247,34 @@ moonbit_ts_input_read(
   uint32_t *bytes_read
 ) {
   struct MoonBitTSInputRead *input = (struct MoonBitTSInputRead *)payload;
+  moonbit_ts_trace("input = %p\n", (void *)input);
   TSPoint *point =
     (TSPoint *)moonbit_make_int32_array(sizeof(TSPoint) / sizeof(int32_t), 0);
   *point = position;
+  moonbit_ts_trace("point = %p\n", (void *)point);
+  MoonBitTSInputReadRange *range =
+    (MoonBitTSInputReadRange *)moonbit_make_int32_array(
+      sizeof(MoonBitTSInputReadRange) / sizeof(int32_t), 0
+    );
+  range->offset = 0;
+  range->length = 0;
+  moonbit_ts_trace("range = %p\n", (void *)range);
   moonbit_incref(input);
-  moonbit_bytes_t bytes = input->read(input, byte, point);
-  *bytes_read = Moonbit_array_length(bytes);
+  // We incref `range` here as we wish it to be valid after the read function.
+  moonbit_incref(range);
+  moonbit_bytes_t bytes_data = input->read(input, byte, point, range);
+  // It is safe to decref the bytes_data here, since we keep a reference to it
+  // inside the closure of the read function.
+  moonbit_decref(bytes_data);
+  *bytes_read = range->length;
   if (*bytes_read == 0) {
+    moonbit_ts_trace("moonbit_decref(input)\n");
     moonbit_decref(input);
   }
-  return (const char *)bytes;
+  const char *bytes = (const char *)bytes_data + range->offset;
+  // Decref `range` here as we no longer need it.
+  moonbit_decref(range);
+  return bytes;
 }
 
 typedef struct MoonBitTSTree {

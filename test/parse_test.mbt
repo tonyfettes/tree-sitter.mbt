@@ -161,8 +161,7 @@ test "custom-encoding" {
     fn(offset, _) {
       let start = offset
       let end = @math.minimum(offset + 4, source_bytes.length())
-      let bytes : Bytes = [..source_bytes[start:end]]
-      return bytes
+      return source_bytes[start:end]
     },
     UTF32BE::{  },
   )
