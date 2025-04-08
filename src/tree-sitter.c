@@ -310,7 +310,7 @@ moonbit_ts_parser_parse_with_options(
   struct MoonBitTSInputRead *input,
   TSInputEncoding encoding,
   DecodeFunction decode,
-  struct MoonBitTSParseOptionsProgressCallback *callback
+  struct MoonBitTSParseOptionsProgressCallback *progress_callback
 ) {
   TSInput ts_input = {
     .payload = input,
@@ -319,7 +319,7 @@ moonbit_ts_parser_parse_with_options(
     .decode = decode
   };
   TSParseOptions options = {
-    .payload = callback,
+    .payload = progress_callback,
     .progress_callback = moonbit_ts_parse_options_progress_callback
   };
   TSTree *ts_old_tree = NULL;

@@ -8,6 +8,7 @@ struct TreeCursor {
 }
 
 ///|
+#borrow(node)
 extern "c" fn ts_tree_cursor_new(node : TSNode) -> TSTreeCursor = "moonbit_ts_tree_cursor_new"
 
 ///|

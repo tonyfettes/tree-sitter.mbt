@@ -34,7 +34,11 @@ extern "c" fn ts_query_cursor_new() -> TSQueryCursor = "moonbit_ts_query_cursor_
 /// QueryCursor::exec again.
 pub fn QueryCursor::new() -> QueryCursor {
   let cursor = ts_query_cursor_new()
-  let cursor = QueryCursor::{ cursor, query: Query::null(), tree: Tree::null() }
+  let cursor = QueryCursor::{
+    cursor,
+    query: Query::null(),
+    tree: ts_tree_null(),
+  }
   cursor
 }
 
@@ -48,6 +52,7 @@ extern "c" fn ts_query_cursor_exec(
 ) = "moonbit_ts_query_cursor_exec"
 
 ///|
+// @move progress_callback
 #borrow(self, query, node, tree)
 extern "c" fn ts_query_cursor_exec_with_options(
   self : TSQueryCursor,
@@ -207,6 +212,15 @@ priv type TSQueryMatch
 
 ///|
 #borrow(self)
+extern "c" fn ts_query_match_is_null(self : TSQueryMatch) -> Bool = "moonbit_c_is_null"
+
+///|
+impl Nullable for TSQueryMatch with is_null(self : TSQueryMatch) -> Bool {
+  return ts_query_match_is_null(self)
+}
+
+///|
+#borrow(self)
 extern "c" fn ts_query_match_id(self : TSQueryMatch) -> UInt = "moonbit_ts_query_match_id"
 
 ///|
@@ -237,7 +251,7 @@ extern "c" fn ts_query_cursor_next_match(
   self : TSQueryCursor,
   query : Query,
   tree : Tree
-) -> @c.Nullable[TSQueryMatch] = "moonbit_ts_query_cursor_next_match"
+) -> TSQueryMatch = "moonbit_ts_query_cursor_next_match"
 
 ///|
 /// Advance to the next match of the currently running query.
@@ -245,10 +259,8 @@ extern "c" fn ts_query_cursor_next_match(
 /// If there is a match, returns Some(match).
 /// Otherwise, returns None.
 pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
-  let ts_match = ts_query_cursor_next_match(self.cursor, self.query, self.tree).to()
-  guard ts_match is Some(ts_match) else {
-    return None
-  }
+  let ts_match = ts_query_cursor_next_match(self.cursor, self.query, self.tree).to_option()
+  guard ts_match is Some(ts_match) else { return None }
   let capture_count = ts_query_match_capture_count(ts_match)
   let captures = FixedArray::makei(capture_count.to_int(), fn(i) {
     let i = i.reinterpret_as_uint()
@@ -263,7 +275,7 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
 }
 
 ///|
-#borrow(self)
+#borrow(self, query, tree)
 extern "c" fn ts_query_cursor_remove_match(
   self : TSQueryCursor,
   query : Query,
@@ -283,7 +295,7 @@ pub fn QueryCursor::remove_match(self : QueryCursor, match_id : Int) -> Unit {
 }
 
 ///|
-#borrow(self, match_id)
+#borrow(self, query, tree, match_id)
 extern "c" fn ts_query_cursor_next_capture(
   self : TSQueryCursor,
   query : Query,

@@ -1,7 +1,31 @@
 ///|
 type Tree
 
-extern "c" fn Tree::null() -> Tree = "moonbit_c_null"
+///|
+priv trait Nullable {
+  is_null(Self) -> Bool
+  to_option(Self) -> Self?
+}
+
+///|
+impl Nullable with to_option(self : Self) -> Self? {
+  if self.is_null() {
+    return None
+  }
+  Some(self)
+}
+
+///|
+extern "c" fn ts_tree_null() -> Tree = "moonbit_c_null"
+
+///|
+#borrow(self)
+extern "c" fn ts_tree_is_null(self : Tree) -> Bool = "moonbit_c_is_null"
+
+///|
+impl Nullable for Tree with is_null(self : Tree) -> Bool {
+  ts_tree_is_null(self)
+}
 
 ///|
 #borrow(self)

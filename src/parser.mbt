@@ -5,6 +5,10 @@ type Parser
 extern "c" fn ts_parser_new() -> Parser = "moonbit_ts_parser_new"
 
 ///|
+#borrow(self)
+extern "c" fn Parser::is_null(self : Parser) -> Bool = "moonbit_c_is_null"
+
+///|
 /// Create a new parser.
 pub fn Parser::new() -> Parser {
   ts_parser_new()
@@ -103,7 +107,7 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 }
 
 ///|
-/// Use the parser to parse some source code and create a syntax tree.
+// @move input
 #borrow(self, old_tree)
 extern "c" fn ts_parser_parse(
   self : Parser,
@@ -111,7 +115,7 @@ extern "c" fn ts_parser_parse(
   input : (UInt, Point) -> Bytes,
   encoding : InputEncoding,
   decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]]
-) -> @c.Nullable[Tree] = "moonbit_ts_parser_parse"
+) -> Tree = "moonbit_ts_parser_parse"
 
 ///|
 /// The state of a parse operation.
@@ -135,7 +139,8 @@ pub fn ParseOptions::new(
 }
 
 ///|
-/// Use the parser to parse some source code and create a syntax tree, with some options.
+// @move input
+// @move progress_callback
 #borrow(self, old_tree)
 extern "c" fn ts_parser_parse_with_options(
   self : Parser,
@@ -144,7 +149,7 @@ extern "c" fn ts_parser_parse_with_options(
   encoding : UInt,
   decode : @c.Nullable[FuncRef[(Bytes, @c.Pointer[Int]) -> Int]],
   progress_callback : (UInt, Bool) -> Bool
-) -> @c.Nullable[Tree] = "moonbit_ts_parser_parse_with_options"
+) -> Tree = "moonbit_ts_parser_parse_with_options"
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree.
@@ -207,17 +212,17 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     _ => @c.Nullable::none()
   }
   guard options is Some(options) else {
-    return ts_parser_parse(
+    ts_parser_parse(
       self,
-      old_tree.or(Tree::null()),
+      old_tree.or(ts_tree_null()),
       input.read,
       input_encoding,
       decode,
-    ).to()
+    ).to_option()
   }
   ts_parser_parse_with_options(
     self,
-    old_tree.or(Tree::null()),
+    old_tree.or(ts_tree_null()),
     input.read,
     input_encoding.to_uint(),
     decode,
@@ -225,7 +230,7 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       let current_byte_offset = uint_to_int(current_byte_offset)
       (options.progress_callback)({ current_byte_offset, has_error })
     },
-  ).to()
+  ).to_option()
 }
 
 ///|
@@ -257,11 +262,11 @@ pub fn Parser::parse_bytes(
   encoding? : InputEncoding
 ) -> Tree {
   match encoding {
-    None => ts_parser_parse_bytes(self, old_tree.or(Tree::null()), bytes)
+    None => ts_parser_parse_bytes(self, old_tree.or(ts_tree_null()), bytes)
     Some(encoding) =>
       ts_parser_parse_bytes_encoding(
         self,
-        old_tree.or(Tree::null()),
+        old_tree.or(ts_tree_null()),
         bytes,
         encoding.to_uint(),
       )
@@ -279,7 +284,7 @@ pub fn Parser::parse_string(
 ) -> Tree {
   ts_parser_parse_bytes(
     self,
-    old_tree.or(Tree::null()),
+    old_tree.or(ts_tree_null()),
     @encoding.encode(UTF8, string),
   )
 }
@@ -337,6 +342,7 @@ fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
 }
 
 ///|
+// @move logger
 #borrow(self)
 extern "c" fn ts_parser_set_logger(self : Parser, logger : Logger) = "moonbit_ts_parser_set_logger"
 
