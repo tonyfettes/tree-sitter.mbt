@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-from os import wait
 from pathlib import PurePath, Path, PurePosixPath
 import re
-from typing import Optional, Union
+from typing import Optional
 
 class Project:
     include: list[Path]
