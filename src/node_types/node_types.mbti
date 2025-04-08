@@ -1,6 +1,8 @@
-package tonyfettes/tree_sitter/node_types
+package "tonyfettes/tree_sitter/node_types"
 
-alias @moonbitlang/core/json as @json
+import(
+  "moonbitlang/core/json"
+)
 
 // Values
 
@@ -24,8 +26,8 @@ impl @json.FromJson for NodeType
 
 pub enum NodeTypePayload {
   Empty
-  Supertype(Array[NodeType])
-  Normal(Map[String, ChildType], ChildType)
+  Supertype(subtypes~ : Array[NodeType])
+  Normal(fields~ : Map[String, ChildType], children~ : ChildType)
 }
 impl Show for NodeTypePayload
 

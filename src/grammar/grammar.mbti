@@ -1,6 +1,8 @@
-package tonyfettes/tree_sitter/grammar
+package "tonyfettes/tree_sitter/grammar"
 
-alias @moonbitlang/core/json as @json
+import(
+  "moonbitlang/core/json"
+)
 
 // Values
 
@@ -31,7 +33,7 @@ impl Eq for Prec
 impl Hash for Prec
 
 pub enum Rule {
-  Alias(Bool, String, Rule)
+  Alias(named~ : Bool, String, Rule)
   Blank
   Symbol(String)
   String(String)
@@ -39,9 +41,9 @@ pub enum Rule {
   Repeat1(Rule)
   Choice(Array[Rule])
   Seq(Array[Rule])
-  Field(String, Rule)
-  Token(Bool, Rule)
-  Prec(Prec, Int, Rule)
+  Field(name~ : String, Rule)
+  Token(immediate~ : Bool, Rule)
+  Prec(prec~ : Prec, value~ : Int, Rule)
   Pattern(String)
 }
 impl Eq for Rule
