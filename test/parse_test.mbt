@@ -121,3 +121,68 @@ test "markdown" {
   parser.set_language(moonbit)
   parser.set_included_ranges(moonbit_ranges) |> ignore()
 }
+
+///|
+struct UTF32BE {}
+
+///|
+impl @tree_sitter.DecodeFunction for UTF32BE with decode(bytes : @bytes.View) -> @tree_sitter.DecodeResult? {
+  match bytes {
+    [a, b, c, d, .. _bytes] => {
+      let bytes : Bytes = [a, b, c, d]
+      let code_point = bytes[:].to_int_be()
+      return Some({ code_point, bytes_read: 4 })
+    }
+    [.. _bytes] => return None
+  }
+}
+
+///|
+test "custom-encoding" {
+  let parser = @tree_sitter.Parser::new()
+  let language = @tree_sitter_json.language()
+  parser.set_language(language)
+  let source =
+    #|{
+    #|  "name": "John Doe",
+    #|  "age": 43
+    #|}
+  let source_buffer = @buffer.new()
+  loop source[:] {
+    [char, .. source] => {
+      let char = char.to_int()
+      source_buffer.write_int_be(char)
+      continue source
+    }
+    _ => break
+  }
+  let source_bytes = source_buffer.contents()
+  let input = @tree_sitter.Input::new(
+    fn(offset, _) {
+      let start = offset
+      let end = @math.minimum(offset + 4, source_bytes.length())
+      let bytes : Bytes = [..source_bytes[start:end]]
+      return bytes
+    },
+    UTF32BE::{  },
+  )
+  let tree = parser.parse(None, input).or_error!(Failure("Parse error"))
+  let root_node = tree.root_node()
+  let root_sexp = @sexp.parse!(root_node.string())
+  inspect!(
+    @sexp.print(root_sexp),
+    content=
+      #|(document
+      #| (object
+      #|  (pair
+      #|   key: (string
+      #|         (string_content))
+      #|   value: (string
+      #|           (string_content)))
+      #|  (pair
+      #|   key: (string
+      #|         (string_content))
+      #|   value: (number))))
+    ,
+  )
+}
