@@ -12,7 +12,7 @@ test "query" {
     #|    println("Hello, world!")
     #|  }
     #|}
-  let source_tree = parser.parse_string(None, source)
+  let source_tree = parser.parse_string(None, source).or_error!(Failure("Parse error"))
   let source_root = source_tree.root_node()
   let query =
     #|(for_expression) @forExpression

@@ -13,8 +13,8 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
   let source_tree = parser.parse_bytes(
     None,
     source,
-    encoding=@tree_sitter.InputEncoding::UTF8,
-  )
+    encoding=@encoding.UTF8,
+  ).or_error!(Failure("Parse error"))
   let source_root = source_tree.root_node()
   let query_source =
     #|(block_mapping_pair

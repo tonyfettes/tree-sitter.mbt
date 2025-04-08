@@ -136,7 +136,7 @@ fn pattern_query(
     raise UnterminatedPattern
   }
   let context = context.replaced.to_string()
-  let context_tree = parser.parse_string(None, context)
+  let context_tree = parser.parse_string(None, context).or_error!(Failure("Parse error"))
   let context_root = context_tree.root_node()
   let capture_name : Array[String] = []
   fn generate_pattern(node : @tree_sitter.Node, stripping : Bool?) -> String {
@@ -243,7 +243,9 @@ test "pattern" {
   let parser = @tree_sitter.Parser::new()
   let language = @tree_sitter_moonbit.language()
   parser.set_language(language)
-  let source_tree = parser.parse_string(None, source)
+  let source_tree = parser
+    .parse_string(None, source)
+    .or_error!(Failure("Parse error"))
   let source_root = source_tree.root_node()
   let pattern_query = pattern_query!(parser, env, pattern)
   inspect!(

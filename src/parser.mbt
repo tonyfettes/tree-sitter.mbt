@@ -259,17 +259,18 @@ pub fn Parser::parse_bytes(
   self : Parser,
   old_tree : Tree?,
   bytes : Bytes,
-  encoding? : InputEncoding
-) -> Tree {
+  encoding? : @encoding.Encoding
+) -> Tree? {
   match encoding {
-    None => ts_parser_parse_bytes(self, old_tree.or(ts_tree_null()), bytes)
+    None =>
+      ts_parser_parse_bytes(self, old_tree.or(ts_tree_null()), bytes).to_option()
     Some(encoding) =>
       ts_parser_parse_bytes_encoding(
         self,
         old_tree.or(ts_tree_null()),
         bytes,
-        encoding.to_uint(),
-      )
+        encoding.encoding().to_uint(),
+      ).to_option()
   }
 }
 
@@ -281,12 +282,12 @@ pub fn Parser::parse_string(
   self : Parser,
   old_tree : Tree?,
   string : String
-) -> Tree {
+) -> Tree? {
   ts_parser_parse_bytes(
     self,
     old_tree.or(ts_tree_null()),
     @encoding.encode(UTF8, string),
-  )
+  ).to_option()
 }
 
 ///|

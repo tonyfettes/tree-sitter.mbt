@@ -8,7 +8,7 @@ test "json" {
     #|  "name": "John Doe",
     #|  "age": 43
     #|}
-  let tree = parser.parse_string(None, source)
+  let tree = parser.parse_string(None, source).or_error!(Failure("Parse error"))
   let root_node = tree.root_node()
   inspect!(
     root_node.string(),
@@ -43,7 +43,7 @@ test "moonbit" {
     #|    fib(a - 1) + fib(a - 2)
     #|  }
     #|}
-  let tree = parser.parse_string(None, source)
+  let tree = parser.parse_string(None, source).or_error!(Failure("Parse error"))
   let root_node = tree.root_node()
   let comment_document = []
   let query = @tree_sitter.Query::new!(moonbit, "(comment) @comment")
@@ -71,7 +71,9 @@ test "moonbit" {
     ,
   )
   parser.set_language(@tree_sitter_markdown.language())
-  let markdown_tree = parser.parse_string(None, comment_document.to_string())
+  let markdown_tree = parser
+    .parse_string(None, comment_document.to_string())
+    .or_error!(Failure("Parse error"))
   let markdown_root_node = markdown_tree.root_node()
   inspect!(
     markdown_root_node,
@@ -95,7 +97,9 @@ test "markdown" {
     #|  println("Hello, World!")
     #|}
     #|```
-  let tree = parser.parse_string(None, source)
+  let tree = parser
+    .parse_string(None, source)
+    .or_error!(Failure("Failed to parse"))
   let root_node = tree.root_node()
   guard root_node.children().collect() is [document]
   guard document.children().collect() is [_, _, fenced_code_block]
