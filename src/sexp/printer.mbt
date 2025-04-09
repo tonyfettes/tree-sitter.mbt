@@ -1,9 +1,5 @@
 ///|
-fn print_to(
-  list : Array[Sexp],
-  logger : &Logger,
-  indent~ : Int = 0
-) -> Unit {
+fn print_to(list : Array[Sexp], logger : &Logger, indent~ : Int = 0) -> Unit {
   for i, sexp in list {
     sexp.print(logger, indent~)
     if i < list.length() - 1 {
