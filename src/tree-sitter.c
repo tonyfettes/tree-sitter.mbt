@@ -1339,51 +1339,63 @@ moonbit_ts_query_match_captures_get_index(
   return i;
 }
 
-TSLookaheadIterator *
-moonbit_ts_lookahead_iterator_new(TSLanguage *language, TSStateId state) {
-  return ts_lookahead_iterator_new(language, state);
+typedef struct MoonBitTSLookaheadIterator {
+  TSLookaheadIterator *iterator;
+} MoonBitTSLookaheadIterator;
+
+static inline void
+moonbit_ts_lookahead_iterator_delete(void *object) {
+  MoonBitTSLookaheadIterator *self = (MoonBitTSLookaheadIterator *)object;
+  ts_lookahead_iterator_delete(self->iterator);
 }
 
-void
-moonbit_ts_lookahead_iterator_delete(TSLookaheadIterator *self) {
-  ts_lookahead_iterator_delete(self);
+MoonBitTSLookaheadIterator *
+moonbit_ts_lookahead_iterator_new(TSLanguage *language, TSStateId state) {
+  MoonBitTSLookaheadIterator *self =
+    (MoonBitTSLookaheadIterator *)moonbit_make_external_object(
+      moonbit_ts_lookahead_iterator_delete, sizeof(MoonBitTSLookaheadIterator)
+    );
+  self->iterator = ts_lookahead_iterator_new(language, state);
+  return self;
 }
 
 int32_t
 moonbit_ts_lookahead_iterator_reset_state(
-  TSLookaheadIterator *self,
+  MoonBitTSLookaheadIterator *self,
   TSStateId state
 ) {
-  return ts_lookahead_iterator_reset_state(self, state);
+  return ts_lookahead_iterator_reset_state(self->iterator, state);
 }
 
 int32_t
 moonbit_ts_lookahead_iterator_reset(
-  TSLookaheadIterator *self,
+  MoonBitTSLookaheadIterator *self,
   TSLanguage *language,
   TSStateId state
 ) {
-  return ts_lookahead_iterator_reset(self, language, state);
+  return ts_lookahead_iterator_reset(self->iterator, language, state);
 }
 
 const TSLanguage *
-moonbit_ts_lookahead_iterator_language(const TSLookaheadIterator *self) {
-  return ts_lookahead_iterator_language(self);
+moonbit_ts_lookahead_iterator_language(MoonBitTSLookaheadIterator *self) {
+  return ts_lookahead_iterator_language(self->iterator);
 }
 
 int32_t
-moonbit_ts_lookahead_iterator_next(TSLookaheadIterator *self) {
-  return ts_lookahead_iterator_next(self);
+moonbit_ts_lookahead_iterator_next(MoonBitTSLookaheadIterator *self) {
+  return ts_lookahead_iterator_next(self->iterator);
 }
 
 TSSymbol
-moonbit_ts_lookahead_iterator_current_symbol(const TSLookaheadIterator *self) {
-  return ts_lookahead_iterator_current_symbol(self);
+moonbit_ts_lookahead_iterator_current_symbol(
+  const MoonBitTSLookaheadIterator *self
+) {
+  return ts_lookahead_iterator_current_symbol(self->iterator);
 }
 
 const char *
 moonbit_ts_lookahead_iterator_current_symbol_name(
-  const TSLookaheadIterator *self
+  const MoonBitTSLookaheadIterator *self
 ) {
-  return ts_lookahead_iterator_current_symbol_name(self);
+  return ts_lookahead_iterator_current_symbol_name(self->iterator);
 }

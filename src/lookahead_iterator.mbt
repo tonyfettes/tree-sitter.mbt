@@ -1,11 +1,20 @@
 ///|
-extern type LookaheadIterator
+type LookaheadIterator
 
 ///|
-extern "c" fn LookaheadIterator::_new(
+#borrow(self)
+extern "c" fn ts_lookahead_iterator_is_null(self : LookaheadIterator) -> Bool = "moonbit_ts_lookahead_iterator_is_null"
+
+///|
+impl Nullable for LookaheadIterator with is_null(self : LookaheadIterator) -> Bool {
+  ts_lookahead_iterator_is_null(self)
+}
+
+///|
+extern "c" fn ts_lookahead_iterator_new(
   language : Language,
   state : StateId
-) -> @c.Nullable[LookaheadIterator] = "moonbit_ts_lookahead_iterator_new"
+) -> LookaheadIterator = "moonbit_ts_lookahead_iterator_new"
 
 ///|
 /// Create a new lookahead iterator for the given language and parse state.
@@ -25,18 +34,15 @@ pub fn LookaheadIterator::new(
   language : Language,
   state : StateId
 ) -> LookaheadIterator? {
-  LookaheadIterator::_new(language, state).to()
+  ts_lookahead_iterator_new(language, state).to_option()
 }
-
-///|
-/// Delete a lookahead iterator freeing all the memory used.
-pub extern "c" fn LookaheadIterator::delete(self : LookaheadIterator) = "moonbit_ts_lookahead_iterator_delete"
 
 ///|
 /// Reset the lookahead iterator to another state.
 ///
 /// This returns `true` if the iterator was reset to the given state and `false`
 /// otherwise.
+#borrow(self)
 pub extern "c" fn LookaheadIterator::reset_state(
   self : LookaheadIterator,
   state : StateId
@@ -47,6 +53,7 @@ pub extern "c" fn LookaheadIterator::reset_state(
 ///
 /// This returns `true` if the language was set successfully and `false`
 /// otherwise.
+#borrow(self)
 pub extern "c" fn LookaheadIterator::reset(
   self : LookaheadIterator,
   language : Language,
@@ -55,6 +62,7 @@ pub extern "c" fn LookaheadIterator::reset(
 
 ///|
 /// Get the current language of the lookahead iterator.
+#borrow(self)
 pub extern "c" fn LookaheadIterator::language(
   self : LookaheadIterator
 ) -> Language = "moonbit_ts_lookahead_iterator_language"
@@ -63,16 +71,19 @@ pub extern "c" fn LookaheadIterator::language(
 /// Advance the lookahead iterator to the next symbol.
 ///
 /// This returns `true` if there is a new symbol and `false` otherwise.
+#borrow(self)
 pub extern "c" fn LookaheadIterator::next(self : LookaheadIterator) -> Bool = "moonbit_ts_lookahead_iterator_next"
 
 ///|
 /// Get the current symbol of the lookahead iterator.
+#borrow(self)
 pub extern "c" fn LookaheadIterator::current_symbol(
   self : LookaheadIterator
 ) -> Symbol = "moonbit_ts_lookahead_iterator_current_symbol"
 
 ///|
-extern "c" fn LookaheadIterator::_current_symbol_name(
+#borrow(self)
+extern "c" fn ts_lookahead_iterator_current_symbol_name(
   self : LookaheadIterator
 ) -> @c.Pointer[Byte] = "moonbit_ts_lookahead_iterator_current_symbol_name"
 
@@ -81,6 +92,9 @@ extern "c" fn LookaheadIterator::_current_symbol_name(
 pub fn LookaheadIterator::current_symbol_name(
   self : LookaheadIterator
 ) -> String? {
-  let bytes = LookaheadIterator::_current_symbol_name(self)
+  let bytes = ts_lookahead_iterator_current_symbol_name(self)
+  if bytes.is_null() {
+    return None
+  }
   decode_c_string(bytes)
 }
