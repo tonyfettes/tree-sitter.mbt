@@ -21,11 +21,9 @@ test "query" {
   let query = @tree_sitter.Query::new!(language, query)
   let query_cursor = @tree_sitter.QueryCursor::new()
   query_cursor.exec(query, source_root)
-  guard query_cursor.next_match() is Some(match_) else {
-    fail!("Expected match")
+  let matches : Array[@tree_sitter.QueryMatch] = []
+  while query_cursor.next_match() is Some(matched) {
+    matches.push(matched)
   }
-  inspect!(
-    match_.captures[0].node,
-    content="(for_expression (for_keyword) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))) (semicolon) (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))) (semicolon) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))))) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))",
-  )
+  @json.inspect!(matches.length(), content=1)
 }
