@@ -39,6 +39,7 @@ class Project:
                     self.copy(resolved, relocate=False)
                     headers.append(resolved)
                 return PurePosixPath(relocated)
+            print(f"Warning: {header} not found")
             return header
 
         def replace(match: re.Match) -> str:
@@ -91,7 +92,7 @@ def main():
     source = Path("src") / "tree-sitter"
     target = Path("src")
     target.mkdir(parents=True, exist_ok=True)
-    include = [source / "lib" / "include", source / "src"]
+    include = [source / "lib" / "include", source / "lib" / "src"]
     project = Project(source, target, include=include, prefix="tree-sitter")
     configure(project)
 
