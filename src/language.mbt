@@ -144,9 +144,12 @@ extern "c" fn ts_language_symbol_name(
 
 ///|
 /// Get a node type string for the given numerical id.
-pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String {
+pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String? {
   let name_bytes = ts_language_symbol_name(self, symbol)
-  return decode_c_string(name_bytes).unwrap()
+  if name_bytes.is_null() {
+    return None
+  }
+  return decode_c_string(name_bytes)
 }
 
 ///|
