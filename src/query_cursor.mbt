@@ -195,16 +195,43 @@ pub fn QueryCursor::set_point_range(
 }
 
 ///|
+#visibility(change_to="abstract", "Please use accessor functions instead")
 pub struct QueryCapture {
   node : Node
   index : Int
 } derive(Show)
 
 ///|
+pub fn QueryCapture::node(self : QueryCapture) -> Node {
+  self.node
+}
+
+///|
+pub fn QueryCapture::index(self : QueryCapture) -> Int {
+  self.index
+}
+
+///|
+#visibility(change_to="abstract", "Please use accessor functions instead")
 pub struct QueryMatch {
   id : Int
   pattern_index : Int
   captures : FixedArray[QueryCapture]
+} derive(Show)
+
+///|
+pub fn QueryMatch::id(self : QueryMatch) -> Int {
+  self.id
+}
+
+///|
+pub fn QueryMatch::pattern_index(self : QueryMatch) -> Int {
+  self.pattern_index
+}
+
+///|
+pub fn QueryMatch::captures(self : QueryMatch) -> Iter[QueryCapture] {
+  self.captures.iter()
 }
 
 ///|
