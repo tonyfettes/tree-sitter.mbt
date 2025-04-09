@@ -32,16 +32,15 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
   let query_cursor = @tree_sitter.QueryCursor::new()
   query_cursor.exec(query, source_root)
   let edits : Array[Edit] = []
-  while true {
-    guard query_cursor.next_match() is Some(match_) else { break }
+  while query_cursor.next_match() is Some(matched) {
     let captures_nodes = {}
     let captures_texts = {}
-    for capture in match_.captures {
-      let node = capture.node
+    for capture in matched.captures() {
+      let node = capture.node()
       let bytes = source[node.start_byte():node.end_byte()]
       let text = @encoding.decoder(UTF8).decode!([..bytes])
-      captures_nodes[query.capture_name_for_id(capture.index)] = node
-      captures_texts[query.capture_name_for_id(capture.index)] = text
+      captures_nodes[query.capture_name_for_id(capture.index())] = node
+      captures_texts[query.capture_name_for_id(capture.index())] = text
     }
     guard captures_texts["name"] is Some(name) else {
       fail!("Error: missing name")
