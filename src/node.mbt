@@ -733,3 +733,18 @@ pub fn Node::eq(self : Node, other : Node) -> Bool {
 impl Eq for Node with op_equal(self, other) -> Bool {
   ts_node_eq(self.node, self.tree, other.node, other.tree)
 }
+
+///|
+pub impl ToJson for Node with to_json(self : Node) -> Json {
+  let child_json = []
+  for child in self.children() {
+    child_json.push(child.to_json())
+  }
+  if child_json.length() == 0 {
+    Json::string(self.type_())
+  } else {
+    let object = {}
+    object[self.type_()] = Json::array(child_json)
+    Json::object(object)
+  }
+}

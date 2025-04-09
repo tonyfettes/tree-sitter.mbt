@@ -199,7 +199,7 @@ pub fn QueryCursor::set_point_range(
 pub struct QueryCapture {
   node : Node
   index : Int
-} derive(Show)
+} derive(Show, ToJson)
 
 ///|
 pub fn QueryCapture::node(self : QueryCapture) -> Node {
@@ -217,7 +217,7 @@ pub struct QueryMatch {
   id : Int
   pattern_index : Int
   captures : FixedArray[QueryCapture]
-} derive(Show)
+} derive(Show, ToJson)
 
 ///|
 pub fn QueryMatch::id(self : QueryMatch) -> Int {
