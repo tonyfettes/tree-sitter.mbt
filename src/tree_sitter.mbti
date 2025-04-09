@@ -2,6 +2,8 @@ package "tonyfettes/tree_sitter"
 
 import(
   "moonbitlang/core/builtin"
+  "moonbitlang/core/bytes"
+  "tonyfettes/encoding"
   "tonyfettes/tree_sitter_language"
 )
 
@@ -20,7 +22,7 @@ type FieldId
 
 type Input[DecodeFunction]
 impl Input {
-  new[DecodeFunction]((Int, Point) -> Bytes, DecodeFunction) -> Self[DecodeFunction]
+  new[DecodeFunction : DecodeFunction]((Int, Point) -> @bytes.View, DecodeFunction) -> Self[DecodeFunction]
 }
 
 type InputEdit
@@ -28,11 +30,9 @@ impl InputEdit {
   new(start_byte~ : Int, old_end_byte~ : Int, new_end_byte~ : Int, start_point~ : Point, old_end_point~ : Point, new_end_point~ : Point) -> Self
 }
 
-pub(all) enum InputEncoding {
-  UTF8
-  UTF16LE
-  UTF16BE
-  Custom
+type InputEncoding
+impl InputEncoding {
+  custom() -> Self
 }
 
 pub(all) type Language @tree_sitter_language.Language
@@ -148,8 +148,8 @@ impl Parser {
   logger(Self) -> Logger
   new() -> Self
   parse[Encoding : DecodeFunction](Self, Tree?, Input[Encoding], options? : ParseOptions) -> Tree?
-  parse_bytes(Self, Tree?, Bytes, encoding? : InputEncoding) -> Tree
-  parse_string(Self, Tree?, String) -> Tree
+  parse_bytes(Self, Tree?, Bytes, encoding? : @encoding.Encoding) -> Tree?
+  parse_string(Self, Tree?, String) -> Tree?
   reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Bool
   set_language(Self, Language) -> Unit
@@ -293,7 +293,8 @@ pub typealias QueryPredicate = Array[QueryPredicateStep]
 
 // Traits
 pub(open) trait DecodeFunction {
-  input_encoding(Self) -> InputEncoding = _
-  decode(Bytes) -> DecodeResult?
+  encoding(Self) -> InputEncoding = _
+  decode(@bytes.View) -> DecodeResult?
 }
+impl DecodeFunction for @encoding.Encoding
 
