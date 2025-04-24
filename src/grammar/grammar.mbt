@@ -23,7 +23,7 @@ impl Show for Prec with output(self, logger) {
 
 ///|
 impl ToJson for Prec with to_json(self) {
-  String(self.to_string())
+  self.to_string().to_json()
 }
 
 ///|
@@ -256,7 +256,7 @@ impl ToJson for Rule with to_json(self : Rule) -> Json {
     Alias(named~, value, rule) =>
       {
         "type": "ALIAS",
-        "value": String(value),
+        "value": value.to_json(),
         "named": named.to_json(),
         "content": rule.to_json(),
       }
@@ -268,28 +268,16 @@ impl ToJson for Rule with to_json(self : Rule) -> Json {
       }
     Token(immediate~, rule) => {
       let token_type = if immediate { "IMMEDIATE_TOKEN" } else { "TOKEN" }
-      { "type": String(token_type), "content": rule.to_json() }
+      { "type": token_type.to_json(), "content": rule.to_json() }
     }
     Field(name~, rule) =>
-      { "type": "FIELD", "name": String(name), "content": rule.to_json() }
-    Seq(rules) => {
-      let members_json = []
-      for member in rules {
-        members_json.push(member.to_json())
-      }
-      { "type": "SEQ", "members": Array(members_json) }
-    }
-    Choice(rules) => {
-      let members_json = []
-      for member in rules {
-        members_json.push(member.to_json())
-      }
-      { "type": "CHOICE", "members": Array(members_json) }
-    }
+      { "type": "FIELD", "name": Json::string(name), "content": rule.to_json() }
+    Seq(rules) => { "type": "SEQ", "members": rules.to_json() }
+    Choice(rules) => { "type": "CHOICE", "members": rules.to_json() }
     Repeat1(rule) => { "type": "REPEAT1", "content": rule.to_json() }
     Repeat(rule) => { "type": "REPEAT", "content": rule.to_json() }
-    String(value) => { "type": "STRING", "value": String(value) }
-    Symbol(name) => { "type": "SYMBOL", "name": String(name) }
+    String(value) => { "type": "STRING", "value": value.to_json() }
+    Symbol(name) => { "type": "SYMBOL", "name": name.to_json() }
     Blank => { "type": "BLANK" }
     Pattern(value) => { "type": "PATTERN", "value": value.to_json() }
   }
@@ -315,7 +303,7 @@ impl @json.FromJson for RuleName with from_json(
 
 ///|
 impl ToJson for RuleName with to_json(self : RuleName) -> Json {
-  String(self.name)
+  self.name.to_json()
 }
 
 ///|

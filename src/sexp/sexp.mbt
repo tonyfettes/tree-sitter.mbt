@@ -34,7 +34,7 @@ pub impl ToJson for Sexp with to_json(self : Sexp) -> Json {
     Pair(key, value) => {
       let object = {}
       object[key] = value.to_json()
-      Object(object)
+      Json::object(object)
     }
     List(list) => list.to_json()
   }
