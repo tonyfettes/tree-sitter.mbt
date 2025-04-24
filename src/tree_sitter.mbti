@@ -137,6 +137,12 @@ impl Hash for Node
 impl Show for Node
 impl ToJson for Node
 
+pub type! ParseError {
+  NoLanguageAssigned
+  Cancelled
+}
+impl Show for ParseError
+
 type ParseOptions
 impl ParseOptions {
   new((ParseState) -> Bool) -> Self
@@ -150,11 +156,12 @@ pub struct ParseState {
 type Parser
 impl Parser {
   included_ranges(Self) -> Array[Range]
+  language(Self) -> Language?
   logger(Self) -> Logger
   new() -> Self
-  parse[Encoding : DecodeFunction](Self, old_tree? : Tree, Input[Encoding], options? : ParseOptions) -> Tree?
-  parse_bytes(Self, old_tree? : Tree, Bytes, encoding? : @encoding.Encoding) -> Tree?
-  parse_string(Self, old_tree? : Tree, String) -> Tree?
+  parse[Encoding : DecodeFunction](Self, old_tree? : Tree, Input[Encoding], options? : ParseOptions) -> Tree!ParseError
+  parse_bytes(Self, old_tree? : Tree, Bytes, encoding? : @encoding.Encoding) -> Tree!ParseError
+  parse_string(Self, old_tree? : Tree, String) -> Tree!ParseError
   reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Bool
   set_language(Self, Language) -> Unit
@@ -203,6 +210,8 @@ impl QueryCapture {
   name(Self) -> String
   node(Self) -> Node
 }
+impl Show for QueryCapture
+impl ToJson for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
@@ -237,6 +246,8 @@ impl QueryMatch {
   id(Self) -> Int
   pattern_index(Self) -> Int
 }
+impl Show for QueryMatch
+impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {
   Capture(String)
@@ -267,6 +278,7 @@ impl Tree {
   get_changed_ranges(Self, Self) -> Array[Range]
   included_ranges(Self) -> Array[Range]
   language(Self) -> Language
+  query(Self, String) -> QueryCursor!QueryError
   root_node(Self) -> Node
   root_node_with_offset(Self, Int, Point) -> Node
   walk(Self) -> TreeCursor
