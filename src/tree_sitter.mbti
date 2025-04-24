@@ -15,9 +15,9 @@ const MIN_COMPATIBLE_LANGUAGE_VERSION : Int = 13
 fn parser(Language) -> Parser
 
 // Types and methods
-pub(all) struct DecodeResult {
-  code_point : Int
-  bytes_read : Int
+type DecodeResult
+impl DecodeResult {
+  new(code_point~ : Int, bytes_read~ : Int) -> Self
 }
 
 type FieldId
@@ -229,8 +229,9 @@ impl QueryCursor {
   set_point_range(Self, Point, Point) -> Unit
 }
 
-pub(all) struct QueryCursorOptions {
-  progress_callback : (QueryCursorState) -> Unit
+type QueryCursorOptions
+impl QueryCursorOptions {
+  new(progress_callback~ : (QueryCursorState) -> Unit) -> Self
 }
 
 pub struct QueryCursorState {

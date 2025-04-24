@@ -9,6 +9,8 @@ fn parse(String) -> Array[Sexp]!SexpError
 
 fn print(Array[Sexp]) -> String
 
+fn print_to(Array[Sexp], &Logger, indent~ : Int = ..) -> Unit
+
 // Types and methods
 pub enum Atom {
   Symbol(String)
