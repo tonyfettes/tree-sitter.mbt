@@ -242,7 +242,6 @@ test "pattern" {
     #|}
   let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
   let source_tree = parser.parse_string!(source)
-  let source_root = source_tree.root_node()
   let pattern_query = pattern_query!(parser, env, pattern)
   inspect!(
     pattern_query.source,
@@ -250,7 +249,7 @@ test "pattern" {
       #|(binary_expression (compound_expression (simple_expression (_) @A)) ("==") (compound_expression (simple_expression (_) @A))) @pattern
     ,
   )
-  let query_cursor = source_root.query!(pattern_query.source)
+  let query_cursor = source_tree.query!(pattern_query.source)
   let ranges = []
   for matched in query_cursor.matches() {
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}

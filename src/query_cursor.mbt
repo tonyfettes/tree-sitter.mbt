@@ -212,7 +212,7 @@ pub impl Show for QueryCapture with output(self, logger) -> Unit {
 pub impl ToJson for QueryCapture with to_json(self) -> Json {
   Json::object({
     "name": self.name().to_json(),
-    "node": self.node.string().to_json(),
+    "node": self.node.to_string().to_json(),
     "index": self.index.to_json(),
   })
 }

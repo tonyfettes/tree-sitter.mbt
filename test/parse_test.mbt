@@ -10,14 +10,35 @@ test "json" {
   let tree = parser.parse_string!(source)
   let root_node = tree.root_node()
   inspect!(
-    root_node.string(),
-    content="(document (object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number))))",
+    root_node,
+    content=
+      #|(document
+      #| (object
+      #|  (pair
+      #|   key: (string
+      #|         (string_content))
+      #|   value: (string
+      #|           (string_content)))
+      #|  (pair
+      #|   key: (string
+      #|         (string_content))
+      #|   value: (number))))
+    ,
   )
-  let root_node_first_child = root_node.child(0).map(@tree_sitter.Node::string)
+  let root_node_first_child = root_node.child(0).or_error!(Failure("None"))
   inspect!(
     root_node_first_child,
     content=
-      #|Some("(object (pair key: (string (string_content)) value: (string (string_content))) (pair key: (string (string_content)) value: (number)))")
+      #|(object
+      #| (pair
+      #|  key: (string
+      #|        (string_content))
+      #|  value: (string
+      #|          (string_content)))
+      #| (pair
+      #|  key: (string
+      #|        (string_content))
+      #|  value: (number)))
     ,
   )
 }
@@ -75,7 +96,15 @@ test "moonbit" {
   let markdown_root_node = markdown_tree.root_node()
   inspect!(
     markdown_root_node,
-    content="(document (section (atx_heading (atx_h1_marker) heading_content: (inline)) (paragraph (inline))))",
+    content=
+      #|(document
+      #| (section
+      #|  (atx_heading
+      #|   (atx_h1_marker)
+      #|   heading_content: (inline))
+      #|  (paragraph
+      #|   (inline))))
+    ,
   )
 }
 
@@ -160,9 +189,8 @@ test "custom-encoding" {
   )
   let tree = parser.parse!(input)
   let root_node = tree.root_node()
-  let root_sexp = @sexp.parse!(root_node.string())
   inspect!(
-    @sexp.print(root_sexp),
+    root_node,
     content=
       #|(document
       #| (object

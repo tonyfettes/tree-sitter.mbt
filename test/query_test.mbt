@@ -14,21 +14,78 @@ test "query" {
   let query =
     #|(for_expression) @forExpression
   let query_cursor = source_tree.query!(query)
-  let matches : Array[@tree_sitter.QueryMatch] = []
-  while query_cursor.next_match() is Some(matched) {
-    matches.push(matched)
+  let captures = []
+  for matched in query_cursor.matches() {
+    for capture in matched.captures() {
+      captures.push(capture)
+    }
   }
-  @json.inspect!(matches, content=[
-    {
-      "id": 0,
-      "pattern_index": 0,
-      "captures": [
-        {
-          "name": "forExpression",
-          "node": "(for_expression (for_keyword) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))) (semicolon) (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))) (semicolon) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))))) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))",
-          "index": 0,
-        },
-      ],
-    },
-  ])
+  @json.inspect!(captures.length(), content=1)
+  inspect!(captures[0].name(), content="forExpression")
+  inspect!(
+    captures[0].node(),
+    content=
+      #|(for_expression
+      #| (for_keyword)
+      #| (for_binder
+      #|  (lowercase_identifier)
+      #|  (expression
+      #|   (pipeline_expression
+      #|    (compound_expression
+      #|     (simple_expression
+      #|      (atomic_expression
+      #|       (literal
+      #|        (integer_literal))))))))
+      #| (semicolon)
+      #| (compound_expression
+      #|  (binary_expression
+      #|   (compound_expression
+      #|    (simple_expression
+      #|     (qualified_identifier
+      #|      (lowercase_identifier))))
+      #|   (compound_expression
+      #|    (simple_expression
+      #|     (atomic_expression
+      #|      (literal
+      #|       (integer_literal)))))))
+      #| (semicolon)
+      #| (for_binder
+      #|  (lowercase_identifier)
+      #|  (expression
+      #|   (pipeline_expression
+      #|    (compound_expression
+      #|     (binary_expression
+      #|      (compound_expression
+      #|       (simple_expression
+      #|        (qualified_identifier
+      #|         (lowercase_identifier))))
+      #|      (compound_expression
+      #|       (simple_expression
+      #|        (atomic_expression
+      #|         (literal
+      #|          (integer_literal))))))))))
+      #| (block_expression
+      #|  (statement_expression
+      #|   (expression
+      #|    (pipeline_expression
+      #|     (compound_expression
+      #|      (simple_expression
+      #|       (apply_expression
+      #|        (simple_expression
+      #|         (qualified_identifier
+      #|          (lowercase_identifier)))
+      #|        (argument
+      #|         (expression
+      #|          (pipeline_expression
+      #|           (compound_expression
+      #|            (simple_expression
+      #|             (atomic_expression
+      #|              (literal
+      #|               (string_literal
+      #|                (string_fragment
+      #|                 (unescaped_string_fragment))))))))))))))))
+      #|  (semicolon
+      #|   (automatic_semicolon))))
+    ,
+  )
 }

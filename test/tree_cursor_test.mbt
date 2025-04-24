@@ -5,10 +5,22 @@ test "tree_cursor" {
   inspect!(tree_cursor.goto_parent(), content="false")
   inspect!(
     tree_cursor.current_node(),
-    content="(document (array (number) (null)))",
+    content=
+      #|(document
+      #| (array
+      #|  (number)
+      #|  (null)))
+    ,
   )
   inspect!(tree_cursor.goto_first_child(), content="true")
-  inspect!(tree_cursor.current_node(), content="(array (number) (null))")
+  inspect!(
+    tree_cursor.current_node(),
+    content=
+      #|(array
+      #| (number)
+      #| (null))
+    ,
+  )
   inspect!(tree_cursor.goto_next_sibling(), content="false")
   inspect!(tree_cursor.goto_first_child(), content="true")
   inspect!(
@@ -32,6 +44,11 @@ test "tree_cursor" {
   )
   inspect!(
     tree_cursor.current_node(),
-    content="(document (array (number) (null)))",
+    content=
+      #|(document
+      #| (array
+      #|  (number)
+      #|  (null)))
+    ,
   )
 }

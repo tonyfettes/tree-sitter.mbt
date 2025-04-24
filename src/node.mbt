@@ -106,7 +106,12 @@ pub fn Node::string(self : Node) -> String {
 
 ///|
 pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Unit {
-  logger.write_string(self.string())
+  try {
+    let sexp = @sexp.parse!(self.string())
+    @sexp.print_to(sexp, logger)
+  } catch {
+    _ => logger.write_string(self.string())
+  }
 }
 
 ///|
