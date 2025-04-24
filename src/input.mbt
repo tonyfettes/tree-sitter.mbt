@@ -61,9 +61,14 @@ pub fn InputEdit::new(
 }
 
 ///|
-pub(all) struct DecodeResult {
+struct DecodeResult {
   code_point : Int
   bytes_read : Int
+}
+
+///|
+pub fn DecodeResult::new(code_point~ : Int, bytes_read~ : Int) -> DecodeResult {
+  { code_point, bytes_read }
 }
 
 ///|
