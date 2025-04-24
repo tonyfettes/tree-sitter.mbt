@@ -15,6 +15,13 @@ pub fn Parser::new() -> Parser {
 }
 
 ///|
+pub fn parser(language : Language) -> Parser {
+  let parser = Parser::new()
+  parser.set_language(language)
+  return parser
+}
+
+///|
 #borrow(self)
 extern "c" fn ts_parser_set_language(self : Parser, language : Language) = "moonbit_ts_parser_set_language"
 
