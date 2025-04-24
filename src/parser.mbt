@@ -23,6 +23,16 @@ pub fn parser(language : Language) -> Parser {
 
 ///|
 #borrow(self)
+extern "c" fn ts_parser_language(self : Parser) -> @c.Nullable[Language] = "moonbit_ts_parser_language"
+
+///|
+/// Get the parser's current language.
+pub fn Parser::language(self : Parser) -> Language? {
+  ts_parser_language(self).to()
+}
+
+///|
+#borrow(self)
 extern "c" fn ts_parser_set_language(self : Parser, language : Language) = "moonbit_ts_parser_set_language"
 
 ///|
