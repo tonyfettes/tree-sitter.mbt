@@ -327,10 +327,10 @@ pub fn Parser::parse_bytes(
 }
 
 ///|
-type! ParseError {
+pub type! ParseError {
   NoLanguageAssigned
   Cancelled
-}
+} derive(Show)
 
 ///|
 fn raise_parse_error(self : Parser, tree : Tree?) -> Tree!ParseError {
