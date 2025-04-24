@@ -51,7 +51,7 @@ impl Language {
   supertypes(Self) -> Array[Symbol]
   symbol_count(Self) -> Int
   symbol_for_name(Self, String) -> Symbol
-  symbol_name(Self, Symbol) -> String
+  symbol_name(Self, Symbol) -> String?
   symbol_type(Self, Symbol) -> SymbolType
   #deprecated
   version(Self) -> Int
@@ -75,7 +75,6 @@ type LookaheadIterator
 impl LookaheadIterator {
   current_symbol(Self) -> Symbol
   current_symbol_name(Self) -> String?
-  delete(Self) -> Unit
   language(Self) -> Language
   new(Language, StateId) -> Self?
   next(Self) -> Bool
@@ -131,6 +130,7 @@ impl Node {
   type_(Self) -> String
 }
 impl Show for Node
+impl ToJson for Node
 
 type ParseOptions
 impl ParseOptions {
@@ -196,7 +196,12 @@ pub struct QueryCapture {
   node : Node
   index : Int
 }
+impl QueryCapture {
+  index(Self) -> Int
+  node(Self) -> Node
+}
 impl Show for QueryCapture
+impl ToJson for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
@@ -229,6 +234,13 @@ pub struct QueryMatch {
   pattern_index : Int
   captures : FixedArray[QueryCapture]
 }
+impl QueryMatch {
+  captures(Self) -> Iter[QueryCapture]
+  id(Self) -> Int
+  pattern_index(Self) -> Int
+}
+impl Show for QueryMatch
+impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {
   Capture(String)
