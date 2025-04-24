@@ -68,8 +68,15 @@ pub struct QueryCursorState {
 }
 
 ///|
-pub(all) struct QueryCursorOptions {
+struct QueryCursorOptions {
   progress_callback : (QueryCursorState) -> Unit
+}
+
+///|
+pub fn QueryCursorOptions::new(
+  progress_callback~ : (QueryCursorState) -> Unit
+) -> QueryCursorOptions {
+  QueryCursorOptions::{ progress_callback, }
 }
 
 ///|
