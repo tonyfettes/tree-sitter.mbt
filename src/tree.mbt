@@ -4,7 +4,7 @@ type Tree
 ///|
 priv trait Nullable {
   is_null(Self) -> Bool
-  to_option(Self) -> Self?
+  to_option(Self) -> Self? = _
 }
 
 ///|

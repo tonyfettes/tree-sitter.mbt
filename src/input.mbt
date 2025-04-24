@@ -71,7 +71,7 @@ pub(all) struct DecodeResult {
 /// returning the number of bytes consumed and the code point.
 /// If the input is invalid, return `None`.
 pub(open) trait DecodeFunction {
-  encoding(Self) -> InputEncoding
+  encoding(Self) -> InputEncoding = _
   decode(@bytes.View) -> DecodeResult?
 }
 
