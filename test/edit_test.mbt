@@ -48,21 +48,21 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
     guard captures_texts["search"] is Some(search) else {
       fail!("Error: missing search")
     }
-    let search : String = match search.trim_space() {
-      ['|', '\n', .. search] => [..search]
+    let search  = match search.trim_space() {
+      ['|', '\n', .. search] => search
       search => search
     }
     guard captures_texts["replace"] is Some(replace) else {
       fail!("Error: missing replace")
     }
-    let replace : String = match replace.trim_space() {
-      ['|', '\n', .. replace] => [..replace]
+    let replace  = match replace.trim_space() {
+      ['|', '\n', .. replace] => replace
       replace => replace
     }
     edits.push(Edit::{
       name,
-      search: search.trim_space(),
-      replace: replace.trim_space(),
+      search: search.trim_space().to_string(),
+      replace: replace.trim_space().to_string(),
     })
   }
   return edits
