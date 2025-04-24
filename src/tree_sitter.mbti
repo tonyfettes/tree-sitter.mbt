@@ -215,6 +215,7 @@ impl ToJson for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
+  captures(Self) -> Iter[QueryCapture]
   did_exceed_match_limit(Self) -> Bool
   exec(Self, Query, Node, options? : QueryCursorOptions) -> Unit
   match_limit(Self) -> Int

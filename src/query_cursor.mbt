@@ -405,6 +405,20 @@ pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
 }
 
 ///|
+pub fn QueryCursor::captures(self : QueryCursor) -> Iter[QueryCapture] {
+  Iter::new(fn(yield_) {
+    while self.next_capture() is Some(capture) {
+      match yield_(capture) {
+        IterContinue => continue
+        IterEnd => break IterEnd
+      }
+    } else {
+      IterContinue
+    }
+  })
+}
+
+///|
 #borrow(self)
 extern "c" fn ts_query_cursor_set_max_start_depth(
   self : TSQueryCursor,
