@@ -202,6 +202,22 @@ struct QueryCapture {
 }
 
 ///|
+pub impl Show for QueryCapture with output(self, logger) -> Unit {
+  logger.write_string(self.node.string())
+  logger.write_string(" @")
+  logger.write_object(self.name())
+}
+
+///|
+pub impl ToJson for QueryCapture with to_json(self) -> Json {
+  Json::object({
+    "name": self.name().to_json(),
+    "node": self.node.string().to_json(),
+    "index": self.index.to_json(),
+  })
+}
+
+///|
 pub fn QueryCapture::node(self : QueryCapture) -> Node {
   self.node
 }
@@ -221,6 +237,15 @@ struct QueryMatch {
   id : Int
   pattern_index : Int
   captures : FixedArray[QueryCapture]
+} derive(Show)
+
+///|
+pub impl ToJson for QueryMatch with to_json(self) -> Json {
+  Json::object({
+    "id": self.id.to_json(),
+    "pattern_index": self.pattern_index.to_json(),
+    "captures": self.captures.to_json(),
+  })
 }
 
 ///|
