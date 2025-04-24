@@ -144,3 +144,8 @@ pub fn Tree::get_changed_ranges(self : Tree, other : Tree) -> Array[Range] {
     )
   })
 }
+
+///|
+pub fn Tree::walk(self : Tree) -> TreeCursor {
+  TreeCursor::new(self.root_node())
+}
