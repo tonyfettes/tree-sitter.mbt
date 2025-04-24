@@ -28,7 +28,6 @@ fn Environment::add_var(
 ///|
 struct Query {
   source : String
-  capture : Array[String]
 }
 
 ///|
@@ -207,7 +206,7 @@ fn pattern_query(
   let pattern = generate_pattern(context_root, None)
   let pattern = pattern + " @pattern"
   capture_name.push("pattern")
-  { source: pattern, capture: capture_name }
+  { source: pattern }
 }
 
 ///|
