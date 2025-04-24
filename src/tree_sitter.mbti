@@ -128,6 +128,7 @@ impl Node {
   string(Self) -> String
   symbol(Self) -> Symbol
   type_(Self) -> String
+  walk(Self) -> TreeCursor
 }
 impl Hash for Node
 impl Show for Node
@@ -148,9 +149,9 @@ impl Parser {
   included_ranges(Self) -> Array[Range]
   logger(Self) -> Logger
   new() -> Self
-  parse[Encoding : DecodeFunction](Self, Tree?, Input[Encoding], options? : ParseOptions) -> Tree?
-  parse_bytes(Self, Tree?, Bytes, encoding? : @encoding.Encoding) -> Tree?
-  parse_string(Self, Tree?, String) -> Tree?
+  parse[Encoding : DecodeFunction](Self, old_tree? : Tree, Input[Encoding], options? : ParseOptions) -> Tree?
+  parse_bytes(Self, old_tree? : Tree, Bytes, encoding? : @encoding.Encoding) -> Tree?
+  parse_string(Self, old_tree? : Tree, String) -> Tree?
   reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Bool
   set_language(Self, Language) -> Unit
@@ -274,6 +275,7 @@ impl Tree {
   language(Self) -> Language
   root_node(Self) -> Node
   root_node_with_offset(Self, Int, Point) -> Node
+  walk(Self) -> TreeCursor
 }
 
 type TreeCursor
