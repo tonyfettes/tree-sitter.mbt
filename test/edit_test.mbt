@@ -1,8 +1,8 @@
 ///|
 struct Edit {
-  name : String
-  search : String
-  replace : String
+  name : @string.View
+  search : @string.View
+  replace : @string.View
 } derive(Show, ToJson)
 
 ///|
@@ -33,9 +33,9 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
     for capture in matched.captures() {
       let node = capture.node()
       let bytes = source[node.start_byte():node.end_byte()]
-      let text = @encoding.decoder(UTF8).decode!([..bytes])
-      captures_nodes[capture.name()] = node
-      captures_texts[capture.name()] = text
+      let text = @encoding.decode!(encoding=UTF8, [..bytes])
+      captures_nodes[capture.name().to_string()] = node
+      captures_texts[capture.name().to_string()] = text
     }
     guard captures_texts["name"] is Some(name) else {
       fail!("Error: missing name")
@@ -104,7 +104,7 @@ test "parse_rules" {
     #|  replace: |
     #|    for $binderDefinition in $rangeLower..<($rangeUpper) $forBody
     #|
-  let rules = parse_rules!(@encoding.encode(UTF8, rules))
+  let rules = parse_rules!(@encoding.encode(encoding=UTF8, rules))
   @json.inspect!(rules, content=[
     {
       "name": "suggested-for-in",

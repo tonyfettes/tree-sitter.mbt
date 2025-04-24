@@ -41,7 +41,7 @@ type! PatternError {
 fn pattern_query(
   parser : @tree_sitter.Parser,
   env : Environment,
-  pattern : String
+  pattern : @string.View
 ) -> Query! {
   struct Context {
     replaced : StringBuilder
@@ -138,7 +138,10 @@ fn pattern_query(
   let context_tree = parser.parse_string!(context)
   let context_root = context_tree.root_node()
   let capture_name : Array[String] = []
-  fn generate_pattern(node : @tree_sitter.Node, stripping : Bool?) -> String {
+  fn generate_pattern(
+    node : @tree_sitter.Node,
+    stripping : Bool?
+  ) -> @string.View {
     if node.start_byte() <= pattern_start || node.end_byte() >= pattern_end {
       let child_patterns = []
       for child in node.children() {
@@ -160,7 +163,9 @@ fn pattern_query(
         child_patterns => {
           let pattern = StringBuilder::new()
           pattern.write_char('(')
-          pattern.write_string(child_patterns.join(" "))
+          pattern.write_string(
+            child_patterns.map(fn(x) { x.to_string() }).join(" "),
+          )
           pattern.write_char(')')
           return pattern.to_string()
         }
@@ -199,12 +204,12 @@ fn pattern_query(
       }
       child_patterns.push(generate_pattern(child, stripping))
     }
-    let child_patterns = child_patterns.join(" ")
+    let child_patterns = child_patterns.map(fn(x) { x.to_string() }).join(" ")
     return "(\{node.type_()} \{child_patterns})"
   }
 
   let pattern = generate_pattern(context_root, None)
-  let pattern = pattern + " @pattern"
+  let pattern = pattern.to_string() + " @pattern"
   capture_name.push("pattern")
   { source: pattern }
 }
@@ -254,8 +259,8 @@ test "pattern" {
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
     for capture in matched.captures() {
       let name = capture.name()
-      match meta_var_nodes.get(name) {
-        None => meta_var_nodes.set(name, [capture.node()])
+      match meta_var_nodes.get(name.to_string()) {
+        None => meta_var_nodes.set(name.to_string(), [capture.node()])
         Some(nodes) => nodes.push(capture.node())
       }
     }
