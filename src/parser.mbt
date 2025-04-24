@@ -356,7 +356,7 @@ pub fn Parser::parse_string(
   let tree = ts_parser_parse_bytes(
     self,
     old_tree.or(ts_tree_null()),
-    @encoding.encode(UTF8, string),
+    @encoding.encode(encoding=UTF8, string),
   ).to_option()
   match tree {
     None =>
@@ -412,11 +412,11 @@ fn LogType::of_uint(value : UInt) -> LogType {
 type Logger (UInt, Bytes) -> Unit
 
 ///|
-fn Logger::new(log : (LogType, String) -> Unit) -> Logger {
+fn Logger::new(log : (LogType, @string.View) -> Unit) -> Logger {
   fn(log_type, message) {
     log(
       LogType::of_uint(log_type),
-      @encoding.decoder(UTF8).decode_lossy(message),
+      @encoding.decode_lossy(encoding=UTF8, message),
     )
   }
 }

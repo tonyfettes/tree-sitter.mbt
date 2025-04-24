@@ -56,7 +56,7 @@ extern "c" fn Query::_new(
 /// If a pattern is invalid, this raises a `QueryError`.
 pub fn Query::new(language : Language, source : String) -> Query!QueryError {
   let error = FixedArray::make(2, 0U)
-  let source = @encoding.encode(UTF8, source)
+  let source = @encoding.encode(encoding=UTF8, source)
   let query = Query::_new(language, source, error)
   if error[1] == 0 {
     query
@@ -158,8 +158,8 @@ fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
 
 ///|
 pub enum QueryPredicateStep {
-  Capture(String)
-  String(String)
+  Capture(@string.View)
+  String(@string.View)
 } derive(Show)
 
 ///|
@@ -265,7 +265,7 @@ extern "c" fn Query::_capture_name_for_id(
 ///|
 /// Get the name of one of the query's captures. Each capture is associated with a
 /// numeric id based on the order that it appeared in the query's source.
-pub fn Query::capture_name_for_id(self : Query, capture_id : Int) -> String {
+pub fn Query::capture_name_for_id(self : Query, capture_id : Int) -> @string.View {
   let capture_id = int_to_uint(capture_id)
   let length : FixedArray[UInt] = [0U]
   let name = Query::_capture_name_for_id(self, capture_id, length)
@@ -327,7 +327,7 @@ extern "c" fn Query::_string_value_for_id(
 ///|
 /// Get the value of one of the query's string literals. Each string is associated with a
 /// numeric id based on the order that it appeared in the query's source.
-pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
+pub fn Query::string_value_for_id(self : Query, string_id : Int) -> @string.View {
   let string_id = int_to_uint(string_id)
   let length : FixedArray[UInt] = [0U]
   let value = Query::_string_value_for_id(self, string_id, length)
@@ -345,7 +345,7 @@ extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_
 /// any resource usage associated with recording the capture. Currently, there
 /// is no way to undo this.
 pub fn Query::disable_capture(self : Query, name : String) -> Unit {
-  let name = @encoding.encode(UTF8, name)
+  let name = @encoding.encode(encoding=UTF8, name)
   Query::_disable_capture(self, name)
 }
 

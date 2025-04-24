@@ -103,7 +103,6 @@ pub fn InputEncoding::custom() -> InputEncoding {
 pub impl DecodeFunction for @encoding.Encoding with encoding(self) -> InputEncoding {
   match self {
     @encoding.UTF8 => UTF8
-    @encoding.UTF16 => UTF16LE
     @encoding.UTF16LE => UTF16LE
     @encoding.UTF16BE => UTF16BE
   }

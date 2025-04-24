@@ -52,7 +52,7 @@ extern "c" fn ts_language_symbol_for_name_(
 ///|
 /// Get the numerical id for the given node type string.
 pub fn Language::symbol_for_name(self : Language, name : String) -> Symbol {
-  let name_bytes = @encoding.encode(UTF8, name)
+  let name_bytes = @encoding.encode(encoding=UTF8, name)
   return ts_language_symbol_for_name_(self, name_bytes)
 }
 
@@ -76,13 +76,13 @@ extern "c" fn ts_language_field_name_for_id(
 
 ///|
 /// Get the field name string for the given numerical id.
-pub fn Language::field_name_for_id(self : Language, id : FieldId) -> String? {
+pub fn Language::field_name_for_id(self : Language, id : FieldId) -> @string.View? {
   let name_bytes = ts_language_field_name_for_id(self, id)
   return decode_c_string(name_bytes)
 }
 
 ///|
-fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> String? {
+fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> @string.View? {
   if c_string.is_null() {
     return None
   }
@@ -98,7 +98,7 @@ fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> String? {
       }
   }
   let name = buffer.contents()
-  let name = @encoding.decoder(UTF8).decode_lossy(name)
+  let name = @encoding.decode_lossy(encoding=UTF8, name)
   Some(name)
 }
 
@@ -112,7 +112,7 @@ extern "c" fn Language::_field_id_for_name(
 ///|
 /// Get the numerical id for the given field name string.
 pub fn Language::field_id_for_name(self : Language, name : String) -> Int {
-  let name_bytes = @encoding.encode(UTF8, name)
+  let name_bytes = @encoding.encode(encoding=UTF8, name)
   Language::_field_id_for_name(self, name_bytes) |> uint_to_int()
 }
 
@@ -144,7 +144,7 @@ extern "c" fn ts_language_symbol_name(
 
 ///|
 /// Get a node type string for the given numerical id.
-pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String? {
+pub fn Language::symbol_name(self : Language, symbol : Symbol) -> @string.View? {
   let name_bytes = ts_language_symbol_name(self, symbol)
   if name_bytes.is_null() {
     return None
@@ -286,7 +286,7 @@ extern "c" fn ts_language_name(self : Language) -> @c.Pointer[Byte] = "moonbit_t
 
 ///|
 /// Get the name of this language. This returns `None` in older parsers.
-pub fn Language::name(self : Language) -> String? {
+pub fn Language::name(self : Language) -> @string.View? {
   let name = ts_language_name(self._)
   return decode_c_string(name)
 }

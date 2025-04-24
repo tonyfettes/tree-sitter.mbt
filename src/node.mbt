@@ -13,7 +13,7 @@ extern "c" fn ts_node_type(self : TSNode, tree : Tree) -> @c.Pointer[Byte] = "mo
 
 ///|
 /// Get the node's type as a string.
-pub fn Node::type_(self : Node) -> String {
+pub fn Node::type_(self : Node) -> @string.View {
   return decode_c_string(ts_node_type(self.node, self.tree)).unwrap()
 }
 
@@ -46,7 +46,7 @@ extern "c" fn ts_node_grammar_type(
 
 ///|
 /// Get the node's type as it appears in the grammar ignoring aliases as a string.
-pub fn Node::grammar_type(self : Node) -> String {
+pub fn Node::grammar_type(self : Node) -> @string.View {
   return decode_c_string(ts_node_grammar_type(self.node, self.tree)).unwrap()
 }
 
@@ -98,8 +98,9 @@ extern "c" fn ts_node_string(self : TSNode, tree : Tree) -> Bytes = "moonbit_ts_
 
 ///|
 /// Get an S-expression representing the node as a string.
-pub fn Node::string(self : Node) -> String {
-  return @encoding.decoder(UTF8).decode_lossy(
+pub fn Node::string(self : Node) -> @string.View {
+  return @encoding.decode_lossy(
+    encoding=UTF8,
     ts_node_string(self.node, self.tree),
   )
 }
@@ -110,7 +111,7 @@ pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Un
     let sexp = @sexp.parse!(self.string())
     @sexp.print_to(sexp, logger)
   } catch {
-    _ => logger.write_string(self.string())
+    _ => logger.write_string(self.string().to_string())
   }
 }
 
@@ -318,7 +319,10 @@ extern "c" fn ts_node_field_name_for_child(
 ///|
 /// Get the field name for node's child at the given index, where zero represents
 /// the first child. Returns `None`, if no field is found.
-pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
+pub fn Node::field_name_for_child(
+  self : Node,
+  child_index : Int
+) -> @string.View? {
   let child_index = int_to_uint(child_index)
   let field_name = ts_node_field_name_for_child(
     self.node,
@@ -333,7 +337,7 @@ pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
     @buffer.write_byte(buffer, field_name[i])
   }
   let field_name = buffer.contents()
-  Some(@encoding.decoder(UTF8).decode_lossy(field_name))
+  Some(@encoding.decode_lossy(encoding=UTF8, field_name))
 }
 
 ///|
@@ -350,7 +354,7 @@ extern "c" fn ts_node_field_name_for_named_child(
 pub fn Node::field_name_for_named_child(
   self : Node,
   child_index : Int
-) -> String? {
+) -> @string.View? {
   let child_index = int_to_uint(child_index)
   let field_name = ts_node_field_name_for_named_child(
     self.node,
@@ -365,7 +369,7 @@ pub fn Node::field_name_for_named_child(
     @buffer.write_byte(buffer, field_name[i])
   }
   let field_name = buffer.contents()
-  Some(@encoding.decoder(UTF8).decode_lossy(field_name))
+  Some(@encoding.decode_lossy(encoding=UTF8, field_name))
 }
 
 ///|
@@ -438,8 +442,8 @@ extern "c" fn ts_node_child_by_field_name(
 
 ///|
 /// Get the node's child with the given field name.
-pub fn Node::child_by_field_name(self : Node, name : String) -> Node? {
-  let name_bytes = @encoding.encode(UTF8, name)
+pub fn Node::child_by_field_name(self : Node, name : @string.View) -> Node? {
+  let name_bytes = @encoding.encode(encoding=UTF8, name)
   let child = ts_node_child_by_field_name(self.node, self.tree, name_bytes)
   if ts_node_is_null(child, self.tree) {
     None
@@ -746,10 +750,10 @@ pub impl ToJson for Node with to_json(self : Node) -> Json {
     child_json.push(child.to_json())
   }
   if child_json.length() == 0 {
-    Json::string(self.type_())
+    Json::string(self.type_().to_string())
   } else {
     let object = {}
-    object[self.type_()] = Json::array(child_json)
+    object[self.type_().to_string()] = Json::array(child_json)
     Json::object(object)
   }
 }

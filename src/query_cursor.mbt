@@ -210,7 +210,7 @@ struct QueryCapture {
 
 ///|
 pub impl Show for QueryCapture with output(self, logger) -> Unit {
-  logger.write_string(self.node.string())
+  logger.write_string(self.node.string().to_string())
   logger.write_string(" @")
   logger.write_object(self.name())
 }
@@ -235,7 +235,7 @@ pub fn QueryCapture::index(self : QueryCapture) -> Int {
 }
 
 ///|
-pub fn QueryCapture::name(self : QueryCapture) -> String {
+pub fn QueryCapture::name(self : QueryCapture) -> @string.View {
   self.query.capture_name_for_id(self.index)
 }
 

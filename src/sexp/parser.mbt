@@ -109,9 +109,9 @@ fn parse_list(
 }
 
 ///|
-pub fn Sexp::parse(source : String) -> Sexp!SexpError {
+pub fn Sexp::parse(source : @string.View) -> Sexp!SexpError {
   let list = []
-  let source = parse_list!(source.view(), list)
+  let source = parse_list!(source, list)
   if source is [_, ..] {
     raise SexpError::UnrecognizedCharacter(source)
   }
@@ -123,9 +123,9 @@ pub fn Sexp::parse(source : String) -> Sexp!SexpError {
 }
 
 ///|
-pub fn parse(source : String) -> Array[Sexp]!SexpError {
+pub fn parse(source : @string.View) -> Array[Sexp]!SexpError {
   let list = []
-  let source = parse_list!(source.view(), list)
+  let source = parse_list!(source, list)
   match source {
     [_, ..] => raise SexpError::UnrecognizedCharacter(source)
     [] => return list

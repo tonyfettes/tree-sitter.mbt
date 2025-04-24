@@ -3,6 +3,7 @@ package "tonyfettes/tree_sitter"
 import(
   "moonbitlang/core/builtin"
   "moonbitlang/core/bytes"
+  "moonbitlang/core/string"
   "tonyfettes/encoding"
   "tonyfettes/tree_sitter_language"
 )
@@ -44,16 +45,16 @@ impl Language {
   delete(Self) -> Unit
   field_count(Self) -> Int
   field_id_for_name(Self, String) -> Int
-  field_name_for_id(Self, FieldId) -> String?
+  field_name_for_id(Self, FieldId) -> @string.StringView?
   metadata(Self) -> LanguageMetadata
-  name(Self) -> String?
+  name(Self) -> @string.StringView?
   next_state(Self, StateId, Symbol) -> StateId
   state_count(Self) -> Int
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
   symbol_count(Self) -> Int
   symbol_for_name(Self, String) -> Symbol
-  symbol_name(Self, Symbol) -> String?
+  symbol_name(Self, Symbol) -> @string.StringView?
   symbol_type(Self, Symbol) -> SymbolType
   #deprecated
   version(Self) -> Int
@@ -76,7 +77,7 @@ type Logger
 type LookaheadIterator
 impl LookaheadIterator {
   current_symbol(Self) -> Symbol
-  current_symbol_name(Self) -> String?
+  current_symbol_name(Self) -> @string.StringView?
   language(Self) -> Language
   new(Language, StateId) -> Self?
   next(Self) -> Bool
@@ -88,7 +89,7 @@ type Node
 impl Node {
   child(Self, Int) -> Self?
   child_by_field_id(Self, FieldId) -> Self?
-  child_by_field_name(Self, String) -> Self?
+  child_by_field_name(Self, @string.StringView) -> Self?
   child_count(Self) -> Int
   child_with_descendant(Self, Self) -> Self?
   children(Self) -> Iter[Self]
@@ -99,12 +100,12 @@ impl Node {
   end_byte(Self) -> Int
   end_point(Self) -> Point
   eq(Self, Self) -> Bool
-  field_name_for_child(Self, Int) -> String?
-  field_name_for_named_child(Self, Int) -> String?
+  field_name_for_child(Self, Int) -> @string.StringView?
+  field_name_for_named_child(Self, Int) -> @string.StringView?
   first_child_for_byte(Self, Int) -> Self?
   first_named_child_for_byte(Self, Int) -> Self?
   grammar_symbol(Self) -> Symbol
-  grammar_type(Self) -> String
+  grammar_type(Self) -> @string.StringView
   has_changes(Self) -> Bool
   has_error(Self) -> Bool
   is_error(Self) -> Bool
@@ -128,9 +129,9 @@ impl Node {
   query(Self, String) -> QueryCursor!QueryError
   start_byte(Self) -> Int
   start_point(Self) -> Point
-  string(Self) -> String
+  string(Self) -> @string.StringView
   symbol(Self) -> Symbol
-  type_(Self) -> String
+  type_(Self) -> @string.StringView
   walk(Self) -> TreeCursor
 }
 impl Hash for Node
@@ -188,7 +189,7 @@ impl Show for Quantifier
 type Query
 impl Query {
   capture_count(Self) -> Int
-  capture_name_for_id(Self, Int) -> String
+  capture_name_for_id(Self, Int) -> @string.StringView
   capture_quantifier_for_id(Self, Int, Int) -> Quantifier
   disable_capture(Self, String) -> Unit
   disable_pattern(Self, Int) -> Unit
@@ -201,13 +202,13 @@ impl Query {
   predicates_for_pattern(Self, Int) -> Array[Array[QueryPredicateStep]]
   start_byte_for_pattern(Self, Int) -> Int
   string_count(Self) -> Int
-  string_value_for_id(Self, Int) -> String
+  string_value_for_id(Self, Int) -> @string.StringView
 }
 
 type QueryCapture
 impl QueryCapture {
   index(Self) -> Int
-  name(Self) -> String
+  name(Self) -> @string.StringView
   node(Self) -> Node
 }
 impl Show for QueryCapture
@@ -252,8 +253,8 @@ impl Show for QueryMatch
 impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {
-  Capture(String)
-  String(String)
+  Capture(@string.StringView)
+  String(@string.StringView)
 }
 impl Show for QueryPredicateStep
 
@@ -292,7 +293,7 @@ impl TreeCursor {
   current_depth(Self) -> Int
   current_descendant_index(Self) -> Int
   current_field_id(Self) -> FieldId
-  current_field_name(Self) -> String?
+  current_field_name(Self) -> @string.StringView?
   current_node(Self) -> Node
   goto_descendant(Self, Int) -> Unit
   goto_first_child(Self) -> Bool

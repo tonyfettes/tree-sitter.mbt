@@ -91,7 +91,7 @@ extern "c" fn ts_lookahead_iterator_current_symbol_name(
 /// Get the current symbol type of the lookahead iterator as a string.
 pub fn LookaheadIterator::current_symbol_name(
   self : LookaheadIterator
-) -> String? {
+) -> @string.View? {
   let bytes = ts_lookahead_iterator_current_symbol_name(self)
   if bytes.is_null() {
     return None
