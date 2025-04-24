@@ -129,6 +129,7 @@ impl Node {
   symbol(Self) -> Symbol
   type_(Self) -> String
 }
+impl Hash for Node
 impl Show for Node
 impl ToJson for Node
 

@@ -865,6 +865,12 @@ moonbit_ts_node_eq(
   return ts_node_eq(self->node, other->node);
 }
 
+uint64_t
+moonbit_ts_node_id_as_uint64(MoonBitTSNode *self, MoonBitTSTree *self_tree) {
+  moonbit_ts_ignore(self_tree);
+  return (uintptr_t)self->node.id;
+}
+
 typedef struct MoonBitTSTreeCursor {
   TSTreeCursor cursor;
 } MoonBitTSTreeCursor;

@@ -748,3 +748,13 @@ pub impl ToJson for Node with to_json(self : Node) -> Json {
     Json::object(object)
   }
 }
+
+///|
+#borrow(self)
+extern "c" fn Node::id_as_uint64(self : Node) -> UInt64 = "moonbit_ts_node_id_as_uint64"
+
+///|
+pub impl Hash for Node with hash_combine(self, hasher) {
+  let id = Node::id_as_uint64(self)
+  hasher.combine(id)
+}
