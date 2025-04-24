@@ -196,7 +196,7 @@ extern "c" fn ts_parser_parse_with_options(
 ///    is passed as the `options` argument inside the `ParseOptions` struct.
 pub fn Parser::parse[Encoding : DecodeFunction](
   self : Parser,
-  old_tree : Tree?,
+  old_tree? : Tree,
   input : Input[Encoding],
   options? : ParseOptions
 ) -> Tree? {
@@ -283,7 +283,7 @@ extern "c" fn ts_parser_parse_bytes_encoding(
 /// UTF8 or UTF16.
 pub fn Parser::parse_bytes(
   self : Parser,
-  old_tree : Tree?,
+  old_tree? : Tree,
   bytes : Bytes,
   encoding? : @encoding.Encoding
 ) -> Tree? {
@@ -306,7 +306,7 @@ pub fn Parser::parse_bytes(
 /// parameter is the string to parse.
 pub fn Parser::parse_string(
   self : Parser,
-  old_tree : Tree?,
+  old_tree? : Tree,
   string : String
 ) -> Tree? {
   ts_parser_parse_bytes(
