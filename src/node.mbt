@@ -763,3 +763,11 @@ pub impl Hash for Node with hash_combine(self, hasher) {
 pub fn Node::walk(self : Node) -> TreeCursor {
   TreeCursor::new(self)
 }
+
+///|
+pub fn Node::query(self : Node, source : String) -> QueryCursor!QueryError {
+  let query = Query::new!(self.language(), source)
+  let query_cursor = QueryCursor::new()
+  query_cursor.exec(query, self)
+  return query_cursor
+}
