@@ -137,7 +137,7 @@ fn pattern_query(
   }
   let context = context.replaced.to_string()
   let context_tree = parser
-    .parse_string(None, context)
+    .parse_string(context)
     .or_error!(Failure("Parse error"))
   let context_root = context_tree.root_node()
   let capture_name : Array[String] = []
@@ -246,7 +246,7 @@ test "pattern" {
   let language = @tree_sitter_moonbit.language()
   parser.set_language(language)
   let source_tree = parser
-    .parse_string(None, source)
+    .parse_string(source)
     .or_error!(Failure("Parse error"))
   let source_root = source_tree.root_node()
   let pattern_query = pattern_query!(parser, env, pattern)

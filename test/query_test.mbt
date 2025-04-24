@@ -13,7 +13,7 @@ test "query" {
     #|  }
     #|}
   let source_tree = parser
-    .parse_string(None, source)
+    .parse_string(source)
     .or_error!(Failure("Parse error"))
   let source_root = source_tree.root_node()
   let query =
