@@ -351,7 +351,7 @@ fn raise_parse_error(self : Parser, tree : Tree?) -> Tree!ParseError {
 pub fn Parser::parse_string(
   self : Parser,
   old_tree? : Tree,
-  string : String
+  string : @string.View
 ) -> Tree!ParseError {
   let tree = ts_parser_parse_bytes(
     self,

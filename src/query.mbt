@@ -54,7 +54,7 @@ extern "c" fn Query::_new(
 ///
 /// If all of the given patterns are valid, this returns a `Query`.
 /// If a pattern is invalid, this raises a `QueryError`.
-pub fn Query::new(language : Language, source : String) -> Query!QueryError {
+pub fn Query::new(language : Language, source : @string.View) -> Query!QueryError {
   let error = FixedArray::make(2, 0U)
   let source = @encoding.encode(encoding=UTF8, source)
   let query = Query::_new(language, source, error)
@@ -344,7 +344,7 @@ extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_
 /// This prevents the capture from being returned in matches, and also avoids
 /// any resource usage associated with recording the capture. Currently, there
 /// is no way to undo this.
-pub fn Query::disable_capture(self : Query, name : String) -> Unit {
+pub fn Query::disable_capture(self : Query, name : @string.View) -> Unit {
   let name = @encoding.encode(encoding=UTF8, name)
   Query::_disable_capture(self, name)
 }

@@ -44,7 +44,7 @@ impl Language {
   copy(Self) -> Self
   delete(Self) -> Unit
   field_count(Self) -> Int
-  field_id_for_name(Self, String) -> Int
+  field_id_for_name(Self, @string.StringView) -> Int
   field_name_for_id(Self, FieldId) -> @string.StringView?
   metadata(Self) -> LanguageMetadata
   name(Self) -> @string.StringView?
@@ -53,7 +53,7 @@ impl Language {
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
   symbol_count(Self) -> Int
-  symbol_for_name(Self, String) -> Symbol
+  symbol_for_name(Self, @string.StringView) -> Symbol
   symbol_name(Self, Symbol) -> @string.StringView?
   symbol_type(Self, Symbol) -> SymbolType
   #deprecated
@@ -126,7 +126,7 @@ impl Node {
   parse_state(Self) -> StateId
   prev_named_sibling(Self) -> Self?
   prev_sibling(Self) -> Self?
-  query(Self, String) -> QueryCursor!QueryError
+  query(Self, @string.StringView) -> QueryCursor!QueryError
   start_byte(Self) -> Int
   start_point(Self) -> Point
   string(Self) -> @string.StringView
@@ -162,7 +162,7 @@ impl Parser {
   new() -> Self
   parse[Encoding : DecodeFunction](Self, old_tree? : Tree, Input[Encoding], options? : ParseOptions) -> Tree!ParseError
   parse_bytes(Self, old_tree? : Tree, Bytes, encoding? : @encoding.Encoding) -> Tree!ParseError
-  parse_string(Self, old_tree? : Tree, String) -> Tree!ParseError
+  parse_string(Self, old_tree? : Tree, @string.StringView) -> Tree!ParseError
   reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Bool
   set_language(Self, Language) -> Unit
@@ -191,13 +191,13 @@ impl Query {
   capture_count(Self) -> Int
   capture_name_for_id(Self, Int) -> @string.StringView
   capture_quantifier_for_id(Self, Int, Int) -> Quantifier
-  disable_capture(Self, String) -> Unit
+  disable_capture(Self, @string.StringView) -> Unit
   disable_pattern(Self, Int) -> Unit
   end_byte_for_pattern(Self, Int) -> Int
   is_pattern_guaranteed_at_step(Self, Int) -> Bool
   is_pattern_non_local(Self, Int) -> Bool
   is_pattern_rooted(Self, Int) -> Bool
-  new(Language, String) -> Self!QueryError
+  new(Language, @string.StringView) -> Self!QueryError
   pattern_count(Self) -> Int
   predicates_for_pattern(Self, Int) -> Array[Array[QueryPredicateStep]]
   start_byte_for_pattern(Self, Int) -> Int
@@ -281,7 +281,7 @@ impl Tree {
   get_changed_ranges(Self, Self) -> Array[Range]
   included_ranges(Self) -> Array[Range]
   language(Self) -> Language
-  query(Self, String) -> QueryCursor!QueryError
+  query(Self, @string.StringView) -> QueryCursor!QueryError
   root_node(Self) -> Node
   root_node_with_offset(Self, Int, Point) -> Node
   walk(Self) -> TreeCursor

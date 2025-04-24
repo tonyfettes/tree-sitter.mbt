@@ -151,6 +151,6 @@ pub fn Tree::walk(self : Tree) -> TreeCursor {
 }
 
 ///|
-pub fn Tree::query(self : Tree, source : String) -> QueryCursor!QueryError {
+pub fn Tree::query(self : Tree, source : @string.View) -> QueryCursor!QueryError {
   self.root_node().query!(source)
 }
