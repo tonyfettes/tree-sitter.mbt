@@ -12,6 +12,8 @@ const LANGUAGE_VERSION : Int = 15
 
 const MIN_COMPATIBLE_LANGUAGE_VERSION : Int = 13
 
+fn parser(Language) -> Parser
+
 // Types and methods
 pub(all) struct DecodeResult {
   code_point : Int
@@ -123,6 +125,7 @@ impl Node {
   parse_state(Self) -> StateId
   prev_named_sibling(Self) -> Self?
   prev_sibling(Self) -> Self?
+  query(Self, String) -> QueryCursor!QueryError
   start_byte(Self) -> Int
   start_point(Self) -> Point
   string(Self) -> String
@@ -194,22 +197,19 @@ impl Query {
   string_value_for_id(Self, Int) -> String
 }
 
-pub struct QueryCapture {
-  node : Node
-  index : Int
-}
+type QueryCapture
 impl QueryCapture {
   index(Self) -> Int
+  name(Self) -> String
   node(Self) -> Node
 }
-impl Show for QueryCapture
-impl ToJson for QueryCapture
 
 type QueryCursor
 impl QueryCursor {
   did_exceed_match_limit(Self) -> Bool
   exec(Self, Query, Node, options? : QueryCursorOptions) -> Unit
   match_limit(Self) -> Int
+  matches(Self) -> Iter[QueryMatch]
   new() -> Self
   next_capture(Self) -> QueryCapture?
   next_match(Self) -> QueryMatch?
@@ -231,18 +231,12 @@ pub struct QueryCursorState {
 type QueryError
 impl Show for QueryError
 
-pub struct QueryMatch {
-  id : Int
-  pattern_index : Int
-  captures : FixedArray[QueryCapture]
-}
+type QueryMatch
 impl QueryMatch {
   captures(Self) -> Iter[QueryCapture]
   id(Self) -> Int
   pattern_index(Self) -> Int
 }
-impl Show for QueryMatch
-impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {
   Capture(String)
