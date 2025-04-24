@@ -195,11 +195,11 @@ pub fn QueryCursor::set_point_range(
 }
 
 ///|
-#visibility(change_to="abstract", "Please use accessor functions instead")
-pub struct QueryCapture {
+struct QueryCapture {
+  query : Query
   node : Node
   index : Int
-} derive(Show, ToJson)
+}
 
 ///|
 pub fn QueryCapture::node(self : QueryCapture) -> Node {
@@ -212,12 +212,16 @@ pub fn QueryCapture::index(self : QueryCapture) -> Int {
 }
 
 ///|
-#visibility(change_to="abstract", "Please use accessor functions instead")
-pub struct QueryMatch {
+pub fn QueryCapture::name(self : QueryCapture) -> String {
+  self.query.capture_name_for_id(self.index)
+}
+
+///|
+struct QueryMatch {
   id : Int
   pattern_index : Int
   captures : FixedArray[QueryCapture]
-} derive(Show, ToJson)
+}
 
 ///|
 pub fn QueryMatch::id(self : QueryMatch) -> Int {
@@ -294,11 +298,25 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
     let node = ts_query_match_captures_get_node(ts_match, i)
     let index = ts_query_match_captures_get_index(ts_match, i)
     let index = uint_to_int(index)
-    QueryCapture::{ node: { node, tree: self.tree }, index }
+    QueryCapture::{ query: self.query, node: { node, tree: self.tree }, index }
   })
   let id = uint_to_int(ts_query_match_id(ts_match))
   let pattern_index = uint_to_int(ts_query_match_pattern_index(ts_match))
   Some(QueryMatch::{ id, pattern_index, captures })
+}
+
+///|
+pub fn QueryCursor::matches(self : QueryCursor) -> Iter[QueryMatch] {
+  Iter::new(fn(yield_) {
+    while self.next_match() is Some(match_) {
+      match yield_(match_) {
+        IterContinue => continue
+        IterEnd => break IterEnd
+      }
+    } else {
+      IterContinue
+    }
+  })
 }
 
 ///|
@@ -347,7 +365,11 @@ pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
   let node = ts_query_match_captures_get_node(ts_match, 0)
   let index = ts_query_match_captures_get_index(ts_match, 0)
   let index = uint_to_int(index)
-  Some(QueryCapture::{ node: { node, tree: self.tree }, index })
+  Some(QueryCapture::{
+    query: self.query,
+    node: { node, tree: self.tree },
+    index,
+  })
 }
 
 ///|
