@@ -216,7 +216,7 @@ pub fn Parser::parse[Encoding : DecodeFunction](
   old_tree? : Tree,
   input : Input[Encoding],
   options? : ParseOptions
-) -> Tree? {
+) -> Tree!ParseError {
   let encoding = input.decode.encoding()
   let decode : @c.Nullable[
     FuncRef[(@c.Pointer[Byte], UInt, @c.Pointer[Int]) -> Int],
@@ -261,9 +261,16 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     return bytes_data
   }
   guard options is Some(options) else {
-    ts_parser_parse(self, old_tree.or(ts_tree_null()), read, encoding, decode).to_option()
+    let tree = ts_parser_parse(
+      self,
+      old_tree.or(ts_tree_null()),
+      read,
+      encoding,
+      decode,
+    ).to_option()
+    self.raise_parse_error!(tree)
   }
-  ts_parser_parse_with_options(
+  let tree = ts_parser_parse_with_options(
     self,
     old_tree.or(ts_tree_null()),
     read,
@@ -274,6 +281,7 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       (options.progress_callback)({ current_byte_offset, has_error })
     },
   ).to_option()
+  self.raise_parse_error!(tree)
 }
 
 ///|
@@ -303,8 +311,8 @@ pub fn Parser::parse_bytes(
   old_tree? : Tree,
   bytes : Bytes,
   encoding? : @encoding.Encoding
-) -> Tree? {
-  match encoding {
+) -> Tree!ParseError {
+  let tree = match encoding {
     None =>
       ts_parser_parse_bytes(self, old_tree.or(ts_tree_null()), bytes).to_option()
     Some(encoding) =>
@@ -314,6 +322,25 @@ pub fn Parser::parse_bytes(
         bytes,
         encoding.encoding().to_uint(),
       ).to_option()
+  }
+  self.raise_parse_error!(tree)
+}
+
+///|
+type! ParseError {
+  NoLanguageAssigned
+  Cancelled
+}
+
+///|
+fn raise_parse_error(self : Parser, tree : Tree?) -> Tree!ParseError {
+  match tree {
+    None =>
+      match self.language() {
+        None => raise NoLanguageAssigned
+        Some(_) => raise Cancelled
+      }
+    Some(tree) => return tree
   }
 }
 
@@ -325,12 +352,21 @@ pub fn Parser::parse_string(
   self : Parser,
   old_tree? : Tree,
   string : String
-) -> Tree? {
-  ts_parser_parse_bytes(
+) -> Tree!ParseError {
+  let tree = ts_parser_parse_bytes(
     self,
     old_tree.or(ts_tree_null()),
     @encoding.encode(UTF8, string),
   ).to_option()
+  match tree {
+    None =>
+      match self.language() {
+        None => raise NoLanguageAssigned
+        Some(_) => raise Cancelled
+      }
+    Some(tree) => return tree
+  }
+  self.raise_parse_error!(tree)
 }
 
 ///|
