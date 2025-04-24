@@ -758,3 +758,8 @@ pub impl Hash for Node with hash_combine(self, hasher) {
   let id = Node::id_as_uint64(self)
   hasher.combine(id)
 }
+
+///|
+pub fn Node::walk(self : Node) -> TreeCursor {
+  TreeCursor::new(self)
+}
