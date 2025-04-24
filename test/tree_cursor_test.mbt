@@ -1,14 +1,7 @@
 ///|
 test "tree_cursor" {
-  let parser = @tree_sitter.Parser::new()
-  let language = @tree_sitter_json.language()
-  parser.set_language(language)
-  let source_code = "[1, null]"
-  let tree = parser
-    .parse_string(source_code)
-    .or_error!(Failure("Parse error"))
-  let root_node = tree.root_node()
-  let tree_cursor = @tree_sitter.TreeCursor::new(root_node)
+  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let tree_cursor = parser.parse_string!("[1, null]").walk()
   inspect!(tree_cursor.goto_parent(), content="false")
   inspect!(
     tree_cursor.current_node(),

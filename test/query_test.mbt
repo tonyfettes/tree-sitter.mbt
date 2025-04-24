@@ -1,8 +1,6 @@
 ///|
 test "query" {
-  let parser = @tree_sitter.Parser::new()
-  let language = @tree_sitter_moonbit.language()
-  parser.set_language(language)
+  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
   let source =
     #|fn main {
     #|  if 1 == 1 {
@@ -12,18 +10,25 @@ test "query" {
     #|    println("Hello, world!")
     #|  }
     #|}
-  let source_tree = parser
-    .parse_string(source)
-    .or_error!(Failure("Parse error"))
-  let source_root = source_tree.root_node()
+  let source_tree = parser.parse_string!(source)
   let query =
     #|(for_expression) @forExpression
-  let query = @tree_sitter.Query::new!(language, query)
-  let query_cursor = @tree_sitter.QueryCursor::new()
-  query_cursor.exec(query, source_root)
+  let query_cursor = source_tree.query!(query)
   let matches : Array[@tree_sitter.QueryMatch] = []
   while query_cursor.next_match() is Some(matched) {
     matches.push(matched)
   }
-  @json.inspect!(matches.length(), content=1)
+  @json.inspect!(matches, content=[
+    {
+      "id": 0,
+      "pattern_index": 0,
+      "captures": [
+        {
+          "name": "forExpression",
+          "node": "(for_expression (for_keyword) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))) (semicolon) (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))) (semicolon) (for_binder (lowercase_identifier) (expression (pipeline_expression (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))))) (block_expression (statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))))))))) (semicolon (automatic_semicolon))))",
+          "index": 0,
+        },
+      ],
+    },
+  ])
 }

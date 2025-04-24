@@ -136,9 +136,7 @@ fn pattern_query(
     raise UnterminatedPattern
   }
   let context = context.replaced.to_string()
-  let context_tree = parser
-    .parse_string(context)
-    .or_error!(Failure("Parse error"))
+  let context_tree = parser.parse_string!(context)
   let context_root = context_tree.root_node()
   let capture_name : Array[String] = []
   fn generate_pattern(node : @tree_sitter.Node, stripping : Bool?) -> String {
@@ -242,12 +240,8 @@ test "pattern" {
     #|    println("Hello, world!")
     #|  }
     #|}
-  let parser = @tree_sitter.Parser::new()
-  let language = @tree_sitter_moonbit.language()
-  parser.set_language(language)
-  let source_tree = parser
-    .parse_string(source)
-    .or_error!(Failure("Parse error"))
+  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let source_tree = parser.parse_string!(source)
   let source_root = source_tree.root_node()
   let pattern_query = pattern_query!(parser, env, pattern)
   inspect!(
@@ -256,20 +250,15 @@ test "pattern" {
       #|(binary_expression (compound_expression (simple_expression (_) @A)) ("==") (compound_expression (simple_expression (_) @A))) @pattern
     ,
   )
-  let query = @tree_sitter.Query::new!(language, pattern_query.source)
-  let query_cursor = @tree_sitter.QueryCursor::new()
-  query_cursor.exec(query, source_root)
+  let query_cursor = source_root.query!(pattern_query.source)
   let ranges = []
-  while true {
-    let next_match = query_cursor.next_match()
-    guard next_match is Some(match_) else { break }
+  for matched in query_cursor.matches() {
     let meta_var_nodes : Map[String, Array[@tree_sitter.Node]] = {}
-    for capture in match_.captures {
-      let capture_index = capture.index
-      let name = pattern_query.capture[capture_index]
+    for capture in matched.captures() {
+      let name = capture.name()
       match meta_var_nodes.get(name) {
-        None => meta_var_nodes.set(name, [capture.node])
-        Some(nodes) => nodes.push(capture.node)
+        None => meta_var_nodes.set(name, [capture.node()])
+        Some(nodes) => nodes.push(capture.node())
       }
     }
     let mut satisfied = true
