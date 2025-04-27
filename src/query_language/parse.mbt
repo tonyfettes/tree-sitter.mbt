@@ -11,7 +11,7 @@ fn Range::new(start : Int, end : Int) -> Range {
 
 ///|
 type! ParseError {
-  ParseError(@tree_sitter.ParseError)
+  ParseError(Array[@tree_sitter.ParseError])
   UnrecognizedCharacter(Range, Char)
   UnterminatedGroup(Range)
   MissingColon(Range)
@@ -89,13 +89,18 @@ priv enum ParseState {
 
 ///|
 struct Entry {
+  context : String
   query : String
   placeholder : String
 }
 
 ///|
-pub fn Entry::new(query~ : String, placeholder~ : String) -> Entry {
-  Entry::{ query, placeholder }
+pub fn Entry::new(
+  context~ : String,
+  query~ : String,
+  placeholder~ : String
+) -> Entry {
+  Entry::{ context, query, placeholder }
 }
 
 ///|
@@ -119,14 +124,15 @@ fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
   queries : Array[Query],
+  offset : Int,
   buffer : StringBuilder
 ) -> Unit!ParseError {
   let capture_queries = []
   let children_queries = []
   for query in queries {
     let query_range = query.range()
-    if query_range.start <= node.start_byte() &&
-      query_range.end >= node.end_byte() {
+    if query_range.start + offset <= node.start_byte() &&
+      query_range.end + offset >= node.end_byte() {
       capture_queries.push(query)
       if query is Group(_, _, queries) {
         children_queries.append(queries)
@@ -169,12 +175,12 @@ fn generate_query(
       let queries = []
       for query in children_queries {
         let query_range = query.range()
-        if query_range.start <= child.end_byte() &&
-          query_range.end >= child.start_byte() {
+        if query_range.start + offset <= child.end_byte() &&
+          query_range.end + offset >= child.start_byte() {
           queries.push(query)
         }
       }
-      generate_query!(self, child, queries, buffer)
+      generate_query!(self, child, queries, offset, buffer)
     }
   }
   if capture_queries.length() == 0 {
@@ -236,14 +242,31 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
     Empty(children~), _, [] => {
       let parser = @tree_sitter.parser(self.language)
       let query = query.to_string()
-      let tree = try {
-        parser.parse_string!(query)
-      } catch {
-        e => raise ParseError(e)
+      let errors = []
+      let (tree, offset) = for _, entry in self.entries {
+        let context = entry.context.split("$").collect()
+        let prefix = context[0]
+        let suffix : @string.View = if context.length() == 1 {
+          ""
+        } else {
+          context[1]
+        }
+        let query = "\{prefix}\{query}\{suffix}"
+        try {
+          let tree = parser.parse_string!(query)
+          if tree.root_node().has_error() {
+            continue
+          }
+          break (tree, prefix.length())
+        } catch {
+          e => errors.push(e)
+        }
+      } else {
+        raise ParseError(errors)
       }
       let node = tree.root_node()
       let query = StringBuilder::new()
-      generate_query!(self, node, children, query)
+      generate_query!(self, node, children, offset, query)
       query.to_string()
     }
     Ident(state~, buffer~), offset, [':', char, .. source] => {
