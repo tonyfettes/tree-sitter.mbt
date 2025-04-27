@@ -1,0 +1,31 @@
+package "tonyfettes/tree_sitter/query_language"
+
+import(
+  "moonbitlang/core/string"
+  "tonyfettes/tree_sitter"
+)
+
+// Values
+fn parse(Parser, @string.StringView) -> String!ParseError
+
+// Types and methods
+type ParseError
+
+type Parser
+impl Parser {
+  new(@tree_sitter.Language, aliases~ : Map[String, String], placeholders~ : Map[String, String]) -> Self
+  parse(Self, @string.StringView) -> String!ParseError
+}
+
+type Query
+impl Query {
+  name(Self) -> String
+  range(Self) -> Range
+}
+
+type Range
+
+// Type aliases
+
+// Traits
+
