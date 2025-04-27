@@ -5,6 +5,8 @@
     "tonyfettes/tree_sitter_markdown",
     "tonyfettes/tree_sitter_json",
     "tonyfettes/tree_sitter_yaml",
-    "tonyfettes/encoding"
+    "tonyfettes/encoding",
+    "tonyfettes/tree_sitter/query_language",
+    "tonyfettes/tree_sitter/sexp"
   ]
 }
