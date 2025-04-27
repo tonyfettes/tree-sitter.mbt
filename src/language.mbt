@@ -51,7 +51,10 @@ extern "c" fn ts_language_symbol_for_name_(
 
 ///|
 /// Get the numerical id for the given node type string.
-pub fn Language::symbol_for_name(self : Language, name : @string.View) -> Symbol {
+pub fn Language::symbol_for_name(
+  self : Language,
+  name : @string.View
+) -> Symbol {
   let name_bytes = @encoding.encode(encoding=UTF8, name)
   return ts_language_symbol_for_name_(self, name_bytes)
 }
@@ -76,7 +79,10 @@ extern "c" fn ts_language_field_name_for_id(
 
 ///|
 /// Get the field name string for the given numerical id.
-pub fn Language::field_name_for_id(self : Language, id : FieldId) -> @string.View? {
+pub fn Language::field_name_for_id(
+  self : Language,
+  id : FieldId
+) -> @string.View? {
   let name_bytes = ts_language_field_name_for_id(self, id)
   return decode_c_string(name_bytes)
 }

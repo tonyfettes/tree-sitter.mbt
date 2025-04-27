@@ -774,7 +774,10 @@ pub fn Node::walk(self : Node) -> TreeCursor {
 }
 
 ///|
-pub fn Node::query(self : Node, source : @string.View) -> QueryCursor!QueryError {
+pub fn Node::query(
+  self : Node,
+  source : @string.View
+) -> QueryCursor!QueryError {
   let query = Query::new!(self.language(), source)
   let query_cursor = QueryCursor::new()
   query_cursor.exec(query, self)
