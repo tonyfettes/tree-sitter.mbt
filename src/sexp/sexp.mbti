@@ -7,6 +7,8 @@ import(
 // Values
 fn parse(@string.StringView) -> Array[Sexp]!SexpError
 
+fn pretty(@string.StringView) -> @string.StringView!SexpError
+
 fn print(Array[Sexp]) -> String
 
 fn print_to(Array[Sexp], &Logger, indent~ : Int = ..) -> Unit
@@ -15,6 +17,8 @@ fn print_to(Array[Sexp], &Logger, indent~ : Int = ..) -> Unit
 pub enum Atom {
   Symbol(String)
   String(String)
+  Capture(String)
+  Command(String)
 }
 impl Eq for Atom
 impl Show for Atom
@@ -23,7 +27,7 @@ impl ToJson for Atom
 pub enum Sexp {
   Atom(Atom)
   Pair(String, Sexp)
-  List(Array[Sexp])
+  List(Char, Array[Sexp], Char)
 }
 impl Sexp {
   parse(@string.StringView) -> Self!SexpError
@@ -39,6 +43,7 @@ pub type! SexpError {
   UnterminatedList(@string.StringView)
   MissingValue(@string.StringView)
   ExtraContent(ArrayView[Sexp])
+  InvalidPairKey(@string.StringView)
 }
 impl Show for SexpError
 

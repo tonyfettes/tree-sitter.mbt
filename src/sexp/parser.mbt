@@ -5,6 +5,7 @@ pub type! SexpError {
   UnterminatedList(@string.View)
   MissingValue(@string.View)
   ExtraContent(@array.View[Sexp])
+  InvalidPairKey(@string.View)
 } derive(Show)
 
 ///|
@@ -58,7 +59,7 @@ fn parse_list(
     }
     ['(', .. source] => {
       let list = []
-      sexp.push(List(list))
+      sexp.push(List('(', list, ')'))
       match parse_list!(source, list) {
         [')', .. source] => continue source
         [.. source] => raise SexpError::UnterminatedList(source)
@@ -66,7 +67,7 @@ fn parse_list(
     }
     ['[', .. source] => {
       let list = []
-      sexp.push(List(list))
+      sexp.push(List('[', list, ']'))
       match parse_list!(source, list) {
         [']', .. source] => continue source
         source => raise SexpError::UnterminatedList(source)
@@ -74,10 +75,30 @@ fn parse_list(
     }
     ['{', .. source] => {
       let list = []
-      sexp.push(List(list))
+      sexp.push(List('{', list, '}'))
       match parse_list!(source, list) {
         ['}', .. source] => continue source
         [.. source] => raise SexpError::UnterminatedList(source)
+      }
+    }
+    ['#', .. source] => {
+      let command = StringBuilder::new()
+      match parse_symbol(source, command) {
+        [':', ..] => raise SexpError::InvalidPairKey(command.to_string())
+        [.. source] => {
+          sexp.push(Atom(Command(command.to_string())))
+          continue source
+        }
+      }
+    }
+    ['@', .. source] => {
+      let capture = StringBuilder::new()
+      match parse_symbol(source, capture) {
+        [':', ..] => raise SexpError::InvalidPairKey(capture.to_string())
+        [.. source] => {
+          sexp.push(Atom(Capture(capture.to_string())))
+          continue source
+        }
       }
     }
     ['a'..<'z' | 'A'..<'Z' | '0'..<'9' | '_' as char, .. source] => {
@@ -130,4 +151,9 @@ pub fn parse(source : @string.View) -> Array[Sexp]!SexpError {
     [_, ..] => raise SexpError::UnrecognizedCharacter(source)
     [] => return list
   }
+}
+
+///|
+pub fn pretty(source : @string.View) -> @string.View!SexpError {
+  print(parse!(source))
 }

@@ -27,6 +27,31 @@ test "parse" {
 }
 
 ///|
+test "[]" {
+  @json.inspect!(
+    @sexp.parse!(
+      #|[
+      #|  (expression)
+      #|  (compound_expression)
+      #|]
+      ,
+    ),
+    content=[[["expression"], ["compound_expression"]]],
+  )
+}
+
+///|
+test "capture" {
+  @json.inspect!(
+    @sexp.parse!(
+      #|(capture) @a
+      ,
+    ),
+    content=[["capture"], "@a"],
+  )
+}
+
+///|
 test "void" {
   @json.inspect!(
     @sexp.parse!(
