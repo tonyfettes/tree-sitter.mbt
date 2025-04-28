@@ -11,16 +11,19 @@ fn parse(Parser, @string.StringView) -> String!ParseError
 // Types and methods
 type Entry
 impl Entry {
-  new(context~ : String, query~ : String, placeholder~ : String) -> Self
+  new(query~ : String, placeholder~ : String) -> Self
 }
 
 type ParseError
+impl Show for ParseError
 
 type Parser
 impl Parser {
-  new(@tree_sitter.Language, entries~ : Map[String, Entry], extras~ : Array[String] = ..) -> Self
+  new(@tree_sitter.Language, contexts~ : Map[String, String], entries~ : Map[String, Entry], extras~ : Array[String] = ..) -> Self!ParserCreationError
   parse(Self, @string.StringView) -> String!ParseError
 }
+
+type ParserCreationError
 
 // Type aliases
 

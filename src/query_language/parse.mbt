@@ -17,7 +17,7 @@ type! ParseError {
   MissingColon(Range)
   ConflictingMatch(Range, String, String)
   UnrecognizedEntry(Range, String)
-}
+} derive(Show)
 
 ///|
 priv enum Query {
@@ -88,35 +88,71 @@ priv enum ParseState {
 }
 
 ///|
+priv struct Context {
+  prefix : @string.View
+  suffix : @string.View
+}
+
+///|
+fn Context::new!(context : @string.View) -> Context!ParserCreationError {
+  let prefix = StringBuilder::new()
+  loop context {
+    ['$', .. context] =>
+      return Context::{ prefix: prefix.to_string(), suffix: context }
+    [.. "\\$", .. context] => {
+      prefix.write_char('$')
+      continue context
+    }
+    [char, .. context] => {
+      prefix.write_char(char)
+      continue context
+    }
+    [] => raise MissingContextInterpolator
+  }
+}
+
+///|
 struct Entry {
-  context : String
   query : String
   placeholder : String
 }
 
 ///|
-pub fn Entry::new(
-  context~ : String,
-  query~ : String,
-  placeholder~ : String
-) -> Entry {
-  Entry::{ context, query, placeholder }
+pub fn Entry::new(query~ : String, placeholder~ : String) -> Entry {
+  Entry::{ query, placeholder }
 }
 
 ///|
 struct Parser {
   language : @tree_sitter.Language
+  contexts : Map[String, Context]
   entries : Map[String, Entry]
   extras : Set[String]
 }
 
 ///|
+type! ParserCreationError {
+  MissingContextInterpolator
+}
+
+///|
 pub fn Parser::new(
   language : @tree_sitter.Language,
+  contexts~ : Map[String, String],
   entries~ : Map[String, Entry],
   extras~ : Array[String] = []
-) -> Parser {
-  Parser::{ language, entries, extras: Set::from_array(extras) }
+) -> Parser!ParserCreationError {
+  let parsed_contexts = Map::new(capacity=contexts.size())
+  for name, context in contexts {
+    let context = Context::new!(context)
+    parsed_contexts.set(name, context)
+  }
+  Parser::{
+    language,
+    contexts: parsed_contexts,
+    entries,
+    extras: Set::from_array(extras),
+  }
 }
 
 ///|
@@ -241,32 +277,28 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
     }
     Empty(children~), _, [] => {
       let parser = @tree_sitter.parser(self.language)
-      let query = query.to_string()
+      let quasi = query.to_string()
       let errors = []
-      let (tree, offset) = for _, entry in self.entries {
-        let context = entry.context.split("$").collect()
-        let prefix = context[0]
-        let suffix : @string.View = if context.length() == 1 {
-          ""
-        } else {
-          context[1]
-        }
-        let query = "\{prefix}\{query}\{suffix}"
-        try {
-          let tree = parser.parse_string!(query)
-          if tree.root_node().has_error() {
+      let query = StringBuilder::new()
+      for name, context in self.contexts {
+        let tree = try {
+          parser.parse_string!("\{context.prefix}\{quasi}\{context.suffix}")
+        } catch {
+          e => {
+            errors.push(e)
             continue
           }
-          break (tree, prefix.length())
-        } catch {
-          e => errors.push(e)
         }
-      } else {
+        if tree.root_node().has_error() {
+          continue
+        }
+        let node = tree.root_node()
+        query.write_string(";; \{name}\n")
+        generate_query!(self, node, children, context.prefix.length(), query)
+      }
+      if errors.length() > 0 {
         raise ParseError(errors)
       }
-      let node = tree.root_node()
-      let query = StringBuilder::new()
-      generate_query!(self, node, children, offset, query)
       query.to_string()
     }
     Ident(state~, buffer~), offset, [':', char, .. source] => {
