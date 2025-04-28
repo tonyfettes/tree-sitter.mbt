@@ -5,7 +5,8 @@ priv type TSQueryCursor
 struct QueryCursor {
   cursor : TSQueryCursor
   mut query : Query
-  mut tree : Tree
+  mut tree : TSTree
+  mut text : @string.View
 }
 
 ///|
@@ -38,6 +39,7 @@ pub fn QueryCursor::new() -> QueryCursor {
     cursor,
     query: Query::null(),
     tree: ts_tree_null(),
+    text: "",
   }
   cursor
 }
@@ -48,7 +50,7 @@ extern "c" fn ts_query_cursor_exec(
   self : TSQueryCursor,
   query : Query,
   node : TSNode,
-  tree : Tree
+  tree : TSTree
 ) = "moonbit_ts_query_cursor_exec"
 
 ///|
@@ -58,7 +60,7 @@ extern "c" fn ts_query_cursor_exec_with_options(
   self : TSQueryCursor,
   query : Query,
   node : TSNode,
-  tree : Tree,
+  tree : TSTree,
   progress_callback : (UInt) -> Unit
 ) = "moonbit_ts_query_cursor_exec_with_options"
 
@@ -103,6 +105,7 @@ pub fn QueryCursor::exec(
   }
   self.query = query
   self.tree = node.tree
+  self.text = node.text
 }
 
 ///|
@@ -313,7 +316,7 @@ extern "c" fn ts_query_match_captures_get_index(
 extern "c" fn ts_query_cursor_next_match(
   self : TSQueryCursor,
   query : Query,
-  tree : Tree
+  tree : TSTree
 ) -> TSQueryMatch = "moonbit_ts_query_cursor_next_match"
 
 ///|
@@ -330,7 +333,11 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
     let node = ts_query_match_captures_get_node(ts_match, i)
     let index = ts_query_match_captures_get_index(ts_match, i)
     let index = uint_to_int(index)
-    QueryCapture::{ query: self.query, node: { node, tree: self.tree }, index }
+    QueryCapture::{
+      query: self.query,
+      node: { node, tree: self.tree, text: self.text },
+      index,
+    }
   })
   let id = uint_to_int(ts_query_match_id(ts_match))
   let pattern_index = uint_to_int(ts_query_match_pattern_index(ts_match))
@@ -356,7 +363,7 @@ pub fn QueryCursor::matches(self : QueryCursor) -> Iter[QueryMatch] {
 extern "c" fn ts_query_cursor_remove_match(
   self : TSQueryCursor,
   query : Query,
-  tree : Tree,
+  tree : TSTree,
   match_id : UInt
 ) = "moonbit_ts_query_cursor_remove_match"
 
@@ -376,7 +383,7 @@ pub fn QueryCursor::remove_match(self : QueryCursor, match_id : Int) -> Unit {
 extern "c" fn ts_query_cursor_next_capture(
   self : TSQueryCursor,
   query : Query,
-  tree : Tree,
+  tree : TSTree,
   match_id : FixedArray[UInt]
 ) -> @c.Nullable[TSQueryMatch] = "moonbit_ts_query_cursor_next_capture"
 
@@ -399,7 +406,7 @@ pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
   let index = uint_to_int(index)
   Some(QueryCapture::{
     query: self.query,
-    node: { node, tree: self.tree },
+    node: { node, tree: self.tree, text: self.text },
     index,
   })
 }

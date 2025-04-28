@@ -1,5 +1,11 @@
 ///|
-type Tree
+priv type TSTree
+
+///|
+struct Tree {
+  tree : TSTree
+  text : @string.View
+}
 
 ///|
 priv trait Nullable {
@@ -16,20 +22,20 @@ impl Nullable with to_option(self : Self) -> Self? {
 }
 
 ///|
-extern "c" fn ts_tree_null() -> Tree = "moonbit_c_null"
+extern "c" fn ts_tree_null() -> TSTree = "moonbit_c_null"
 
 ///|
 #borrow(self)
-extern "c" fn ts_tree_is_null(self : Tree) -> Bool = "moonbit_c_is_null"
+extern "c" fn ts_tree_is_null(self : TSTree) -> Bool = "moonbit_c_is_null"
 
 ///|
-impl Nullable for Tree with is_null(self : Tree) -> Bool {
+impl Nullable for TSTree with is_null(self : TSTree) -> Bool {
   ts_tree_is_null(self)
 }
 
 ///|
 #borrow(self)
-extern "c" fn ts_tree_copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
+extern "c" fn ts_tree_copy(self : TSTree) -> TSTree = "moonbit_ts_tree_copy"
 
 ///|
 /// Create a shallow copy of the syntax tree. This is very fast.
@@ -37,22 +43,22 @@ extern "c" fn ts_tree_copy(self : Tree) -> Tree = "moonbit_ts_tree_copy"
 /// You need to copy a syntax tree in order to use it on more than one thread at
 /// a time, as syntax trees are not thread safe.
 pub fn Tree::copy(self : Tree) -> Tree {
-  ts_tree_copy(self)
+  { ..self, tree: ts_tree_copy(self.tree) }
 }
 
 ///|
 #borrow(self)
-extern "c" fn ts_tree_root_node(self : Tree) -> TSNode = "moonbit_ts_tree_root_node"
+extern "c" fn ts_tree_root_node(self : TSTree) -> TSNode = "moonbit_ts_tree_root_node"
 
 ///| Get the root node of the syntax tree.
 pub fn Tree::root_node(self : Tree) -> Node {
-  Node::{ node: ts_tree_root_node(self), tree: self }
+  Node::{ node: ts_tree_root_node(self.tree), tree: self.tree, text: self.text }
 }
 
 ///|
 #borrow(self, offset_extent)
 extern "c" fn ts_tree_root_node_with_offset(
-  self : Tree,
+  self : TSTree,
   offset_bytes : UInt,
   offset_extent : Point
 ) -> Node = "moonbit_ts_tree_root_node_with_offset"
@@ -65,27 +71,31 @@ pub fn Tree::root_node_with_offset(
   offset_bytes : Int,
   offset_extent : Point
 ) -> Node {
-  ts_tree_root_node_with_offset(self, int_to_uint(offset_bytes), offset_extent)
+  ts_tree_root_node_with_offset(
+    self.tree,
+    int_to_uint(offset_bytes),
+    offset_extent,
+  )
 }
 
 ///|
 #borrow(self)
-extern "c" fn ts_tree_language(self : Tree) -> Language = "moonbit_ts_tree_language"
+extern "c" fn ts_tree_language(self : TSTree) -> Language = "moonbit_ts_tree_language"
 
 ///|
 /// Get the language that was used to parse the syntax tree.
 pub fn Tree::language(self : Tree) -> Language {
-  ts_tree_language(self)
+  ts_tree_language(self.tree)
 }
 
 ///|
 #borrow(self)
-extern "c" fn ts_tree_included_ranges(self : Tree) -> FixedArray[UInt] = "moonbit_ts_tree_included_ranges"
+extern "c" fn ts_tree_included_ranges(self : TSTree) -> FixedArray[UInt] = "moonbit_ts_tree_included_ranges"
 
 ///|
 /// Get the array of included ranges that was used to parse the syntax tree.
 pub fn Tree::included_ranges(self : Tree) -> Array[Range] {
-  let flatten_ranges = ts_tree_included_ranges(self)
+  let flatten_ranges = ts_tree_included_ranges(self.tree)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::_new(
       Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
@@ -98,7 +108,7 @@ pub fn Tree::included_ranges(self : Tree) -> Array[Range] {
 
 ///|
 #borrow(self, edit)
-extern "c" fn ts_tree_edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edit"
+extern "c" fn ts_tree_edit(self : TSTree, edit : InputEdit) = "moonbit_ts_tree_edit"
 
 ///|
 /// Edit the syntax tree to keep it in sync with source code that has been
@@ -107,14 +117,14 @@ extern "c" fn ts_tree_edit(self : Tree, edit : InputEdit) = "moonbit_ts_tree_edi
 /// You must describe the edit both in terms of byte offsets and in terms of
 /// (row, column) coordinates.
 pub fn Tree::edit(self : Tree, edit : InputEdit) -> Unit {
-  ts_tree_edit(self, edit)
+  ts_tree_edit(self.tree, edit)
 }
 
 ///|
 #borrow(self, other)
 extern "c" fn ts_tree_get_changed_ranges(
-  self : Tree,
-  other : Tree
+  self : TSTree,
+  other : TSTree
 ) -> FixedArray[UInt] = "moonbit_ts_tree_get_changed_ranges"
 
 ///|
@@ -134,7 +144,7 @@ extern "c" fn ts_tree_get_changed_ranges(
 /// Note that the returned ranges may be slightly larger than the exact changed areas,
 /// but Tree-sitter attempts to make them as small as possible.
 pub fn Tree::get_changed_ranges(self : Tree, other : Tree) -> Array[Range] {
-  let flatten_ranges = ts_tree_get_changed_ranges(self, other)
+  let flatten_ranges = ts_tree_get_changed_ranges(self.tree, other.tree)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
     Range::_new(
       Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),

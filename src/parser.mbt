@@ -128,13 +128,13 @@ pub fn Parser::included_ranges(self : Parser) -> Array[Range] {
 #borrow(self, old_tree)
 extern "c" fn ts_parser_parse(
   self : Parser,
-  old_tree : Tree,
+  old_tree : TSTree,
   input : (UInt, Point, FixedArray[UInt]) -> Bytes,
   encoding : InputEncoding,
   decode : @c.Nullable[
     FuncRef[(@c.Pointer[Byte], UInt, @c.Pointer[Int]) -> Int],
   ]
-) -> Tree = "moonbit_ts_parser_parse"
+) -> TSTree = "moonbit_ts_parser_parse"
 
 ///|
 /// The state of a parse operation.
@@ -163,14 +163,14 @@ pub fn ParseOptions::new(
 #borrow(self, old_tree)
 extern "c" fn ts_parser_parse_with_options(
   self : Parser,
-  old_tree : Tree,
+  old_tree : TSTree,
   input : (UInt, Point, FixedArray[UInt]) -> Bytes,
   encoding : UInt,
   decode : @c.Nullable[
     FuncRef[(@c.Pointer[Byte], UInt, @c.Pointer[Int]) -> Int],
   ],
   progress_callback : (UInt, Bool) -> Bool
-) -> Tree = "moonbit_ts_parser_parse_with_options"
+) -> TSTree = "moonbit_ts_parser_parse_with_options"
 
 ///|
 /// Use the parser to parse some source code and create a syntax tree.
@@ -230,7 +230,7 @@ pub fn Parser::parse[Encoding : DecodeFunction](
         let bytes = buffer.contents()
         match Encoding::decode(bytes[:]) {
           Some(result) => {
-            code_point.store(result.code_point)
+            code_point.store(result.code_point.to_int())
             result.bytes_read
           }
           None => -1
@@ -238,6 +238,8 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       })
     _ => @c.Nullable::none()
   }
+  let mut stage : @bytes.View = []
+  let text = StringBuilder::new()
   let mut chunk = None
   let read : (UInt, Point, FixedArray[UInt]) -> Bytes = fn(
     offset : UInt,
@@ -245,6 +247,19 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     range : FixedArray[UInt]
   ) {
     let bytes_view = (input.read)(offset, point)
+    stage = [..stage, ..bytes_view]
+    loop Encoding::decode(stage) {
+      Some(result) => {
+        text.write_char(result.code_point)
+        stage = stage[result.bytes_read:]
+        if stage.length() == 0 {
+          break
+        } else {
+          continue Encoding::decode(stage)
+        }
+      }
+      None => ()
+    }
     let bytes_start = bytes_view.start_offset()
     let bytes_length = bytes_view.length()
     range[0] = int_to_uint(bytes_start)
@@ -260,19 +275,17 @@ pub fn Parser::parse[Encoding : DecodeFunction](
     }
     return bytes_data
   }
+  let old_ts_tree = match old_tree {
+    None => ts_tree_null()
+    Some(tree) => tree.tree
+  }
   guard options is Some(options) else {
-    let tree = ts_parser_parse(
-      self,
-      old_tree.or(ts_tree_null()),
-      read,
-      encoding,
-      decode,
-    ).to_option()
-    self.raise_parse_error!(tree)
+    let tree = ts_parser_parse(self, old_ts_tree, read, encoding, decode).to_option()
+    { tree: self.raise_parse_error!(tree), text: text.to_string() }
   }
   let tree = ts_parser_parse_with_options(
     self,
-    old_tree.or(ts_tree_null()),
+    old_ts_tree,
     read,
     encoding.to_uint(),
     decode,
@@ -281,25 +294,25 @@ pub fn Parser::parse[Encoding : DecodeFunction](
       (options.progress_callback)({ current_byte_offset, has_error })
     },
   ).to_option()
-  self.raise_parse_error!(tree)
+  { tree: self.raise_parse_error!(tree), text: text.to_string() }
 }
 
 ///|
 #borrow(self, old_tree, string)
 extern "c" fn ts_parser_parse_bytes(
   self : Parser,
-  old_tree : Tree,
+  old_tree : TSTree,
   string : Bytes
-) -> Tree = "moonbit_ts_parser_parse_string"
+) -> TSTree = "moonbit_ts_parser_parse_string"
 
 ///|
 #borrow(self, old_tree, string)
 extern "c" fn ts_parser_parse_bytes_encoding(
   self : Parser,
-  old_tree : Tree,
+  old_tree : TSTree,
   string : Bytes,
   encoding : UInt
-) -> Tree = "moonbit_ts_parser_parse_string_encoding"
+) -> TSTree = "moonbit_ts_parser_parse_string_encoding"
 
 ///|
 /// Use the parser to parse some source code stored in one contiguous buffer
@@ -312,18 +325,20 @@ pub fn Parser::parse_bytes(
   bytes : Bytes,
   encoding~ : @encoding.Encoding
 ) -> Tree!ParseError {
-  let tree = match encoding {
-    None =>
-      ts_parser_parse_bytes(self, old_tree.or(ts_tree_null()), bytes).to_option()
-    Some(encoding) =>
-      ts_parser_parse_bytes_encoding(
-        self,
-        old_tree.or(ts_tree_null()),
-        bytes,
-        encoding.encoding().to_uint(),
-      ).to_option()
+  let old_ts_tree = match old_tree {
+    None => ts_tree_null()
+    Some(tree) => tree.tree
   }
-  self.raise_parse_error!(tree)
+  let tree = ts_parser_parse_bytes_encoding(
+    self,
+    old_ts_tree,
+    bytes,
+    encoding.encoding().to_uint(),
+  ).to_option()
+  {
+    tree: self.raise_parse_error!(tree),
+    text: @encoding.decode_lossy(bytes, encoding~),
+  }
 }
 
 ///|
@@ -333,7 +348,7 @@ pub type! ParseError {
 } derive(Show)
 
 ///|
-fn raise_parse_error(self : Parser, tree : Tree?) -> Tree!ParseError {
+fn raise_parse_error(self : Parser, tree : TSTree?) -> TSTree!ParseError {
   match tree {
     None =>
       match self.language() {
@@ -353,20 +368,16 @@ pub fn Parser::parse_string(
   old_tree? : Tree,
   string : @string.View
 ) -> Tree!ParseError {
+  let old_ts_tree = match old_tree {
+    None => ts_tree_null()
+    Some(tree) => tree.tree
+  }
   let tree = ts_parser_parse_bytes(
     self,
-    old_tree.or(ts_tree_null()),
+    old_ts_tree,
     @encoding.encode(encoding=UTF8, string),
   ).to_option()
-  match tree {
-    None =>
-      match self.language() {
-        None => raise NoLanguageAssigned
-        Some(_) => raise Cancelled
-      }
-    Some(tree) => return tree
-  }
-  self.raise_parse_error!(tree)
+  { tree: self.raise_parse_error!(tree), text: string }
 }
 
 ///|

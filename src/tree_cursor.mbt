@@ -4,7 +4,8 @@ priv type TSTreeCursor
 ///|
 struct TreeCursor {
   cursor : TSTreeCursor
-  tree : Tree
+  tree : TSTree
+  text : @string.View
 }
 
 ///|
@@ -22,7 +23,7 @@ extern "c" fn ts_tree_cursor_new(node : TSNode) -> TSTreeCursor = "moonbit_ts_tr
 /// and the cursor cannot walk outside this node.
 pub fn TreeCursor::new(node : Node) -> TreeCursor {
   let cursor = ts_tree_cursor_new(node.node)
-  TreeCursor::{ cursor, tree: node.tree }
+  TreeCursor::{ cursor, tree: node.tree, text: node.text }
 }
 
 ///|
@@ -62,6 +63,7 @@ pub fn TreeCursor::current_node(self : TreeCursor) -> Node {
   return Node::{
     node: ts_tree_cursor_current_node(self.cursor),
     tree: self.tree,
+    text: self.text,
   }
 }
 
@@ -276,5 +278,5 @@ extern "c" fn ts_tree_cursor_copy(self : TSTreeCursor) -> TSTreeCursor = "moonbi
 ///|
 pub fn TreeCursor::copy(self : TreeCursor) -> TreeCursor {
   let cursor = ts_tree_cursor_copy(self.cursor)
-  TreeCursor::{ cursor, tree: self.tree }
+  TreeCursor::{ cursor, tree: self.tree, text: self.text }
 }
