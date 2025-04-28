@@ -401,14 +401,12 @@ pub fn QueryCursor::next_capture(self : QueryCursor) -> QueryCapture? {
     match_id,
   ).to()
   guard ts_match is Some(ts_match) else { return None }
-  let node = ts_query_match_captures_get_node(ts_match, 0)
-  let index = ts_query_match_captures_get_index(ts_match, 0)
+  let match_id = match_id[0]
+  let node = ts_query_match_captures_get_node(ts_match, match_id)
+  let node = { node, tree: self.tree, text: self.text }
+  let index = ts_query_match_captures_get_index(ts_match, match_id)
   let index = uint_to_int(index)
-  Some(QueryCapture::{
-    query: self.query,
-    node: { node, tree: self.tree, text: self.text },
-    index,
-  })
+  Some(QueryCapture::{ query: self.query, node, index })
 }
 
 ///|
