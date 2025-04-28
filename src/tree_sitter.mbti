@@ -161,7 +161,7 @@ impl Parser {
   logger(Self) -> Logger
   new() -> Self
   parse[Encoding : DecodeFunction](Self, old_tree? : Tree, Input[Encoding], options? : ParseOptions) -> Tree!ParseError
-  parse_bytes(Self, old_tree? : Tree, Bytes, encoding? : @encoding.Encoding) -> Tree!ParseError
+  parse_bytes(Self, old_tree? : Tree, Bytes, encoding~ : @encoding.Encoding) -> Tree!ParseError
   parse_string(Self, old_tree? : Tree, @string.StringView) -> Tree!ParseError
   reset(Self) -> Unit
   set_included_ranges(Self, Array[Range]) -> Bool

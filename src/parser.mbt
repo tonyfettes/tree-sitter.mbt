@@ -310,7 +310,7 @@ pub fn Parser::parse_bytes(
   self : Parser,
   old_tree? : Tree,
   bytes : Bytes,
-  encoding? : @encoding.Encoding
+  encoding~ : @encoding.Encoding
 ) -> Tree!ParseError {
   let tree = match encoding {
     None =>
