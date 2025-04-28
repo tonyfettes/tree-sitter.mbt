@@ -1,4 +1,4 @@
-package tonyfettes/tree-sitter/test
+package "tonyfettes/tree-sitter/test"
 
 // Values
 
