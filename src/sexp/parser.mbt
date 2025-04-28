@@ -49,6 +49,20 @@ fn parse_list(
     }
   }
 
+  fn parse_comment(
+    source : @string.View,
+    comment : StringBuilder
+  ) -> @string.View {
+    loop source {
+      ['\n', .. source] => return source
+      [char, .. source] => {
+        comment.write_char(char)
+        continue source
+      }
+      [.. source] => return source
+    }
+  }
+
   loop source {
     [' ' | '\t' | '\r' | '\n', .. source] => continue source
     ['\'' | '"' as quote, .. source] => {
@@ -100,6 +114,12 @@ fn parse_list(
           continue source
         }
       }
+    }
+    [';', .. source] => {
+      let comment = StringBuilder::new()
+      let source = parse_comment(source, comment)
+      sexp.push(Atom(Comment(comment.to_string())))
+      continue source
     }
     ['a'..<'z' | 'A'..<'Z' | '0'..<'9' | '_' as char, .. source] => {
       let symbol = StringBuilder::new()

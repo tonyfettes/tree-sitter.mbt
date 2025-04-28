@@ -14,6 +14,9 @@ pub fn print_to(
       }
     }
     sexp.print(logger, indent~)
+    if sexp is Atom(Comment(_)) && i == list.length() - 1 {
+      logger.write_char('\n')
+    }
   }
 }
 

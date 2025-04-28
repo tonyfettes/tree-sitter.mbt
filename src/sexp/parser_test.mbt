@@ -94,3 +94,14 @@ test "pair with multiple values" {
     content=[[{ "key": "value1" }, "value2"]],
   )
 }
+
+///|
+test "comment" {
+  @json.inspect!(
+    @sexp.parse!(
+      #|; comment
+      ,
+    ),
+    content=["; comment"],
+  )
+}

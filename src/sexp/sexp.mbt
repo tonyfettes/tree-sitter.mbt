@@ -4,6 +4,7 @@ pub enum Atom {
   String(String)
   Capture(String)
   Command(String)
+  Comment(String)
 } derive(Eq)
 
 ///|
@@ -13,6 +14,7 @@ pub impl ToJson for Atom with to_json(self : Atom) -> Json {
     String(string) => string.escape().to_json()
     Capture(capture) => "@\{capture}".to_json()
     Command(command) => "#\{command}".to_json()
+    Comment(comment) => ";\{comment}".to_json()
   }
 }
 
@@ -28,6 +30,10 @@ pub impl Show for Atom with output(self : Atom, logger : &Logger) -> Unit {
     Command(command) => {
       logger.write_char('#')
       logger.write_string(command)
+    }
+    Comment(comment) => {
+      logger.write_char(';')
+      logger.write_string(comment)
     }
   }
 }
