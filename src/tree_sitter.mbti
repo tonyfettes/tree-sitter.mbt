@@ -18,7 +18,7 @@ fn parser(Language) -> Parser
 // Types and methods
 type DecodeResult
 impl DecodeResult {
-  new(code_point~ : Int, bytes_read~ : Int) -> Self
+  new(code_point~ : Char, bytes_read~ : Int) -> Self
 }
 
 type FieldId
