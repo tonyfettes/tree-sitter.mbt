@@ -154,7 +154,7 @@ impl @tree_sitter.DecodeFunction for UTF32BE with decode(bytes : @bytes.View) ->
   match bytes {
     [a, b, c, d, .. _bytes] => {
       let bytes : Bytes = [a, b, c, d]
-      let code_point = bytes[:].to_int_be()
+      let code_point = Char::from_int(bytes[:].to_int_be())
       return Some(@tree_sitter.DecodeResult::new(code_point~, bytes_read=4))
     }
     [.. _bytes] => return None
