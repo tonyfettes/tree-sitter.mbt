@@ -280,26 +280,29 @@ test "prettify" {
     #|  (compound_expression)
     #|  (expression)
     #|]) @b))))) ("}")))))
-  inspect!(@sexp.prettify!(source), content=
-    #|;; exp
-    #|(structure
-    #| (structure_item
-    #|  (function_definition
-    #|   ("fn")
-    #|   (function_identifier
-    #|    (lowercase_identifier))
-    #|   (block_expression
-    #|    ("{")
-    #|    (statement_expression
-    #|     (expression
-    #|      (pipeline_expression
-    #|       (compound_expression
-    #|        (binary_expression
-    #|         ([(compound_expression)
-    #|           (expression)]) @a
-    #|         ("==")
-    #|         ([(compound_expression)
-    #|           (expression)]) @b)))))
-    #|    ("}")))))
+  inspect!(
+    @sexp.prettify!(source),
+    content=
+      #|;; exp
+      #|(structure
+      #| (structure_item
+      #|  (function_definition
+      #|   ("fn")
+      #|   (function_identifier
+      #|    (lowercase_identifier))
+      #|   (block_expression
+      #|    ("{")
+      #|    (statement_expression
+      #|     (expression
+      #|      (pipeline_expression
+      #|       (compound_expression
+      #|        (binary_expression
+      #|         ([(compound_expression)
+      #|           (expression)]) @a
+      #|         ("==")
+      #|         ([(compound_expression)
+      #|           (expression)]) @b)))))
+      #|    ("}")))))
+    ,
   )
 }
