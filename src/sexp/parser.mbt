@@ -54,7 +54,7 @@ fn parse_list(
     comment : StringBuilder
   ) -> @string.View {
     loop source {
-      ['\n', .. source] => return source
+      ['\n', ..] as source => return source
       [char, .. source] => {
         comment.write_char(char)
         continue source
@@ -64,7 +64,11 @@ fn parse_list(
   }
 
   loop source {
-    [' ' | '\t' | '\r' | '\n', .. source] => continue source
+    [' ' | '\t' | '\r', .. source] => continue source
+    ['\n', .. source] => {
+      sexp.push(Atom(Newline))
+      continue source
+    }
     ['\'' | '"' as quote, .. source] => {
       let string = StringBuilder::new()
       let source = parse_string!(source, string, quote)
@@ -171,9 +175,4 @@ pub fn parse(source : @string.View) -> Array[Sexp]!SexpError {
     [_, ..] => raise SexpError::UnrecognizedCharacter(source)
     [] => return list
   }
-}
-
-///|
-pub fn pretty(source : @string.View) -> @string.View!SexpError {
-  print(parse!(source))
 }

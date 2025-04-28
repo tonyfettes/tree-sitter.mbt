@@ -7,7 +7,11 @@ import(
 // Values
 fn parse(@string.StringView) -> Array[Sexp]!SexpError
 
-fn pretty(@string.StringView) -> @string.StringView!SexpError
+fn prettify(@string.StringView) -> @string.StringView!SexpError
+
+fn pretty(Array[Sexp]) -> Array[Sexp]
+
+fn pretty_to(Array[Sexp], Array[Sexp]) -> Unit
 
 fn print(Array[Sexp]) -> String
 
@@ -19,6 +23,8 @@ pub enum Atom {
   String(String)
   Capture(String)
   Command(String)
+  Comment(String)
+  Newline
 }
 impl Eq for Atom
 impl Show for Atom
@@ -31,7 +37,8 @@ pub enum Sexp {
 }
 impl Sexp {
   parse(@string.StringView) -> Self!SexpError
-  print(Self, &Logger, indent~ : Int = ..) -> Unit
+  pretty(Self) -> Self
+  print_to(Self, &Logger, indent~ : Int = ..) -> Unit
 }
 impl Eq for Sexp
 impl Show for Sexp
