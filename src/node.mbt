@@ -793,3 +793,11 @@ pub fn Node::query(
   query_cursor.exec(query, self)
   return query_cursor
 }
+
+///|
+pub fn Node::text(self : Node) -> @string.View {
+  let start = self.start_byte()
+  let end = self.end_byte()
+  let text = self.text.view(start_offset=start, end_offset=end)
+  return text
+}
