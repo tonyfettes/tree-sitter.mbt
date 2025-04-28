@@ -298,41 +298,8 @@ test "pattern" {
   let tree = parser.parse_string!(source)
   let query_cursor = tree.query!(query)
   let captures = {}
-  for matched in query_cursor.matches() {
-    for capture in matched.captures() {
-      captures[capture.name().to_string()] = capture.node()
-    }
+  for capture in query_cursor.captures() {
+    captures[capture.name().to_string()] = capture.node().text()
   }
-  inspect!(
-    captures["a"].or_error!(Failure("Missing a")),
-    content=
-      #|(compound_expression
-      #| (simple_expression
-      #|  (qualified_identifier
-      #|   (lowercase_identifier))))
-    ,
-  )
-  inspect!(captures["a"].or_error!(Failure("Missing a")).text(), content="x")
-  inspect!(
-    captures["b"].or_error!(Failure("Missing b")),
-    content=
-      #|(pattern
-      #| (simple_pattern
-      #|  (lowercase_identifier)))
-    ,
-  )
-  inspect!(captures["b"].or_error!(Failure("Missing b")).text(), content="y")
-  inspect!(
-    captures["c"].or_error!(Failure("Missing c")),
-    content=
-      #|(statement_expression
-      #| (expression
-      #|  (pipeline_expression
-      #|   (compound_expression
-      #|    (simple_expression
-      #|     (qualified_identifier
-      #|      (lowercase_identifier)))))))
-    ,
-  )
-  inspect!(captures["c"].or_error!(Failure("Missing c")).text(), content="z")
+  @json.inspect!(captures, content={ "a": "x", "b": "y", "c": "z" })
 }
