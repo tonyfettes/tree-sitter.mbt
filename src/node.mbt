@@ -749,7 +749,7 @@ pub fn Node::eq(self : Node, other : Node) -> Bool {
 }
 
 ///|
-impl Eq for Node with op_equal(self, other) -> Bool {
+pub impl Eq for Node with op_equal(self, other) -> Bool {
   ts_node_eq(self.node, self.tree, other.node, other.tree)
 }
 
