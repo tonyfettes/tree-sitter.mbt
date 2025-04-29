@@ -12,24 +12,24 @@ fn Range::new(start : Int, end : Int) -> Range {
 ///|
 type! ParseError {
   ParseError(Array[@tree_sitter.ParseError])
+  QueryError(@tree_sitter.QueryError)
   UnrecognizedCharacter(Range, Char)
   UnterminatedGroup(Range)
   MissingColon(Range)
-  ConflictingMatch(Range, String, String)
   UnrecognizedEntry(Range, String)
 } derive(Show)
 
 ///|
 priv enum Query {
   Group(String, Range, Array[Query])
-  Match(String, Range, String)
+  Match(String, Range, matches~ : @string.View, replace~ : @string.View?)
 } derive(Show)
 
 ///|
 fn Query::range(self : Query) -> Range {
   match self {
     Group(_, range, _) => range
-    Match(_, range, _) => range
+    Match(_, range, ..) => range
   }
 }
 
@@ -37,7 +37,15 @@ fn Query::range(self : Query) -> Range {
 fn Query::name(self : Query) -> String {
   match self {
     Group(name, _, _) => name
-    Match(name, _, _) => name
+    Match(name, _, ..) => name
+  }
+}
+
+///|
+fn Query::matches(self : Query) -> @string.View {
+  match self {
+    Group(_, _, _) => []
+    Match(_, _, matches~, ..) => matches
   }
 }
 
@@ -88,17 +96,25 @@ priv enum ParseState {
 }
 
 ///|
-priv struct Context {
+struct Context {
   prefix : @string.View
   suffix : @string.View
+  select : @string.View
 }
 
 ///|
-fn Context::new!(context : @string.View) -> Context!ParserCreationError {
+pub fn Context::new!(
+  context : @string.View,
+  selector~ : @string.View
+) -> Context!ContextError {
   let prefix = StringBuilder::new()
   loop context {
     ['$', .. context] =>
-      return Context::{ prefix: prefix.to_string(), suffix: context }
+      return Context::{
+        prefix: prefix.to_string(),
+        suffix: context,
+        select: selector,
+      }
     [.. "\\$", .. context] => {
       prefix.write_char('$')
       continue context
@@ -107,19 +123,24 @@ fn Context::new!(context : @string.View) -> Context!ParserCreationError {
       prefix.write_char(char)
       continue context
     }
-    [] => raise MissingContextInterpolator
+    [] => raise MissingInterpolator
   }
 }
 
 ///|
 struct Entry {
-  query : String
-  placeholder : String
+  matches : @string.View
+  replace : @string.View?
+  placeholder : @string.View
 }
 
 ///|
-pub fn Entry::new(query~ : String, placeholder~ : String) -> Entry {
-  Entry::{ query, placeholder }
+pub fn Entry::new(
+  matches~ : @string.View,
+  replace? : @string.View,
+  placeholder~ : @string.View
+) -> Entry {
+  Entry::{ matches, replace, placeholder }
 }
 
 ///|
@@ -127,75 +148,113 @@ struct Parser {
   language : @tree_sitter.Language
   contexts : Map[String, Context]
   entries : Map[String, Entry]
-  extras : Set[String]
+  extras : Array[String]
 }
 
 ///|
-type! ParserCreationError {
-  MissingContextInterpolator
+type! ContextError {
+  MissingInterpolator
 }
 
 ///|
 pub fn Parser::new(
   language : @tree_sitter.Language,
-  contexts~ : Map[String, String],
+  contexts~ : Map[String, Context],
   entries~ : Map[String, Entry],
   extras~ : Array[String] = []
-) -> Parser!ParserCreationError {
+) -> Parser {
   let parsed_contexts = Map::new(capacity=contexts.size())
   for name, context in contexts {
-    let context = Context::new!(context)
     parsed_contexts.set(name, context)
   }
-  Parser::{
-    language,
-    contexts: parsed_contexts,
-    entries,
-    extras: Set::from_array(extras),
-  }
+  Parser::{ language, contexts: parsed_contexts, entries, extras }
 }
 
 ///|
 fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
-  queries : Array[Query],
-  offset : Int,
-  buffer : StringBuilder
+  queries~ : Array[Query],
+  replace~ : Map[@tree_sitter.Node, Array[@string.View]],
+  offset~ : Int,
+  buffer~ : StringBuilder
 ) -> Unit!ParseError {
-  let capture_queries = []
+  if replace[node] is Some(replace) {
+    match replace {
+      [] => {
+        buffer.write_char('(')
+        buffer.write_string(node.type_().to_string())
+        buffer.write_char(')')
+      }
+      [replace] => {
+        buffer.write_char('(')
+        buffer.write_string(replace.to_string())
+        buffer.write_char(')')
+      }
+      replaces => {
+        buffer.write_char('[')
+        for replace in replaces {
+          buffer.write_string(replace.to_string())
+        }
+        buffer.write_char(']')
+      }
+    }
+    return
+  }
+  // Queries that capture the current node
+  let captured_queries = []
+  // Queries that does not capture the current node, therefore they are
+  // passed to the children.
   let children_queries = []
   for query in queries {
     let query_range = query.range()
     if query_range.start + offset <= node.start_byte() &&
       query_range.end + offset >= node.end_byte() {
-      capture_queries.push(query)
-      if query is Group(_, _, queries) {
-        children_queries.append(queries)
+      captured_queries.push(query)
+      match query {
+        Match(name, _, matches~, replace=replacement) => {
+          let cursor = try {
+            node.query!("\{matches} @\{name}")
+          } catch {
+            e => raise QueryError(e)
+          }
+          for capture in cursor.captures() {
+            if capture.name() != name {
+              continue
+            }
+            println("Capturing \{capture.name()} \{capture.node().type_()}")
+            let replacement = replacement.or(capture.node().type_())
+            match replace[capture.node()] {
+              Some(replace) => replace.push(replacement)
+              None => replace[capture.node()] = [replacement]
+            }
+          }
+        }
+        Group(_, _, queries) => children_queries.append(queries)
       }
     } else {
       children_queries.push(query)
     }
   }
-  if capture_queries.length() == 0 {
+  if captured_queries.length() == 0 {
     buffer.write_char('(')
   } else {
-    for _ in 0..<capture_queries.length() {
+    for _ in 0..<captured_queries.length() {
       buffer.write_char('(')
     }
   }
-  let mut type_ = None
-  for query in capture_queries {
-    if query is Match(_, _, query_type) {
-      if type_ is Some(type_) {
-        raise ConflictingMatch(query.range(), type_, query_type)
-      } else {
-        type_ = Some(query_type)
+  if replace[node] is Some(replace) {
+    match replace {
+      [] => buffer.write_string(node.type_().to_string())
+      [replace] => buffer.write_string(replace.to_string())
+      replaces => {
+        buffer.write_char('[')
+        for replace in replaces {
+          buffer.write_string(replace.to_string())
+        }
+        buffer.write_char(']')
       }
     }
-  }
-  if type_ is Some(type_) {
-    buffer.write_string(type_)
   } else {
     let type_ = if node.is_named() {
       node.type_().to_string()
@@ -216,13 +275,13 @@ fn generate_query(
           queries.push(query)
         }
       }
-      generate_query!(self, child, queries, offset, buffer)
+      generate_query!(self, child, queries~, replace~, offset~, buffer~)
     }
   }
-  if capture_queries.length() == 0 {
+  if captured_queries.length() == 0 {
     buffer.write_char(')')
   } else {
-    for query in capture_queries {
+    for query in captured_queries {
       buffer.write_string(") @\{query.name()}")
     }
   }
@@ -292,9 +351,72 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
         if tree.root_node().has_error() {
           continue
         }
-        let node = tree.root_node()
+        let cursor = try {
+          tree.query!(context.select)
+        } catch {
+          e => raise QueryError(e)
+        }
+        let nodes = []
+        println("name: \{name}")
+        for capture in cursor.captures() {
+          println("Capture name: \{capture.name()}")
+          println("Capture node: \{capture.node()}")
+          if capture.name() != name {
+            println("Not \{name} skipping")
+            continue
+          }
+          if self.extras.contains(capture.node().type_().to_string()) {
+            println("\{capture.node().type_()} is extra, skipping")
+            continue
+          }
+          nodes.push(capture.node())
+          println("nodes = \{nodes}")
+        }
+        println("nodes = \{nodes}")
         query.write_string(";; \{name}\n")
-        generate_query!(self, node, children, context.prefix.length(), query)
+        if nodes is [] {
+          generate_query!(
+            self,
+            tree.root_node(),
+            queries=children,
+            replace=Map::new(),
+            offset=context.prefix.length(),
+            buffer=query,
+          )
+        } else {
+          query.write_char('(')
+          for i, node in nodes {
+            generate_query!(
+              self,
+              node,
+              queries=children,
+              replace=Map::new(),
+              offset=context.prefix.length(),
+              buffer=query,
+            )
+            if i < nodes.length() - 1 {
+              match self.extras {
+                [] => query.write_char('.')
+                [extra] => {
+                  query.write_char('(')
+                  query.write_string(extra)
+                  query.write_string(")*")
+                }
+                extras => {
+                  query.write_char('[')
+                  for extra in extras {
+                    query.write_char('(')
+                    query.write_string(extra)
+                    query.write_char(')')
+                  }
+                  query.write_string("]*")
+                }
+              }
+            }
+          }
+          query.write_char(')')
+        }
+        query.write_char('\n')
       }
       if errors.length() > 0 {
         raise ParseError(errors)
@@ -349,10 +471,17 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           alias_,
         )
       }
-      query.write_string(entry.placeholder)
+      query.write_string(entry.placeholder.to_string())
       state
       .children()
-      .push(Match(ident, Range::{ start, end: query.length() }, entry.query))
+      .push(
+        Match(
+          ident,
+          Range::{ start, end: query.length() },
+          matches=entry.matches,
+          replace=entry.replace,
+        ),
+      )
       continue state.to_parse_state(), offset, source
     }
     Group(state~, children~, ident~, start~), offset, ['$', '}', .. source] => {
