@@ -3,7 +3,7 @@ type LookaheadIterator
 
 ///|
 #borrow(self)
-extern "c" fn ts_lookahead_iterator_is_null(self : LookaheadIterator) -> Bool = "moonbit_ts_lookahead_iterator_is_null"
+extern "c" fn ts_lookahead_iterator_is_null(self : LookaheadIterator) -> Bool = "moonbit_c_is_null"
 
 ///|
 impl Nullable for LookaheadIterator with is_null(self : LookaheadIterator) -> Bool {
