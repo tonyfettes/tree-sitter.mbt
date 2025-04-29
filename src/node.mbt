@@ -801,3 +801,43 @@ pub fn Node::text(self : Node) -> @string.View {
   let text = self.text.view(start_offset=start, end_offset=end)
   return text
 }
+
+///|
+pub fn Node::symbols(self : Node) -> Iter[Symbol] {
+  let iterator = LookaheadIterator::new(
+    self.language(),
+    self.parse_state(),
+  )
+  guard iterator is Some(iterator) else { Iter::empty() }
+  Iter::new(fn(yield_) {
+    while iterator.next() {
+      let symbol = iterator.current_symbol()
+      match yield_(symbol) {
+        IterEnd => break IterEnd
+        IterContinue => continue
+      }
+    } else {
+      IterContinue
+    }
+  })
+}
+
+///|
+pub fn Node::next_symbols(self : Node) -> Iter[Symbol] {
+  let iterator = LookaheadIterator::new(
+    self.language(),
+    self.next_parse_state(),
+  )
+  guard iterator is Some(iterator) else { Iter::empty() }
+  Iter::new(fn(yield_) {
+    while iterator.next() {
+      let symbol = iterator.current_symbol()
+      match yield_(symbol) {
+        IterEnd => break IterEnd
+        IterContinue => continue
+      }
+    } else {
+      IterContinue
+    }
+  })
+}
