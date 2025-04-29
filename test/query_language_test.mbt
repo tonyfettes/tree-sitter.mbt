@@ -15,18 +15,22 @@ fn moonbit_parser() -> @query_language.Parser! {
       #|  $
       #|}
       ,
+      strip=true,
       selector=
         #|(structure
         #| (structure_item
         #|  (function_definition
         #|   (block_expression
-        #|    "{" (_) @exp "}"))))
+        #|    "{"
+        #|    (statement_expression
+        #|     (_) @exp)
+        #|    "}"))))
       ,
     ),
     "top": @query_language.Context::new!(
       "$",
       selector=
-        #|(structure_item)
+        #|(structure_item) @top
       ,
     ),
     "pat": @query_language.Context::new!(
@@ -56,6 +60,7 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|  (compound_expression)
         #|  (match_expression)
         #|  (expression)
+        #|  (named_matrix_expression)
         #|] @exp
       ,
       placeholder=
@@ -66,7 +71,7 @@ fn moonbit_parser() -> @query_language.Parser! {
       matches=
         #|[
         #|  (structure_item)
-        #|]
+        #|] @top
       ,
       placeholder=
         #|fn main {
@@ -77,7 +82,7 @@ fn moonbit_parser() -> @query_language.Parser! {
       matches=
         #|[
         #|  (pattern)
-        #|]
+        #|] @pat
       ,
       placeholder=
         #|_
@@ -92,7 +97,7 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|] @id
       ,
       placeholder=
-        #|_
+        #|_id
       ,
     ),
     "ty": @query_language.Entry::new(
@@ -100,7 +105,7 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|[
         #|  (type)
         #|  (return_type)
-        #|]
+        #|] @ty
       ,
       placeholder=
         #|A
@@ -128,14 +133,14 @@ test "exp" {
     query |> @sexp.prettify!(),
     content=
       #|;; exp
-      #|((statement_expression
-      #|  (expression
-      #|   (pipeline_expression
-      #|    (compound_expression
-      #|     (binary_expression
-      #|      (compound_expression) @a
-      #|      ("==")
-      #|      (compound_expression) @b))))))
+      #|(expression
+      #| (pipeline_expression
+      #|  (compound_expression
+      #|   (binary_expression
+      #|    ((compound_expression) @a)
+      #|    ("==")
+      #|    ((compound_expression) @b)))))
+
     ,
   )
   let parser = @tree_sitter.parser(moonbit_language)
@@ -169,28 +174,28 @@ test "top" {
     query |> @sexp.prettify!(),
     content=
       #|;; top
-      #|(structure
-      #| (structure_item
-      #|  (function_definition
-      #|   ("fn")
-      #|   (function_identifier
-      #|    (lowercase_identifier))
-      #|   (block_expression
-      #|    ("{")
-      #|    (statement_expression
-      #|     (expression
-      #|      (pipeline_expression
-      #|       (compound_expression
-      #|        (simple_expression
-      #|         (apply_expression
-      #|          (simple_expression
-      #|           (qualified_identifier
-      #|            (lowercase_identifier)))
-      #|          ("(")
-      #|          (argument
-      #|           (expression)) @a
-      #|          (")")))))))
-      #|    ("}")))))
+      #|(structure_item
+      #| (function_definition
+      #|  ("fn")
+      #|  (function_identifier
+      #|   (lowercase_identifier))
+      #|  (block_expression
+      #|   ("{")
+      #|   (statement_expression
+      #|    (expression
+      #|     (pipeline_expression
+      #|      (compound_expression
+      #|       (simple_expression
+      #|        (apply_expression
+      #|         (simple_expression
+      #|          (qualified_identifier
+      #|           (lowercase_identifier)))
+      #|         ("(")
+      #|         (argument
+      #|          ((expression) @a))
+      #|         (")")))))))
+      #|   ("}"))))
+
     ,
   )
 }
@@ -199,7 +204,6 @@ test "top" {
 test "fn-ambiguity" {
   let query =
     #|fn $a:id {
-    #|  $case:pat => $body:exp
     #|}
   let parser = moonbit_parser!()
   let query = parser.parse!(query)
@@ -207,22 +211,31 @@ test "fn-ambiguity" {
     query |> @sexp.prettify!(),
     content=
       #|;; exp
-      #|((statement_expression
-      #|  (named_matrix_expression
-      #|   ("fn")
-      #|   (lowercase_identifier) @a
+      #|(named_matrix_expression
+      #| ("fn")
+      #| ((lowercase_identifier) @a)
+      #| ("{")
+      #| ("}"))
+      #|;; top
+      #|(structure_item
+      #| (function_definition
+      #|  ("fn")
+      #|  (function_identifier
+      #|   ((lowercase_identifier) @a))
+      #|  (block_expression
       #|   ("{")
-      #|   (matrix_case_clause
-      #|    (pattern) @case
-      #|    ("=>")
-      #|    (statement_expression
-      #|     (expression)) @body)
       #|   ("}"))))
+
     ,
   )
   let source =
     #|fn f(x : Int) -> Unit {
-    #|  fn x {
+    #|  fn fx {
+    #|  }
+    #|}
+    #|
+    #|let a : Int = {
+    #|  fn fa {
     #|  }
     #|}
     #|
@@ -231,13 +244,18 @@ test "fn-ambiguity" {
   let parser = @tree_sitter.parser(moonbit_language)
   let tree = parser.parse_string!(source)
   let query_cursor = tree.query!(query)
-  let captures = {}
+  let captures : Map[@string.View, Array[@string.View]] = {}
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
-      captures[capture.name().to_string()] = capture.node().text()
+      let name = capture.name()
+      if captures[name] is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
     }
   }
-  @json.inspect!(captures, content={})
+  @json.inspect!(captures, content={"a":["fx","f","fa","main"]})
 }
 
 ///|
@@ -246,7 +264,8 @@ test "concat" {
     #|match $a:exp {
     #|  $b:pat => $c:exp
     #|}
-    #|return $d:exp
+    #|$d:exp
+    #|return $e:exp
   let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
@@ -257,21 +276,26 @@ test "concat" {
       #|  (expression
       #|   (match_expression
       #|    ("match")
-      #|    (compound_expression) @a
+      #|    ((compound_expression) @a)
       #|    ("{")
       #|    (case_clause
-      #|     (pattern) @b
+      #|     ((pattern) @b)
       #|     ("=>")
       #|     (statement_expression
-      #|      (expression)) @c)
+      #|      ((expression) @c)))
       #|    ("}"))))
+      #| .
+      #| (semicolon)*
+      #| .
+      #| (statement_expression
+      #|  ((expression) @d))
       #| .
       #| (semicolon)*
       #| .
       #| (statement_expression
       #|  (return_expression
       #|   ("return")
-      #|   (expression) @d)))
+      #|   ((expression) @e))))
     ,
   )
   let parser = @tree_sitter.parser(moonbit_language)
@@ -280,6 +304,7 @@ test "concat" {
     #|  match x {
     #|    y => z
     #|  }
+    #|  println("a")
     #|  return 3
     #|}
   let tree = parser.parse_string!(source)
@@ -288,5 +313,11 @@ test "concat" {
   for capture in query_cursor.captures() {
     captures[capture.name().to_string()] = capture.node().text()
   }
-  @json.inspect!(captures, content={ "a": "x", "b": "y", "c": "z", "d": "3" })
+  @json.inspect!(captures, content={
+    "a": "x",
+    "b": "y",
+    "c": "z",
+    "d": "println(\"a\")",
+    "e": "3",
+  })
 }

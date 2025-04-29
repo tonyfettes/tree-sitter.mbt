@@ -100,11 +100,13 @@ struct Context {
   prefix : @string.View
   suffix : @string.View
   select : @string.View
+  strip : Bool
 }
 
 ///|
 pub fn Context::new!(
   context : @string.View,
+  strip~ : Bool = false,
   selector~ : @string.View
 ) -> Context!ContextError {
   let prefix = StringBuilder::new()
@@ -113,6 +115,7 @@ pub fn Context::new!(
       return Context::{
         prefix: prefix.to_string(),
         suffix: context,
+        strip,
         select: selector,
       }
     [.. "\\$", .. context] => {
@@ -171,34 +174,48 @@ pub fn Parser::new(
 }
 
 ///|
+priv struct Replacement {
+  name : @string.View
+  query : @string.View
+} derive(Show)
+
+///|
 fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
   queries~ : Array[Query],
-  replace~ : Map[@tree_sitter.Node, Array[@string.View]],
+  replace~ : Map[@tree_sitter.Node, Array[Replacement]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
+  println("queries = \{queries}")
+  println("replace = \{replace}")
+  println("node = \{node}")
+  println("replace[node] = \{replace[node]}")
   if replace[node] is Some(replace) {
     match replace {
-      [] => {
-        buffer.write_char('(')
-        buffer.write_string(node.type_().to_string())
-        buffer.write_char(')')
-      }
+      [] => abort("Empty replacement")
       [replace] => {
-        buffer.write_char('(')
-        buffer.write_string(replace.to_string())
+        buffer.write_string("((")
+        buffer.write_string(replace.query.to_string())
+        buffer.write_string(") @")
+        buffer.write_string(replace.name.to_string())
         buffer.write_char(')')
       }
       replaces => {
+        println("found replace[node] = \{replaces}")
         buffer.write_char('[')
         for replace in replaces {
-          buffer.write_string(replace.to_string())
+          buffer.write_string("((")
+          buffer.write_string(replace.query.to_string())
+          buffer.write_string(") @")
+          buffer.write_string(replace.name.to_string())
+          buffer.write_char(')')
         }
         buffer.write_char(']')
       }
     }
+    println("buffer = \{buffer}")
     return
   }
   // Queries that capture the current node
@@ -225,8 +242,8 @@ fn generate_query(
             println("Capturing \{capture.name()} \{capture.node().type_()}")
             let replacement = replacement.or(capture.node().type_())
             match replace[capture.node()] {
-              Some(replace) => replace.push(replacement)
-              None => replace[capture.node()] = [replacement]
+              Some(replace) => replace.push({ name, query: replacement })
+              None => replace[capture.node()] = [{ name, query: replacement }]
             }
           }
         }
@@ -236,26 +253,36 @@ fn generate_query(
       children_queries.push(query)
     }
   }
-  if captured_queries.length() == 0 {
-    buffer.write_char('(')
-  } else {
-    for _ in 0..<captured_queries.length() {
-      buffer.write_char('(')
-    }
-  }
   if replace[node] is Some(replace) {
     match replace {
-      [] => buffer.write_string(node.type_().to_string())
-      [replace] => buffer.write_string(replace.to_string())
+      [] => abort("Empty replacement")
+      [replace] => {
+        buffer.write_string("((")
+        buffer.write_string(replace.query.to_string())
+        buffer.write_string(") @")
+        buffer.write_string(replace.name.to_string())
+        buffer.write_char(')')
+      }
       replaces => {
         buffer.write_char('[')
         for replace in replaces {
-          buffer.write_string(replace.to_string())
+          buffer.write_string("((")
+          buffer.write_string(replace.query.to_string())
+          buffer.write_string(") @")
+          buffer.write_string(replace.name.to_string())
+          buffer.write_char(')')
         }
         buffer.write_char(']')
       }
     }
   } else {
+    if captured_queries.length() == 0 {
+      buffer.write_char('(')
+    } else {
+      for _ in 0..<captured_queries.length() {
+        buffer.write_char('(')
+      }
+    }
     let type_ = if node.is_named() {
       node.type_().to_string()
     } else {
@@ -277,14 +304,15 @@ fn generate_query(
       }
       generate_query!(self, child, queries~, replace~, offset~, buffer~)
     }
-  }
-  if captured_queries.length() == 0 {
-    buffer.write_char(')')
-  } else {
-    for query in captured_queries {
-      buffer.write_string(") @\{query.name()}")
+    if captured_queries.length() == 0 {
+      buffer.write_char(')')
+    } else {
+      for _ in captured_queries {
+        buffer.write_char(')')
+      }
     }
   }
+  println("buffer = \{buffer}")
 }
 
 ///|
@@ -318,6 +346,17 @@ fn Buffer::to_string(self : Buffer) -> String {
 ///|
 fn Buffer::length(self : Buffer) -> Int {
   self.length
+}
+
+///|
+fn strip_colocated_nodes(node : @tree_sitter.Node) -> @tree_sitter.Node {
+  for child in node.children() {
+    if child.start_byte() == node.start_byte() &&
+      child.end_byte() == node.end_byte() {
+      return strip_colocated_nodes(child)
+    }
+  }
+  return node
 }
 
 ///|
@@ -357,27 +396,34 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           e => raise QueryError(e)
         }
         let nodes = []
-        println("name: \{name}")
         for capture in cursor.captures() {
-          println("Capture name: \{capture.name()}")
-          println("Capture node: \{capture.node()}")
           if capture.name() != name {
-            println("Not \{name} skipping")
             continue
           }
           if self.extras.contains(capture.node().type_().to_string()) {
-            println("\{capture.node().type_()} is extra, skipping")
             continue
           }
           nodes.push(capture.node())
-          println("nodes = \{nodes}")
         }
-        println("nodes = \{nodes}")
         query.write_string(";; \{name}\n")
         if nodes is [] {
           generate_query!(
             self,
-            tree.root_node(),
+            strip_colocated_nodes(tree.root_node()),
+            queries=children,
+            replace=Map::new(),
+            offset=context.prefix.length(),
+            buffer=query,
+          )
+        } else if nodes is [node] {
+          let node = if context.strip {
+            strip_colocated_nodes(node)
+          } else {
+            node
+          }
+          generate_query!(
+            self,
+            node,
             queries=children,
             replace=Map::new(),
             offset=context.prefix.length(),
