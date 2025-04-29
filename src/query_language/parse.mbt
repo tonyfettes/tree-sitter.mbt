@@ -398,18 +398,18 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
               match self.extras {
                 [] => query.write_char('.')
                 [extra] => {
-                  query.write_char('(')
+                  query.write_string(".(")
                   query.write_string(extra)
-                  query.write_string(")*")
+                  query.write_string(")*.")
                 }
                 extras => {
-                  query.write_char('[')
+                  query.write_string(".[")
                   for extra in extras {
                     query.write_char('(')
                     query.write_string(extra)
                     query.write_char(')')
                   }
-                  query.write_string("]*")
+                  query.write_string("]*.")
                 }
               }
             }

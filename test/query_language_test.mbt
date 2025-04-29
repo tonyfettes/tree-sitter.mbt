@@ -265,7 +265,9 @@ test "concat" {
       #|     (statement_expression
       #|      (expression)) @c)
       #|    ("}"))))
+      #| .
       #| (semicolon)*
+      #| .
       #| (statement_expression
       #|  (return_expression
       #|   ("return")
@@ -278,7 +280,6 @@ test "concat" {
     #|  match x {
     #|    y => z
     #|  }
-    #|  println("a")
     #|  return 3
     #|}
   let tree = parser.parse_string!(source)
