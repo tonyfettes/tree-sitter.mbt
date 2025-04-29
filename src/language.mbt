@@ -47,16 +47,21 @@ type Symbol UInt16
 extern "c" fn ts_language_symbol_for_name_(
   self : Language,
   name : Bytes
-) -> Symbol = "moonbit_ts_language_symbol_for_name"
+) -> UInt16 = "moonbit_ts_language_symbol_for_name"
 
 ///|
 /// Get the numerical id for the given node type string.
 pub fn Language::symbol_for_name(
   self : Language,
   name : @string.View
-) -> Symbol {
+) -> Symbol? {
   let name_bytes = @encoding.encode(encoding=UTF8, name)
-  return ts_language_symbol_for_name_(self, name_bytes)
+  let symbol = ts_language_symbol_for_name_(self, name_bytes)
+  if symbol == 0 {
+    return None
+  } else {
+    return Some(symbol)
+  }
 }
 
 ///|
