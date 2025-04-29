@@ -343,7 +343,7 @@ pub fn Parser::parse_bytes(
 
 ///|
 pub type! ParseError {
-  NoLanguageAssigned
+  MissingLanguage
   Cancelled
 } derive(Show)
 
@@ -352,7 +352,7 @@ fn raise_parse_error(self : Parser, tree : TSTree?) -> TSTree!ParseError {
   match tree {
     None =>
       match self.language() {
-        None => raise NoLanguageAssigned
+        None => raise MissingLanguage
         Some(_) => raise Cancelled
       }
     Some(tree) => return tree
