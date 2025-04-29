@@ -279,14 +279,9 @@ test "pattern" {
     if satisfied {
       let pattern_node = meta_var_nodes["pattern"].unwrap()[0]
       let (start, end) = (pattern_node.start_byte(), pattern_node.end_byte())
-      let text = source[start:end]
+      let text = source.view(start_offset=start, end_offset=end)
       ranges.push((text, start, end))
     }
   }
-  inspect!(
-    ranges,
-    content=
-      #|[("1 == 1", 15, 21)]
-    ,
-  )
+  @json.inspect!(ranges, content=[["1 == 1", 15, 21]])
 }

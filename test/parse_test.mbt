@@ -74,7 +74,7 @@ test "moonbit" {
       .node()
     let start_byte = comment_node.start_byte()
     let end_byte = comment_node.end_byte()
-    let comment = source[start_byte:end_byte]
+    let comment = source.view(start_offset=start_byte, end_offset=end_byte)
     match comment {
       [.. "/// ", .. comment_content] =>
         comment_document.push(comment_content.to_string())

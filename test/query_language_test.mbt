@@ -256,9 +256,7 @@ test "fn-ambiguity" {
     #|}
   let parser = @tree_sitter.parser(moonbit_language)
   let tree = parser.parse_string!(source)
-  println("querying")
   let query_cursor = tree.query!(query)
-  println("queried")
   let captures : Map[@string.View, Array[@string.View]] = {}
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
@@ -343,5 +341,71 @@ test "concat" {
     "c": "z",
     "d": "println(\"a\")",
     "f": "3",
+  })
+}
+
+///|
+test "ty" {
+  let query =
+    #|let $a:id : $b:ty = $c:exp
+  let parser = moonbit_parser!()
+  let query = parser.parse!(query)
+  inspect!(
+    @sexp.prettify!(query),
+    content=
+      #|;; exp
+      #|(let_expression
+      #| ("let")
+      #| .
+      #| (pattern
+      #|  (simple_pattern
+      #|   ((lowercase_identifier) @a)))
+      #| .
+      #| (type_annotation
+      #|  (colon)
+      #|  .
+      #|  ((type) @b))
+      #| .
+      #| ("=")
+      #| .
+      #| ((expression) @c))
+      #|;; top
+      #|(structure_item
+      #| (value_definition
+      #|  ("let")
+      #|  .
+      #|  ((lowercase_identifier) @a)
+      #|  .
+      #|  (type_annotation
+      #|   (colon)
+      #|   .
+      #|   ((type) @b))
+      #|  .
+      #|  ("=")
+      #|  .
+      #|  ((expression) @c)))
+    ,
+  )
+  let source =
+    #|let a : Int = 42
+    #|
+    #|fn main {
+    #|  let b : Bool = true
+    #|}
+  let parser = @tree_sitter.parser(moonbit_language)
+  let tree = parser.parse_string!(source)
+  let query_cursor = tree.query!(query)
+  let captures : Map[@string.View, Array[@string.View]] = {}
+  for capture in query_cursor.captures() {
+    if captures[capture.name()] is Some(captures) {
+      captures.push(capture.node().text())
+    } else {
+      captures[capture.name()] = [capture.node().text()]
+    }
+  }
+  @json.inspect!(captures, content={
+    "a": ["a", "b"],
+    "b": ["Int", "Bool"],
+    "c": ["42", "true"],
   })
 }
