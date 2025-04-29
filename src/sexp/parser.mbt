@@ -6,6 +6,7 @@ pub type! SexpError {
   MissingValue(@string.View)
   ExtraContent(@array.View[Sexp])
   InvalidPairKey(@string.View)
+  InvalidQuantifier(Char)
 } derive(Show)
 
 ///|
@@ -75,26 +76,45 @@ fn parse_list(
       sexp.push(Atom(String(string.to_string())))
       continue source
     }
+    ['.', .. source] => {
+      sexp.push(Atom(Concat))
+      continue source
+    }
     ['(', .. source] => {
       let list = []
-      sexp.push(List('(', list, ')'))
+      let sexp_list = List::new(open='(', list, close=')')
+      sexp.push(Sexp::List(sexp_list))
       match parse_list!(source, list) {
+        [')', '+' | '?' | '*' as quantifier, .. source] => {
+          sexp_list.quantifier = Quantifier::from_char!(quantifier)
+          continue source
+        }
         [')', .. source] => continue source
         [.. source] => raise SexpError::UnterminatedList(source)
       }
     }
     ['[', .. source] => {
       let list = []
-      sexp.push(List('[', list, ']'))
+      let sexp_list = List::new(open='[', list, close=']')
+      sexp.push(Sexp::List(sexp_list))
       match parse_list!(source, list) {
+        [']', '+' | '?' | '*' as quantifier, .. source] => {
+          sexp_list.quantifier = Quantifier::from_char!(quantifier)
+          continue source
+        }
         [']', .. source] => continue source
-        source => raise SexpError::UnterminatedList(source)
+        [.. source] => raise SexpError::UnterminatedList(source)
       }
     }
     ['{', .. source] => {
       let list = []
-      sexp.push(List('{', list, '}'))
+      let sexp_list = List::new(open='{', list, close='}')
+      sexp.push(Sexp::List(sexp_list))
       match parse_list!(source, list) {
+        ['}', '+' | '?' | '*' as quantifier, .. source] => {
+          sexp_list.quantifier = Quantifier::from_char!(quantifier)
+          continue source
+        }
         ['}', .. source] => continue source
         [.. source] => raise SexpError::UnterminatedList(source)
       }

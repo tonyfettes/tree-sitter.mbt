@@ -43,10 +43,10 @@ pub fn Sexp::pretty(self : Sexp) -> Sexp {
   match self {
     Atom(_) => self
     Pair(key, value) => return Pair(key, value.pretty())
-    List(open, list, close) => {
+    List({ open, list, close, quantifier }) => {
       let result = []
       pretty_to(list, result)
-      return List(open, result, close)
+      return Sexp::list(open~, result, close~, quantifier~)
     }
   }
 }
@@ -123,25 +123,22 @@ pub fn Sexp::print_to(self : Sexp, logger : &Logger, indent~ : Int = 0) -> Unit 
       logger.write_string(": ")
       value.print_to(logger, indent=indent + key.length() + 2)
     }
-    List(open, list, close) => {
+    List({ open, list, close, quantifier }) => {
       logger.write_char(open)
       print_to(list, logger, indent=indent + 1)
       logger.write_char(close)
+      logger.write_object(quantifier)
     }
   }
 }
 
 ///|
 test "print" {
-  let sexp : Sexp = List(
-    '(',
-    [
-      Atom(Symbol("a")),
-      Atom(String("b")),
-      Pair("c", List('(', [Atom(Symbol("d")), Atom(String("e"))], ')')),
-    ],
-    ')',
-  )
+  let sexp : Sexp = Sexp::list([
+    Atom(Symbol("a")),
+    Atom(String("b")),
+    Pair("c", Sexp::list([Atom(Symbol("d")), Atom(String("e"))])),
+  ])
   let buffer = StringBuilder::new()
   sexp.print_to(buffer)
   inspect!(
