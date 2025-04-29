@@ -17,6 +17,7 @@ type! ParseError {
   UnterminatedGroup(Range)
   MissingColon(Range)
   UnrecognizedEntry(Range, String)
+  UnrecognizedSymbol(@string.View)
 } derive(Show)
 
 ///|
@@ -188,10 +189,6 @@ fn generate_query(
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
-  println("queries = \{queries}")
-  println("replace = \{replace}")
-  println("node = \{node}")
-  println("replace[node] = \{replace[node]}")
   if replace[node] is Some(replace) {
     match replace {
       [] => abort("Empty replacement")
@@ -203,7 +200,6 @@ fn generate_query(
         buffer.write_char(')')
       }
       replaces => {
-        println("found replace[node] = \{replaces}")
         buffer.write_char('[')
         for replace in replaces {
           buffer.write_string("((")
@@ -215,7 +211,6 @@ fn generate_query(
         buffer.write_char(']')
       }
     }
-    println("buffer = \{buffer}")
     return
   }
   // Queries that capture the current node
@@ -239,7 +234,6 @@ fn generate_query(
             if capture.name() != name {
               continue
             }
-            println("Capturing \{capture.name()} \{capture.node().type_()}")
             let replacement = replacement.or(capture.node().type_())
             match replace[capture.node()] {
               Some(replace) => replace.push({ name, query: replacement })
@@ -289,20 +283,40 @@ fn generate_query(
       node.type_().to_json().stringify()
     }
     buffer.write_string(type_)
-    for child in node.children() {
+    let children = node.children().collect()
+    for i, child in children {
       if self.extras.contains(child.type_().to_string()) {
-        continue
-      }
-      buffer.write_char(' ')
-      let queries = []
-      for query in children_queries {
-        let query_range = query.range()
-        if query_range.start + offset <= child.end_byte() &&
-          query_range.end + offset >= child.start_byte() {
-          queries.push(query)
+        match self.extras {
+          [] => ()
+          [extra] => {
+            buffer.write_string("(")
+            buffer.write_string(extra)
+            buffer.write_string(")*")
+          }
+          extras => {
+            buffer.write_string("[")
+            for extra in extras {
+              buffer.write_char('(')
+              buffer.write_string(extra)
+              buffer.write_char(')')
+            }
+            buffer.write_string("]*")
+          }
         }
+      } else {
+        let queries = []
+        for query in children_queries {
+          let query_range = query.range()
+          if query_range.start + offset <= child.end_byte() &&
+            query_range.end + offset >= child.start_byte() {
+            queries.push(query)
+          }
+        }
+        generate_query!(self, child, queries~, replace~, offset~, buffer~)
       }
-      generate_query!(self, child, queries~, replace~, offset~, buffer~)
+      if i < children.length() - 1 {
+        buffer.write_string(" . ")
+      }
     }
     if captured_queries.length() == 0 {
       buffer.write_char(')')
@@ -312,7 +326,6 @@ fn generate_query(
       }
     }
   }
-  println("buffer = \{buffer}")
 }
 
 ///|
@@ -360,6 +373,29 @@ fn strip_colocated_nodes(node : @tree_sitter.Node) -> @tree_sitter.Node {
 }
 
 ///|
+fn lowest_common_ancestor(
+  root : @tree_sitter.Node,
+  nodes : Array[@tree_sitter.Node]
+) -> @tree_sitter.Node {
+  let mut ancestor : @tree_sitter.Node? = None
+  for node in nodes {
+    let node_ancestor = root.child_with_descendant(node)
+    match (ancestor, node_ancestor) {
+      (Some(ancestor), Some(node_ancestor)) =>
+        if ancestor != node_ancestor {
+          return root
+        }
+      (None, Some(_)) => ancestor = node_ancestor
+      (_, None) => continue
+    }
+  }
+  match ancestor {
+    None => root
+    Some(ancestor) => lowest_common_ancestor(ancestor, nodes)
+  }
+}
+
+///|
 pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
   let mut numeric_ident = 0
   let state = ParseState::Empty(children=[])
@@ -373,7 +409,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       query.write_char(char)
       continue Empty(children~), offset + 1, source
     }
-    Empty(children~), _, [] => {
+    Empty(children=queries), _, [] => {
       let parser = @tree_sitter.parser(self.language)
       let quasi = query.to_string()
       let errors = []
@@ -410,7 +446,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           generate_query!(
             self,
             strip_colocated_nodes(tree.root_node()),
-            queries=children,
+            queries~,
             replace=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
@@ -424,40 +460,57 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           generate_query!(
             self,
             node,
-            queries=children,
+            queries~,
             replace=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
         } else {
+          let ancestor = lowest_common_ancestor(tree.root_node(), nodes)
           query.write_char('(')
-          for i, node in nodes {
-            generate_query!(
-              self,
-              node,
-              queries=children,
-              replace=Map::new(),
-              offset=context.prefix.length(),
-              buffer=query,
-            )
-            if i < nodes.length() - 1 {
+          let mut start_byte = ancestor.end_byte()
+          let mut end_byte = ancestor.start_byte()
+          for node in nodes {
+            guard ancestor.child_with_descendant(node) is Some(parent) else {
+              continue
+            }
+            start_byte = @math.minimum(start_byte, parent.start_byte())
+            end_byte = @math.maximum(end_byte, parent.end_byte())
+          }
+          let ancestor_children = ancestor.children().filter(fn(node) {
+            node.start_byte() >= start_byte && node.end_byte() <= end_byte
+          }).collect()
+          for i, node in ancestor_children {
+            if self.extras.contains(node.type_().to_string()) {
               match self.extras {
-                [] => query.write_char('.')
+                [] => ()
                 [extra] => {
-                  query.write_string(".(")
+                  query.write_string("(")
                   query.write_string(extra)
-                  query.write_string(")*.")
+                  query.write_string(")*")
                 }
                 extras => {
-                  query.write_string(".[")
+                  query.write_string("[")
                   for extra in extras {
                     query.write_char('(')
                     query.write_string(extra)
                     query.write_char(')')
                   }
-                  query.write_string("]*.")
+                  query.write_string("]*")
                 }
               }
+            } else {
+              generate_query!(
+                self,
+                node,
+                queries~,
+                replace=Map::new(),
+                offset=context.prefix.length(),
+                buffer=query,
+              )
+            }
+            if i < ancestor_children.length() - 1 {
+              query.write_string(" . ")
             }
           }
           query.write_char(')')

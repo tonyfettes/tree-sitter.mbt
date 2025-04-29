@@ -133,14 +133,12 @@ test "exp" {
     query |> @sexp.prettify!(),
     content=
       #|;; exp
-      #|(expression
-      #| (pipeline_expression
-      #|  (compound_expression
-      #|   (binary_expression
-      #|    ((compound_expression) @a)
-      #|    ("==")
-      #|    ((compound_expression) @b)))))
-
+      #|(binary_expression
+      #| ((compound_expression) @a)
+      #| .
+      #| ("==")
+      #| .
+      #| ((compound_expression) @b))
     ,
   )
   let parser = @tree_sitter.parser(moonbit_language)
@@ -148,6 +146,8 @@ test "exp" {
     #|fn main {
     #|  1 == 2
     #|}
+    #|
+    #|let a : Bool = 3 == 4
   let tree = parser.parse_string!(source)
   let query_cursor = tree.query!(query)
   let captures : Map[String, Array[@string.View]] = {}
@@ -159,7 +159,7 @@ test "exp" {
       }
     }
   }
-  @json.inspect!(captures, content={ "a": ["1"], "b": ["2"] })
+  @json.inspect!(captures, content={ "a": ["1", "3"], "b": ["2", "4"] })
 }
 
 ///|
@@ -177,10 +177,13 @@ test "top" {
       #|(structure_item
       #| (function_definition
       #|  ("fn")
+      #|  .
       #|  (function_identifier
       #|   (lowercase_identifier))
+      #|  .
       #|  (block_expression
       #|   ("{")
+      #|   .
       #|   (statement_expression
       #|    (expression
       #|     (pipeline_expression
@@ -190,12 +193,17 @@ test "top" {
       #|         (simple_expression
       #|          (qualified_identifier
       #|           (lowercase_identifier)))
+      #|         .
       #|         ("(")
+      #|         .
       #|         (argument
       #|          ((expression) @a))
+      #|         .
       #|         (")")))))))
+      #|   .
+      #|   (semicolon)*
+      #|   .
       #|   ("}"))))
-
     ,
   )
 }
@@ -208,24 +216,29 @@ test "fn-ambiguity" {
   let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
-    query |> @sexp.prettify!(),
+    @sexp.prettify!(query),
     content=
       #|;; exp
       #|(named_matrix_expression
       #| ("fn")
+      #| .
       #| ((lowercase_identifier) @a)
+      #| .
       #| ("{")
+      #| .
       #| ("}"))
       #|;; top
       #|(structure_item
       #| (function_definition
       #|  ("fn")
+      #|  .
       #|  (function_identifier
       #|   ((lowercase_identifier) @a))
+      #|  .
       #|  (block_expression
       #|   ("{")
+      #|   .
       #|   ("}"))))
-
     ,
   )
   let source =
@@ -243,7 +256,9 @@ test "fn-ambiguity" {
     #|}
   let parser = @tree_sitter.parser(moonbit_language)
   let tree = parser.parse_string!(source)
+  println("querying")
   let query_cursor = tree.query!(query)
+  println("queried")
   let captures : Map[@string.View, Array[@string.View]] = {}
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
@@ -255,7 +270,7 @@ test "fn-ambiguity" {
       }
     }
   }
-  @json.inspect!(captures, content={"a":["fx","f","fa","main"]})
+  @json.inspect!(captures, content={ "a": ["fx", "fa", "main"] })
 }
 
 ///|
@@ -265,7 +280,7 @@ test "concat" {
     #|  $b:pat => $c:exp
     #|}
     #|$d:exp
-    #|return $e:exp
+    #|return $f:exp
   let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
@@ -276,13 +291,21 @@ test "concat" {
       #|  (expression
       #|   (match_expression
       #|    ("match")
+      #|    .
       #|    ((compound_expression) @a)
+      #|    .
       #|    ("{")
+      #|    .
       #|    (case_clause
       #|     ((pattern) @b)
+      #|     .
       #|     ("=>")
+      #|     .
       #|     (statement_expression
       #|      ((expression) @c)))
+      #|    .
+      #|    (semicolon)*
+      #|    .
       #|    ("}"))))
       #| .
       #| (semicolon)*
@@ -295,7 +318,8 @@ test "concat" {
       #| (statement_expression
       #|  (return_expression
       #|   ("return")
-      #|   ((expression) @e))))
+      #|   .
+      #|   ((expression) @f))))
     ,
   )
   let parser = @tree_sitter.parser(moonbit_language)
@@ -318,6 +342,6 @@ test "concat" {
     "b": "y",
     "c": "z",
     "d": "println(\"a\")",
-    "e": "3",
+    "f": "3",
   })
 }
