@@ -514,7 +514,6 @@ test "quantifier-semicolon" {
       #|   (semicolon)*
       #|   .
       #|   ("}"))))
-
     ,
   )
   let source =
@@ -548,7 +547,16 @@ test "quantifier-semicolon" {
     }
     matches.push(captures)
   }
-  @json.inspect!(matches, content=[{"a":["a"],"b":["None"],"d":["3"]},{"a":["a"],"b":["Some"],"c":["println(\"a\")"],"d":["4"]},{"a":["a"],"b":["Some"],"c":["println(\"a\")","println(\"b\")"],"d":["5"]}])
+  @json.inspect!(matches, content=[
+    { "a": ["a"], "b": ["None"], "d": ["3"] },
+    { "a": ["a"], "b": ["Some"], "c": ["println(\"a\")"], "d": ["4"] },
+    {
+      "a": ["a"],
+      "b": ["Some"],
+      "c": ["println(\"a\")", "println(\"b\")"],
+      "d": ["5"],
+    },
+  ])
 }
 
 ///|

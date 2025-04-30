@@ -804,10 +804,7 @@ pub fn Node::text(self : Node) -> @string.View {
 
 ///|
 pub fn Node::symbols(self : Node) -> Iter[Symbol] {
-  let iterator = LookaheadIterator::new(
-    self.language(),
-    self.parse_state(),
-  )
+  let iterator = LookaheadIterator::new(self.language(), self.parse_state())
   guard iterator is Some(iterator) else { Iter::empty() }
   Iter::new(fn(yield_) {
     while iterator.next() {
