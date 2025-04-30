@@ -56,16 +56,17 @@ fn moonbit_parser() -> @query_language.Parser! {
     "exp": @query_language.Entry::new(
       matches=
         #|[
+        #|  (expression)
         #|  (pipeline_expression)
         #|  (compound_expression)
         #|  (match_expression)
-        #|  (expression)
         #|  (named_matrix_expression)
+        #|  (guard_expression)
+        #|  (statement_expression)
+        #|  (simple_expression)
         #|] @exp
       ,
-      placeholder=
-        #|{ ... }
-      ,
+      placeholder="{ ... }",
     ),
     "top": @query_language.Entry::new(
       matches=
@@ -74,19 +75,17 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|] @top
       ,
       placeholder=
-        #|fn main {
-        #|}
+        #|type! A Int
       ,
     ),
     "pat": @query_language.Entry::new(
       matches=
         #|[
         #|  (pattern)
+        #|  (simple_pattern)
         #|] @pat
       ,
-      placeholder=
-        #|_
-      ,
+      placeholder="_",
     ),
     "id": @query_language.Entry::new(
       matches=
@@ -94,11 +93,11 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|  (identifier)
         #|  (lowercase_identifier)
         #|  (uppercase_identifier)
+        #|  (qualified_identifier)
+        #|  (constructor_expression)
         #|] @id
       ,
-      placeholder=
-        #|_id
-      ,
+      placeholder="id",
     ),
     "ty": @query_language.Entry::new(
       matches=
@@ -107,9 +106,7 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|  (return_type)
         #|] @ty
       ,
-      placeholder=
-        #|A
-      ,
+      placeholder="A",
     ),
   }
   let extras = ["semicolon"]
@@ -299,8 +296,7 @@ test "concat" {
       #|     .
       #|     ("=>")
       #|     .
-      #|     (statement_expression
-      #|      ((expression) @c)))
+      #|     ((statement_expression) @c))
       #|    .
       #|    (semicolon)*
       #|    .
@@ -308,8 +304,7 @@ test "concat" {
       #| .
       #| (semicolon)*
       #| .
-      #| (statement_expression
-      #|  ((expression) @d))
+      #| ((statement_expression) @d)
       #| .
       #| (semicolon)*
       #| .
@@ -408,4 +403,197 @@ test "ty" {
     "b": ["Int", "Bool"],
     "c": ["42", "true"],
   })
+}
+
+///|
+test "id" {
+  let query =
+    #|match a {
+    #|  $a:id => $b:exp
+    #|}
+  let parser = moonbit_parser!()
+  let query = parser.parse!(query)
+  inspect!(
+    @sexp.prettify!(query),
+    content=
+      #|;; exp
+      #|(match_expression
+      #| ("match")
+      #| .
+      #| (compound_expression
+      #|  (simple_expression
+      #|   (qualified_identifier
+      #|    (lowercase_identifier))))
+      #| .
+      #| ("{")
+      #| .
+      #| (case_clause
+      #|  (pattern
+      #|   (simple_pattern
+      #|    ((lowercase_identifier) @a)))
+      #|  .
+      #|  ("=>")
+      #|  .
+      #|  ((statement_expression) @b))
+      #| .
+      #| (semicolon)*
+      #| .
+      #| ("}"))
+    ,
+  )
+  let source =
+    #|fn main {
+    #|  match a {
+    #|    A => 1
+    #|  }
+    #|  match a {
+    #|    a => 1
+    #|  }
+    #|}
+  let parser = @tree_sitter.parser(moonbit_language)
+  let tree = parser.parse_string!(source)
+  let query_cursor = tree.query!(query)
+  let captures : Map[@string.View, Array[@string.View]] = {}
+  for matched in query_cursor.matches() {
+    for capture in matched.captures() {
+      let name = capture.name()
+      if captures[name] is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
+    }
+  }
+  @json.inspect!(captures, content={ "a": ["a"], "b": ["1"] })
+}
+
+///|
+test "quantifier-semicolon" {
+  let query =
+    #|guard $a:exp is $b:pat else {
+    #|  $_:{
+    #|    $c:exp
+    #|  $}*
+    #|  return $d:exp
+    #|}
+  let parser = moonbit_parser!()
+  let query = parser.parse!(query)
+  inspect!(
+    query |> @sexp.prettify!(),
+    content=
+      #|;; exp
+      #|(guard_expression
+      #| ("guard")
+      #| .
+      #| (compound_expression
+      #|  (postfix_expression
+      #|   (is_expression
+      #|    ((simple_expression) @a)
+      #|    .
+      #|    (is_keyword)
+      #|    .
+      #|    ((simple_pattern) @b))))
+      #| .
+      #| (guard_else_expression
+      #|  ("else")
+      #|  .
+      #|  (block_expression
+      #|   ("{")
+      #|   .
+      #|   ((statement_expression
+      #|     ((expression) @c))
+      #|    .
+      #|    (semicolon)*)*
+      #|   .
+      #|   (statement_expression
+      #|    (return_expression
+      #|     ("return")
+      #|     .
+      #|     ((expression) @d)))
+      #|   .
+      #|   (semicolon)*
+      #|   .
+      #|   ("}"))))
+
+    ,
+  )
+  let source =
+    #|fn main {
+    #|  guard a is None else {
+    #|    return 3
+    #|  }
+    #|  guard a is Some else {
+    #|    println("a")
+    #|    return 4
+    #|  }
+    #|  guard a is Some else {
+    #|    println("a")
+    #|    println("b")
+    #|    return 5
+    #|  }
+    #|}
+  let parser = @tree_sitter.parser(moonbit_language)
+  let tree = parser.parse_string!(source)
+  let query_cursor = tree.query!(query)
+  let matches = []
+  for matched in query_cursor.matches() {
+    let captures : Map[@string.View, Array[@string.View]] = {}
+    for capture in matched.captures() {
+      let name = capture.name()
+      if captures[name] is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
+    }
+    matches.push(captures)
+  }
+  @json.inspect!(matches, content=[{"a":["a"],"b":["None"],"d":["3"]},{"a":["a"],"b":["Some"],"c":["println(\"a\")"],"d":["4"]},{"a":["a"],"b":["Some"],"c":["println(\"a\")","println(\"b\")"],"d":["5"]}])
+}
+
+///|
+test "group" {
+  let query =
+    #|[
+    #|  $_:{
+    #|    $x:exp,
+    #|  $}+
+    #|  $x:exp
+    #|]
+  let parser = moonbit_parser!()
+  let query = parser.parse!(query)
+  inspect!(
+    query |> @sexp.prettify!(),
+    content=
+      #|;; exp
+      #|(array_expression
+      #| ("[")
+      #| .
+      #| ((expression
+      #|   ((pipeline_expression) @x))
+      #|  .
+      #|  (","))+
+      #| .
+      #| ((expression) @x)
+      #| .
+      #| ("]"))
+    ,
+  )
+  let source =
+    #|fn main {
+    #|  [1, 2, 3, 4]
+    #|}
+  let parser = @tree_sitter.parser(moonbit_language)
+  let tree = parser.parse_string!(source)
+  let query_cursor = tree.query!(query)
+  let captures : Map[@string.View, Array[@string.View]] = {}
+  for capture in query_cursor.captures() {
+    let name = capture.name()
+    if captures[name] is Some(captures) {
+      captures.push(capture.node().text())
+    } else {
+      captures[name] = [capture.node().text()]
+    }
+  }
+  @json.inspect!(captures, content={ "x": ["1", "2", "3", "4"] })
 }
