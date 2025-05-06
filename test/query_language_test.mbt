@@ -51,6 +51,28 @@ fn moonbit_parser() -> @query_language.Parser! {
         #|(type)
       ,
     ),
+    "case": @query_language.Context::new!(
+      #|fn main {
+      #|  match x {
+      #|    $
+      #|  }
+      #|}
+      ,
+      selector=
+        #|(case_clause) @case
+      ,
+    ),
+    "matrix": @query_language.Context::new!(
+      #|fn main {
+      #|  loop a, b {
+      #|    $
+      #|  }
+      #|}
+      ,
+      selector=
+        #|(matrix_case_clause) @matrix
+      ,
+    ),
   }
   let entries : Map[String, @query_language.Entry] = {
     "exp": @query_language.Entry::new(
@@ -589,19 +611,85 @@ test "group" {
   )
   let source =
     #|fn main {
-    #|  [1, 2, 3, 4]
+    #|  [0]
+    #|  [0, 1]
+    #|  [0, 1, 2]
     #|}
   let parser = @tree_sitter.parser(moonbit_language)
   let tree = parser.parse_string!(source)
   let query_cursor = tree.query!(query)
-  let captures : Map[@string.View, Array[@string.View]] = {}
-  for capture in query_cursor.captures() {
-    let name = capture.name()
-    if captures[name] is Some(captures) {
-      captures.push(capture.node().text())
-    } else {
-      captures[name] = [capture.node().text()]
+  let matches = []
+  for matched in query_cursor.matches() {
+    let captures : Map[@string.View, Array[@string.View]] = {}
+    for capture in matched.captures() {
+      let name = capture.name()
+      if captures[name] is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
     }
+    matches.push(captures)
   }
-  @json.inspect!(captures, content={ "x": ["1", "2", "3", "4"] })
+  @json.inspect!(matches, content=[
+    { "x": ["0", "1"] },
+    { "x": ["0", "1", "2"] },
+  ])
+}
+
+///|
+test "case" {
+  let query =
+    #|$_:{ $a:pat, $}* $a:pat => $b:exp
+  let parser = moonbit_parser!()
+  let query = parser.parse!(query)
+  inspect!(
+    @sexp.prettify!(query),
+    content=
+      #|;; matrix
+      #|(matrix_case_clause
+      #| ((pattern
+      #|   ((simple_pattern) @a))
+      #|  .
+      #|  (","))*
+      #| .
+      #| ((pattern) @a)
+      #| .
+      #| ("=>")
+      #| .
+      #| ((statement_expression) @b))
+    ,
+  )
+  let source =
+    #|fn main {
+    #|  match a {
+    #|    A => 1
+    #|  }
+    #|  fn b {
+    #|    B => 2
+    #|  }
+    #|  loop c, d {
+    #|    C, D => 3
+    #|  }
+    #|}
+  let parser = @tree_sitter.parser(moonbit_language)
+  let tree = parser.parse_string!(source)
+  let query_cursor = tree.query!(query)
+  let matches = []
+  for matched in query_cursor.matches() {
+    let captures : Map[@string.View, Array[@string.View]] = {}
+    for capture in matched.captures() {
+      let name = capture.name()
+      if captures[name] is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
+    }
+    matches.push(captures)
+  }
+  @json.inspect!(matches, content=[
+    { "a": ["B"], "b": ["2"] },
+    { "a": ["C", "D"], "b": ["3"] },
+  ])
 }
