@@ -1,0 +1,85 @@
+{
+  "name": "moon-grep",
+  "displayName": "moon-grep",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:moon-grep-search",
+    "onView:moon-grep-searchResultsView",
+    "onCommand:moon-grep.search"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "moon-grep.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "moon-grep.search",
+        "title": "Moon Grep: Search"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "moon-grep-sidebar",
+          "title": "Moon Grep",
+          "icon": "$(search)"
+        }
+      ]
+    },
+    "views": {
+      "moon-grep-sidebar": [
+        {
+          "type": "webview",
+          "id": "moon-grep-search",
+          "name": "Search Input",
+          "icon": "$(search-new)"
+        },
+        {
+          "id": "moon-grep-searchResultsView",
+          "name": "Search Results",
+          "icon": "$(search-results)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.25.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971",
+  "dependencies": {
+    "handlebars": "^4.7.8"
+  }
+}

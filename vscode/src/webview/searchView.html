@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'nonce-{{nonce}}'; script-src 'nonce-{{nonce}}';">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Moon Grep Search</title>
+	<style nonce="{{nonce}}">
+		body {
+			font-family: var(--vscode-font-family);
+			color: var(--vscode-editor-foreground);
+			background-color: var(--vscode-sideBar-background);
+			padding: 10px;
+		}
+		.container {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+		label {
+			display: block;
+			margin-bottom: 5px;
+		}
+		input[type="text"],
+		input[type="search"] {
+			width: 100%;
+			padding: 8px;
+			border: 1px solid var(--vscode-input-border);
+			background-color: var(--vscode-input-background);
+			color: var(--vscode-input-foreground);
+			box-sizing: border-box;
+		}
+		button {
+			padding: 8px 15px;
+			border: none;
+			background-color: var(--vscode-button-background);
+			color: var(--vscode-button-foreground);
+			cursor: pointer;
+		}
+		button:hover {
+			background-color: var(--vscode-button-hoverBackground);
+		}
+		.checkbox-group {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div>
+			<label for="pattern">Search Pattern (Regex):</label>
+			<input type="search" id="pattern" name="pattern">
+		</div>
+		<div>
+			<label for="filePattern">File Pattern (Glob):</label>
+			<input type="text" id="filePattern" name="filePattern" placeholder="e.g., *.ts, !node_modules/**">
+		</div>
+		<div class="checkbox-group">
+			<input type="checkbox" id="caseSensitive" name="caseSensitive">
+			<label for="caseSensitive">Case Sensitive</label>
+		</div>
+		<div class="checkbox-group">
+			<input type="checkbox" id="wholeWord" name="wholeWord">
+			<label for="wholeWord">Whole Word</label>
+		</div>
+		<button id="searchButton">Search</button>
+	</div>
+	<script nonce="{{nonce}}">
+		const vscode = acquireVsCodeApi();
+		const patternInput = document.getElementById('pattern');
+		const filePatternInput = document.getElementById('filePattern');
+		const caseSensitiveCheckbox = document.getElementById('caseSensitive');
+		const wholeWordCheckbox = document.getElementById('wholeWord');
+		const searchButton = document.getElementById('searchButton');
+
+		searchButton.addEventListener('click', () => {
+			vscode.postMessage({
+				type: 'search',
+				value: {
+					pattern: patternInput.value,
+					filePattern: filePatternInput.value,
+					caseSensitive: caseSensitiveCheckbox.checked,
+					wholeWord: wholeWordCheckbox.checked
+				}
+			});
+		});
+	</script>
+</body>
+</html>
