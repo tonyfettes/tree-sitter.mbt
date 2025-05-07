@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as Handlebars from "handlebars";
-import searchViewHtml from "./webview/searchView.html";
+import searchViewHtml from "./search-view.html";
 
 export class SearchViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";

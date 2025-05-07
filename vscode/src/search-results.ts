@@ -3,6 +3,8 @@ import * as MoonGrep from "./moon-grep";
 
 export class SearchResultsProvider
   implements vscode.TreeDataProvider<GrepItem> {
+  public static readonly viewType = "moon-grep-search-results";
+
   private _onDidChangeTreeData: vscode.EventEmitter<
     GrepItem | undefined | null | void
   > = new vscode.EventEmitter<GrepItem | undefined | null | void>();
