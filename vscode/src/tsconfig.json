@@ -6,9 +6,10 @@
     "lib": ["ES2022"],
     "sourceMap": true,
     "strict": true,
+    "moduleResolution": "bundler",
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true
   },
-  "references": [{ "path": "webview" }]
+  "references": [{ "path": "sidebar" }]
 }

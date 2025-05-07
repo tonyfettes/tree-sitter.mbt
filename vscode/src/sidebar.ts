@@ -1,16 +1,16 @@
 import * as vscode from "vscode";
-import * as Fs from "fs";
-import MoonGrep, { Options, Result } from "./moon-grep";
+import sidebarHtml from "./sidebar/index.html";
+import Handlebars, { template } from "handlebars";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";
+  public static readonly template = Handlebars.compile(sidebarHtml);
 
   private _view?: vscode.WebviewView;
-  private _moonGrep: MoonGrep;
-  private _searchResults: Result[] = [];
+  private readonly _extensionUri: vscode.Uri;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {
-    this._moonGrep = new MoonGrep();
+  constructor(extensionUri: vscode.Uri) {
+    this._extensionUri = extensionUri;
   }
 
   public resolveWebviewView(
@@ -155,60 +155,19 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const nonce = getNonce();
 
-    // Get the local paths to the webview resources
-    const htmlPath = vscode.Uri.joinPath(this._extensionUri, "src", "search-view", "index.html");
-    const htmlContent = Fs.readFileSync(htmlPath.fsPath, "utf8");
-
-    // Create URIs for the bundled resources
-    const codiconsUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(
-        this._extensionUri,
-        "node_modules",
-        "@vscode",
-        "codicons",
-        "dist",
-        "codicon.css"
-      )
-    );
-
-    // Create URI for the codicon font file
-    const codiconsFontUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(
-        this._extensionUri,
-        "node_modules",
-        "@vscode",
-        "codicons",
-        "dist",
-        "codicon.ttf"
-      )
-    );
-
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "dist", "search-view", "index.js")
+      vscode.Uri.joinPath(this._extensionUri, "dist", "sidebar", "index.js")
+    );
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "dist", "sidebar", "index.css")
     );
 
-    // Replace placeholders in the HTML with actual values
-    let html = htmlContent;
-    html = html.replace(/{{nonce}}/g, nonce);
-    html = html.replace(/{{cspSource}}/g, webview.cspSource);
-    html = html.replace(/{{codiconsUri}}/g, codiconsUri.toString());
-    html = html.replace(/{{scriptUri}}/g, scriptUri.toString());
-
-    // Add a style tag to override the font-face definition with the correct URI
-    const fontFaceStyle = `
-      <style nonce="${nonce}">
-        @font-face {
-          font-family: "codicon";
-          font-display: block;
-          src: url("${codiconsFontUri}") format("truetype");
-        }
-      </style>
-    `;
-
-    // Insert the font-face style right after the head opening tag
-    html = html.replace("<head>", "<head>" + fontFaceStyle);
-
-    return html;
+    return WebviewViewProvider.template({
+      nonce,
+      cspSource: webview.cspSource,
+      scriptUri: scriptUri.toString(),
+      styleUri: styleUri.toString(),
+    });
   }
 }
 

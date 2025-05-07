@@ -1,5 +1,7 @@
 import esbuild from "esbuild";
 import * as fs from "fs";
+import Handlebars from "handlebars";
+import * as path from "path";
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
@@ -25,9 +27,32 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
   },
 };
 
+const indexHtmlPlugin = ({
+  entryPoint,
+  outfile,
+}: {
+  entryPoint: string;
+  outfile: string;
+}): esbuild.Plugin => {
+  return {
+    name: "index-html-plugin",
+    setup(build) {
+      build.onEnd(async () => {
+        const html = await fs.promises.readFile(entryPoint, "utf-8");
+        const template = Handlebars.compile(html);
+        const output = template({
+          styleUri: "./index.css",
+          scriptUri: "./index.js",
+          nonce: "NONCE",
+          cspSource: "CSP_SOURCE",
+        });
+        await fs.promises.writeFile(outfile, output);
+      });
+    },
+  };
+};
+
 async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
-  fs.mkdirSync(`dist/${path}`, { recursive: true });
-  fs.copyFileSync(`src/${path}/index.html`, `dist/${path}/index.html`);
   return await esbuild.context({
     entryPoints: [`src/${path}/index.ts`],
     bundle: true,
@@ -38,7 +63,13 @@ async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
     platform: "browser",
     outfile: `dist/${path}/index.js`,
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin],
+    plugins: [
+      esbuildProblemMatcherPlugin,
+      indexHtmlPlugin({ entryPoint: `src/${path}/index.html`, outfile: `dist/${path}/index.html` }),
+    ],
+    loader: {
+      ".ttf": "file",
+    },
   });
 }
 
