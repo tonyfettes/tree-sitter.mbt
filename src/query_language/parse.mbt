@@ -655,19 +655,19 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
         offset + 1,
         source
     }
-    Match(state~, ident~, start~, buffer~, quantifier=_),
+    Match(state~, ident~, start~, buffer~, quantifier=One),
     offset,
     ['*', .. source] =>
       continue Match(state~, ident~, start~, buffer~, quantifier=ZeroOrMore),
         offset + 1,
         source
-    Match(state~, ident~, start~, buffer~, quantifier=_),
+    Match(state~, ident~, start~, buffer~, quantifier=One),
     offset,
     ['+', .. source] =>
       continue Match(state~, ident~, start~, buffer~, quantifier=OneOrMore),
         offset + 1,
         source
-    Match(state~, ident~, start~, buffer~, quantifier=_),
+    Match(state~, ident~, start~, buffer~, quantifier=One),
     offset,
     ['?', .. source] =>
       continue Match(state~, ident~, start~, buffer~, quantifier=ZeroOrOne),
