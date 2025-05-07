@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { WebviewViewProvider } from "./search";
+import * as Sidebar from "./sidebar";
 import MoonGrep, { Options } from "./moon-grep";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -8,9 +8,12 @@ export function activate(context: vscode.ExtensionContext) {
   const moonGrep = new MoonGrep();
 
   // Register the Search View provider
-  const searchViewProvider = new WebviewViewProvider(context.extensionUri);
+  const searchViewProvider = new Sidebar.WebviewViewProvider(context.extensionUri);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(WebviewViewProvider.viewType, searchViewProvider)
+    vscode.window.registerWebviewViewProvider(
+      Sidebar.WebviewViewProvider.viewType,
+      searchViewProvider
+    )
   );
 
   // Register the search command
