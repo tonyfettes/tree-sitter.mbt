@@ -13,6 +13,8 @@ export interface Options {
   filePattern?: string;
   caseSensitive?: boolean;
   wholeWord?: boolean;
+  regex?: boolean;
+  includeIgnored?: boolean;
 }
 
 export default class MoonGrep {
@@ -86,9 +88,7 @@ export default class MoonGrep {
           VSCode.window.showErrorMessage(
             `Ripgrep search failed. Error: ${stderr || "Unknown error"}`
           );
-          reject(
-            new Error(stderr || `Ripgrep process exited with code ${code}`)
-          );
+          reject(new Error(stderr || `Ripgrep process exited with code ${code}`));
         }
       });
 
@@ -106,7 +106,13 @@ export default class MoonGrep {
     const args = ["--vimgrep"]; // --vimgrep gives file:line:col:text format, easier to parse initially
 
     if (options.pattern) {
-      args.push("-e", options.pattern);
+      // Handle regex mode
+      if (options.regex !== false) {
+        args.push("-e", options.pattern);
+      } else {
+        // Escape regex special characters if regex mode is disabled
+        args.push("-F", options.pattern);
+      }
     } else {
       // Should not happen if UI validates
       throw new Error("Search pattern is required.");
@@ -118,6 +124,10 @@ export default class MoonGrep {
 
     if (options.wholeWord) {
       args.push("-w"); // Whole word
+    }
+
+    if (options.includeIgnored) {
+      args.push("--no-ignore"); // Include files that are normally ignored
     }
 
     if (options.filePattern) {
