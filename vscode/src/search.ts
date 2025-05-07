@@ -1,8 +1,14 @@
 import * as vscode from "vscode";
 import * as TS from "web-tree-sitter";
-import TSJavaScript from "tree-sitter-javascript";
+import TSJavascript from "tree-sitter-javascript";
 
-await TS.Parser.init();
+console.log("Loading tree-sitter-javascript: ", TSJavascript);
+
+export async function init() {
+  console.log("Initializing tree-sitter");
+  await TS.Parser.init();
+  console.log("Tree-sitter initialized");
+}
 
 export interface Result {
   uri: vscode.Uri;
@@ -23,12 +29,12 @@ export class Service {
     this.languages = new Map<string, TS.Language>();
     this.results = [];
   }
-  public async search(uri: vscode.Uri, options: Options): Promise<void> {
+  public async *search(uri: vscode.Uri, options: Options): AsyncGenerator<Result> {
     const uriStat = await vscode.workspace.fs.stat(uri);
     if (uriStat.type === vscode.FileType.Directory) {
       for (const [name] of await vscode.workspace.fs.readDirectory(uri)) {
         const fileUri = vscode.Uri.joinPath(uri, name);
-        await this.search(fileUri, options);
+        yield* this.search(fileUri, options);
       }
       return;
     }
@@ -48,11 +54,16 @@ export class Service {
       const tsEnd = node.endPosition;
       const vsStart = new vscode.Position(tsStart.row, tsStart.column);
       const vsEnd = new vscode.Position(tsEnd.row, tsEnd.column);
-      this.results.push({
+      const result = {
         uri,
         range: new vscode.Range(vsStart, vsEnd),
-      });
+      };
+      this.results.push(result);
+      yield result;
     }
+  }
+  public clear() {
+    this.results = [];
   }
   private async loadLanguage(name: string): Promise<TS.Language> {
     const language = this.languages.get(name);
@@ -61,7 +72,7 @@ export class Service {
     }
     switch (name) {
       case "javascript":
-        const language = await TS.Language.load(TSJavaScript);
+        const language = await TS.Language.load(TSJavascript);
         this.languages.set(name, language);
         return language;
       default:

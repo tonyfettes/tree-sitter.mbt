@@ -1,16 +1,28 @@
 import * as vscode from "vscode";
 import sidebarHtml from "./sidebar/index.html";
-import Handlebars, { template } from "handlebars";
+import Handlebars from "handlebars";
+import type * as Search from "./search";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";
   public static readonly template = Handlebars.compile(sidebarHtml);
 
-  private _view?: vscode.WebviewView;
-  private readonly _extensionUri: vscode.Uri;
+  private view?: vscode.WebviewView;
+  private service: Search.Service;
+  private readonly extensionUri: vscode.Uri;
 
-  constructor(extensionUri: vscode.Uri) {
-    this._extensionUri = extensionUri;
+  constructor(extensionUri: vscode.Uri, service: Search.Service) {
+    this.extensionUri = extensionUri;
+    this.service = service;
+  }
+
+  private static getNonce() {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
   }
 
   public resolveWebviewView(
@@ -18,11 +30,11 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
-    this._view = webviewView;
+    this.view = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri],
+      localResourceRoots: [this.extensionUri],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -33,16 +45,15 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           await this._performSearch(data.value);
           break;
         }
-        case "replace": {
-          await this._performReplace(data.value, false);
-          break;
-        }
-        case "replaceAll": {
-          await this._performReplace(data.value, true);
-          break;
-        }
         case "clear": {
-          this._searchResults = [];
+          this.service.clear();
+          if (this.view) {
+            this.view.webview.postMessage({
+              type: "results",
+              results: [],
+              stats: { matchCount: 0, fileCount: 0 },
+            });
+          }
           break;
         }
         case "openMatch": {
@@ -57,12 +68,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private async _performSearch(options: Options) {
-    if (!options || !options.pattern) {
-      vscode.window.showInformationMessage("Please enter a search pattern.");
-      return;
-    }
-
+  private async _performSearch(options: Search.Options) {
     try {
       vscode.window.withProgress(
         {
@@ -70,21 +76,22 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           title: "Searching with Ripgrep...",
           cancellable: false,
         },
-        async (progress) => {
-          const results = await this._moonGrep.search(options, vscode.workspace.workspaceFolders);
-
-          this._searchResults = results;
-
-          // Send results to webview
-          if (this._view) {
-            this._view.webview.postMessage({
-              type: "results",
-              results: results,
-              stats: {
-                matchCount: results.length,
-                fileCount: new Set(results.map((r) => r.file)).size,
-              },
-            });
+        async (_) => {
+          const results: Search.Result[] = [];
+          for (const folder of vscode.workspace.workspaceFolders || []) {
+            for await (const result of this.service.search(folder.uri, options)) {
+              results.push(result);
+              if (this.view) {
+                this.view.webview.postMessage({
+                  type: "result",
+                  results,
+                  stats: {
+                    matchCount: results.length,
+                    fileCount: new Set(results.map((r) => r.uri)).size,
+                  },
+                });
+              }
+            }
           }
         }
       );
@@ -92,41 +99,13 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       vscode.window.showErrorMessage(`Search failed: ${error.message || "Unknown error"}`);
 
       // Send empty results to webview
-      if (this._view) {
-        this._view.webview.postMessage({
+      if (this.view) {
+        this.view.webview.postMessage({
           type: "results",
           results: [],
           stats: { matchCount: 0, fileCount: 0 },
         });
       }
-    }
-  }
-
-  private async _performReplace(options: any, replaceAll: boolean) {
-    const { searchPattern, replacePattern, filePattern, caseSensitive, wholeWord, regex } = options;
-
-    if (!searchPattern || !replacePattern) {
-      vscode.window.showInformationMessage("Please enter both search and replace patterns.");
-      return;
-    }
-
-    try {
-      // For now, we'll just show a message that replace functionality is coming soon
-      // In a real implementation, we would use the workspace.fs API to read and write files
-      vscode.window.showInformationMessage(
-        `Replace ${replaceAll ? "all" : ""} functionality is coming soon.`
-      );
-
-      // After replacing, we would re-run the search to update results
-      // await this._performSearch({
-      //   pattern: searchPattern,
-      //   filePattern,
-      //   caseSensitive,
-      //   wholeWord,
-      //   regex
-      // });
-    } catch (error: any) {
-      vscode.window.showErrorMessage(`Replace failed: ${error.message || "Unknown error"}`);
     }
   }
 
@@ -146,20 +125,20 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _openInEditor(results: Result[]) {
+  private _openInEditor(results: Search.Result[]) {
     // This would open the search results in the editor
     // For now, we'll just show a message
     vscode.window.showInformationMessage("Open in editor functionality is coming soon.");
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
-    const nonce = getNonce();
+    const nonce = WebviewViewProvider.getNonce();
 
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "dist", "sidebar", "index.js")
+      vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.js")
     );
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "dist", "sidebar", "index.css")
+      vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.css")
     );
 
     return WebviewViewProvider.template({
@@ -169,13 +148,4 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       styleUri: styleUri.toString(),
     });
   }
-}
-
-function getNonce() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
 }

@@ -4,6 +4,6 @@ declare module "*.html" {
 }
 
 declare module "tree-sitter-javascript" {
-  const content: Uint8Array;
+  const content: string;
   export default content;
 }

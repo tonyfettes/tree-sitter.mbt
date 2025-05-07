@@ -52,6 +52,19 @@ const indexHtmlPlugin = ({
   };
 };
 
+const treeSitterPlugin: esbuild.Plugin = {
+  name: "tree-sitter-plugin",
+  setup(build) {
+    build.onResolve({ filter: /tree-sitter-javascript/ }, (args) => {
+      console.log(`Resolving tree-sitter module: ${args.path}`);
+      console.log(`Resolving tree-sitter module: ${args.resolveDir}`);
+      return {
+        path: path.join(import.meta.dirname, "node_modules", args.path, `${args.path}.wasm`),
+      };
+    });
+  },
+};
+
 async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
   return await esbuild.context({
     entryPoints: [`src/${path}/index.ts`],
@@ -85,9 +98,10 @@ async function main() {
     outfile: "dist/extension.js",
     external: ["vscode"],
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin],
+    plugins: [esbuildProblemMatcherPlugin, treeSitterPlugin],
     loader: {
       ".html": "text",
+      ".wasm": "file",
     },
   });
   const sidebarCtx = await webviewCtx("sidebar");
