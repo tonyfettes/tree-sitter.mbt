@@ -39,7 +39,7 @@ pub fn Language::state_count(self : Language) -> Int {
 }
 
 ///|
-type Symbol UInt16
+type Symbol UInt
 
 ///|
 /// Get the numerical id for the given node type string.
@@ -60,7 +60,7 @@ pub fn Language::symbol_for_name(
   if symbol == 0 {
     return None
   } else {
-    return Some(symbol)
+    return Some(symbol.to_int().reinterpret_as_uint())
   }
 }
 
