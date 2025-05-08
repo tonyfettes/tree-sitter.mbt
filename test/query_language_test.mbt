@@ -172,7 +172,7 @@ test "exp" {
   let captures : Map[String, Array[@string.View]] = {}
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
-      match captures[capture.name().to_string()] {
+      match captures.get(capture.name().to_string()) {
         Some(captures) => captures.push(capture.node().text())
         None => captures[capture.name().to_string()] = [capture.node().text()]
       }
@@ -280,7 +280,7 @@ test "fn-ambiguity" {
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
       let name = capture.name()
-      if captures[name] is Some(captures) {
+      if captures.get(name) is Some(captures) {
         captures.push(capture.node().text())
       } else {
         captures[name] = [capture.node().text()]
@@ -414,7 +414,7 @@ test "ty" {
   let query_cursor = tree.query!(query)
   let captures : Map[@string.View, Array[@string.View]] = {}
   for capture in query_cursor.captures() {
-    if captures[capture.name()] is Some(captures) {
+    if captures.get(capture.name()) is Some(captures) {
       captures.push(capture.node().text())
     } else {
       captures[capture.name()] = [capture.node().text()]
@@ -479,7 +479,7 @@ test "id" {
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
       let name = capture.name()
-      if captures[name] is Some(captures) {
+      if captures.get(name) is Some(captures) {
         captures.push(capture.node().text())
       } else {
         captures[name] = [capture.node().text()]
@@ -561,7 +561,7 @@ test "quantifier-semicolon" {
     let captures : Map[@string.View, Array[@string.View]] = {}
     for capture in matched.captures() {
       let name = capture.name()
-      if captures[name] is Some(captures) {
+      if captures.get(name) is Some(captures) {
         captures.push(capture.node().text())
       } else {
         captures[name] = [capture.node().text()]
@@ -623,7 +623,7 @@ test "group" {
     let captures : Map[@string.View, Array[@string.View]] = {}
     for capture in matched.captures() {
       let name = capture.name()
-      if captures[name] is Some(captures) {
+      if captures.get(name) is Some(captures) {
         captures.push(capture.node().text())
       } else {
         captures[name] = [capture.node().text()]
@@ -680,7 +680,7 @@ test "case" {
     let captures : Map[@string.View, Array[@string.View]] = {}
     for capture in matched.captures() {
       let name = capture.name()
-      if captures[name] is Some(captures) {
+      if captures.get(name) is Some(captures) {
         captures.push(capture.node().text())
       } else {
         captures[name] = [capture.node().text()]
