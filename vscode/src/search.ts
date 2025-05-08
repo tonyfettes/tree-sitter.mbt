@@ -2,12 +2,8 @@ import * as vscode from "vscode";
 import * as TS from "web-tree-sitter";
 import TSJavascript from "tree-sitter-javascript";
 
-console.log("Loading tree-sitter-javascript: ", TSJavascript);
-
 export async function init() {
-  console.log("Initializing tree-sitter");
   await TS.Parser.init();
-  console.log("Tree-sitter initialized");
 }
 
 export interface Result {
@@ -24,7 +20,9 @@ export class Service {
   private parser: TS.Parser;
   private languages: Map<string, TS.Language>;
   private results: Result[];
-  constructor() {
+  private readonly extensionUri: vscode.Uri;
+  constructor(extensionUri: vscode.Uri) {
+    this.extensionUri = extensionUri;
     this.parser = new TS.Parser();
     this.languages = new Map<string, TS.Language>();
     this.results = [];
@@ -33,9 +31,15 @@ export class Service {
     const uriStat = await vscode.workspace.fs.stat(uri);
     if (uriStat.type === vscode.FileType.Directory) {
       for (const [name] of await vscode.workspace.fs.readDirectory(uri)) {
+        if (name === ".mooncakes" || name === "target") {
+          continue;
+        }
         const fileUri = vscode.Uri.joinPath(uri, name);
         yield* this.search(fileUri, options);
       }
+      return;
+    }
+    if (!uri.fsPath.endsWith('.mbt')) {
       return;
     }
     const bytes = await vscode.workspace.fs.readFile(uri);
@@ -48,7 +52,8 @@ export class Service {
     }
     const query = new TS.Query(language, options.query);
     const matches = query.matches(tree.rootNode);
-    for (const match of matches) {
+    for (const [index, match] of matches.entries()) {
+      console.log(`matches[${index}]`);
       const node = match.captures[0].node;
       const tsStart = node.startPosition;
       const tsEnd = node.endPosition;
@@ -72,7 +77,12 @@ export class Service {
     }
     switch (name) {
       case "javascript":
-        const language = await TS.Language.load(TSJavascript);
+        const language = await TS.Language.load(
+          vscode.Uri.joinPath(this.extensionUri, "dist", TSJavascript).fsPath
+        );
+        if (!language) {
+          throw new Error(`Failed to load language ${name} from ${TSJavascript}`);
+        }
         this.languages.set(name, language);
         return language;
       default:

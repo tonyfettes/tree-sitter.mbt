@@ -87,12 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     vscode.postMessage({
       type: "search",
       value: {
-        pattern: pattern,
-        filePattern: filePatternInput.value,
-        caseSensitive: searchOptions.caseSensitive,
-        wholeWord: searchOptions.wholeWord,
-        regex: searchOptions.regex,
-        includeIgnored: searchOptions.includeIgnored,
+        language: "javascript",
+        query: pattern,
       },
     });
   }

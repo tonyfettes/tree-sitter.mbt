@@ -1,5 +1,16 @@
 {
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "module": "ESNext",
+    "target": "ES2022",
+    "outDir": "../../dist/sidebar",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "bundler",
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": false
   }
 }

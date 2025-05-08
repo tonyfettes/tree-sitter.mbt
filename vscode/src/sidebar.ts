@@ -1,11 +1,9 @@
 import * as vscode from "vscode";
 import sidebarHtml from "./sidebar/index.html";
-import Handlebars from "handlebars";
 import type * as Search from "./search";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";
-  public static readonly template = Handlebars.compile(sidebarHtml);
 
   private view?: vscode.WebviewView;
   private service: Search.Service;
@@ -97,8 +95,6 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       );
     } catch (error: any) {
       vscode.window.showErrorMessage(`Search failed: ${error.message || "Unknown error"}`);
-
-      // Send empty results to webview
       if (this.view) {
         this.view.webview.postMessage({
           type: "results",
@@ -141,11 +137,10 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.css")
     );
 
-    return WebviewViewProvider.template({
-      nonce,
-      cspSource: webview.cspSource,
-      scriptUri: scriptUri.toString(),
-      styleUri: styleUri.toString(),
-    });
+    return sidebarHtml
+      .replaceAll(/{{nonce}}/g, nonce)
+      .replaceAll(/{{cspSource}}/g, webview.cspSource)
+      .replaceAll(/{{scriptUri}}/g, scriptUri.toString())
+      .replaceAll(/{{styleUri}}/g, styleUri.toString());
   }
 }

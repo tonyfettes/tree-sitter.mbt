@@ -1,13 +1,13 @@
-import esbuild from "esbuild";
-import * as fs from "fs";
-import Handlebars from "handlebars";
-import * as path from "path";
+import ESBuild from "esbuild";
+import * as Fs from "node:fs";
+import * as Path from "path";
+import * as Module from "node:module";
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
 const serve = process.argv.includes("--serve");
 
-const esbuildProblemMatcherPlugin: esbuild.Plugin = {
+const esbuildProblemMatcherPlugin: ESBuild.Plugin = {
   name: "esbuild-problem-matcher",
 
   setup(build) {
@@ -27,46 +27,93 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
   },
 };
 
-const indexHtmlPlugin = ({
+const webviewHtmlPlugin = ({
   entryPoint,
   outfile,
 }: {
   entryPoint: string;
   outfile: string;
-}): esbuild.Plugin => {
+}): ESBuild.Plugin => {
   return {
-    name: "index-html-plugin",
+    name: "webview-html-plugin",
     setup(build) {
       build.onEnd(async () => {
-        const html = await fs.promises.readFile(entryPoint, "utf-8");
-        const template = Handlebars.compile(html);
-        const output = template({
-          styleUri: "./index.css",
-          scriptUri: "./index.js",
-          nonce: "NONCE",
-          cspSource: "CSP_SOURCE",
-        });
-        await fs.promises.writeFile(outfile, output);
+        const html = await Fs.promises.readFile(entryPoint, "utf-8");
+        const output = html
+          .replaceAll(/{{styleUri}}/g, "./index.css")
+          .replaceAll(/{{scriptUri}}/g, "./index.js")
+          .replaceAll(/{{nonce}}/g, "NONCE")
+          .replaceAll(/{{cspSource}}/g, "CSP_SOURCE");
+        await Fs.promises.writeFile(outfile, output);
       });
     },
   };
 };
 
-const treeSitterPlugin: esbuild.Plugin = {
+function findPackage(path: string): string | undefined {
+  const packageJSON = Module.findPackageJSON(path, import.meta.url);
+  if (!packageJSON) {
+    return undefined;
+  }
+  return Path.dirname(packageJSON);
+}
+
+function findTreeSitterWasm(path: string, name?: string): string | undefined {
+  const wasmName = name || path;
+  const packageJSON = Module.findPackageJSON(path, import.meta.url);
+  if (!packageJSON) {
+    return undefined;
+  }
+  const packageDir = Path.dirname(packageJSON);
+  const wasmPath = Path.join(packageDir, `${wasmName}.wasm`);
+  if (Fs.existsSync(wasmPath)) {
+    return wasmPath;
+  }
+  return undefined;
+}
+
+const treeSitterPlugin: ESBuild.Plugin = {
   name: "tree-sitter-plugin",
   setup(build) {
-    build.onResolve({ filter: /tree-sitter-javascript/ }, (args) => {
-      console.log(`Resolving tree-sitter module: ${args.path}`);
-      console.log(`Resolving tree-sitter module: ${args.resolveDir}`);
+    build.onResolve({ filter: /tree-sitter-javascript/ }, (args): ESBuild.OnResolveResult => {
+      const wasmPath = findTreeSitterWasm(args.path);
+      if (!wasmPath) {
+        throw new Error(`Could not find tree-sitter-wasm for ${args.path}`);
+      }
       return {
-        path: path.join(import.meta.dirname, "node_modules", args.path, `${args.path}.wasm`),
+        path: wasmPath,
       };
+    });
+    build.onResolve({ filter: /web-tree-sitter/ }, (args) => {
+      const packageDir = findPackage(args.path);
+      if (!packageDir) {
+        throw new Error(`Could not find package for ${args.path}`);
+      }
+      return {
+        path: Path.join(packageDir, "tree-sitter.cjs")
+      }
+    });
+    build.onEnd(async () => {
+      const wasmPath = findTreeSitterWasm("web-tree-sitter", "tree-sitter");
+      if (!wasmPath) {
+        throw new Error(`Could not find tree-sitter-wasm for web-tree-sitter`);
+      }
+      let outdir: string | undefined = undefined;
+      if (build.initialOptions.outdir) {
+        outdir = build.initialOptions.outdir;
+      } else if (build.initialOptions.outfile) {
+        outdir = Path.dirname(build.initialOptions.outfile);
+      }
+      if (!outdir) {
+        throw new Error(`Could not find outdir for web-tree-sitter`);
+      }
+      await Fs.promises.copyFile(wasmPath, Path.join(outdir, "tree-sitter.wasm"));
     });
   },
 };
 
-async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
-  return await esbuild.context({
+async function webviewCtx(path: string): Promise<ESBuild.BuildContext> {
+  return await ESBuild.context({
     entryPoints: [`src/${path}/index.ts`],
     bundle: true,
     format: "iife",
@@ -78,7 +125,10 @@ async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
     logLevel: "silent",
     plugins: [
       esbuildProblemMatcherPlugin,
-      indexHtmlPlugin({ entryPoint: `src/${path}/index.html`, outfile: `dist/${path}/index.html` }),
+      webviewHtmlPlugin({
+        entryPoint: `src/${path}/index.html`,
+        outfile: `dist/${path}/index.html`,
+      }),
     ],
     loader: {
       ".ttf": "file",
@@ -87,7 +137,7 @@ async function webviewCtx(path: string): Promise<esbuild.BuildContext> {
 }
 
 async function main() {
-  const extensionCtx = await esbuild.context({
+  const extensionCtx = await ESBuild.context({
     entryPoints: ["src/extension.ts"],
     bundle: true,
     format: "cjs",
