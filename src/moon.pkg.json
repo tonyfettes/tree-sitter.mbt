@@ -6,6 +6,20 @@
       "command": "python3 scripts/prepare.py"
     }
   ],
+  "targets": {
+    "closure.native.mbt": ["native"],
+    "input.native.mbt": ["native"],
+    "language.native.mbt": ["native"],
+    "lookahead_iterator.native.mbt": ["native"],
+    "node.native.mbt": ["native"],
+    "parser.native.mbt": ["native"],
+    "point.native.mbt": ["native"],
+    "query_cursor.native.mbt": ["native"],
+    "query.native.mbt": ["native"],
+    "range.native.mbt": ["native"],
+    "tree_cursor.native.mbt": ["native"],
+    "tree.native.mbt": ["native"]
+  },
   "import": [
     "tonyfettes/encoding",
     "tonyfettes/c",
@@ -14,10 +28,6 @@
     "tonyfettes/tree_sitter_language",
     "tonyfettes/tree_sitter/sexp"
   ],
-  "supported-targets": [
-    "native"
-  ],
-  "native-stub": [
-    "tree-sitter#lib#src#lib.c"
-  ]
+  "supported-targets": ["native"],
+  "native-stub": ["tree-sitter#lib#src#lib.c"]
 }
