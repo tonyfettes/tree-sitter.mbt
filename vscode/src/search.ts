@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as TS from "web-tree-sitter";
 import TSJavascript from "tree-sitter-javascript";
+import * as ChildProcess from "child_process";
 
 export async function init() {
   await TS.Parser.init();
@@ -9,11 +10,14 @@ export async function init() {
 export interface Result {
   uri: vscode.Uri;
   range: vscode.Range;
+  context: string[];
 }
 
 export interface Options {
   language: string;
   query: string;
+  includePattern?: string;
+  excludePattern?: string;
 }
 
 export class Service {
@@ -21,51 +25,76 @@ export class Service {
   private languages: Map<string, TS.Language>;
   private results: Result[];
   private readonly extensionUri: vscode.Uri;
+  public readonly onResult: vscode.EventEmitter<Result[]>;
   constructor(extensionUri: vscode.Uri) {
     this.extensionUri = extensionUri;
     this.parser = new TS.Parser();
     this.languages = new Map<string, TS.Language>();
     this.results = [];
+    this.onResult = new vscode.EventEmitter();
   }
-  public async *search(uri: vscode.Uri, options: Options): AsyncGenerator<Result> {
-    const uriStat = await vscode.workspace.fs.stat(uri);
-    if (uriStat.type === vscode.FileType.Directory) {
-      for (const [name] of await vscode.workspace.fs.readDirectory(uri)) {
-        if (name === ".mooncakes" || name === "target") {
-          continue;
-        }
-        const fileUri = vscode.Uri.joinPath(uri, name);
-        yield* this.search(fileUri, options);
+  public async search(uri: vscode.Uri, options: Options): Promise<void> {
+    const args = [options.query, uri.fsPath];
+    const child = ChildProcess.spawn(
+      "/Users/haoxiang/Workspace/moonbit/feihaoxiang/moonbit-tree-sitter/bin/target/native/release/build/grep/grep.exe",
+      args
+    );
+    const fileSet: Map<vscode.Uri, string[]> = new Map();
+    const textDecoder = new TextDecoder();
+    let buffer = "";
+    child.stdout.on("data", async (data) => {
+      buffer += data;
+      const lines = buffer.split("\n");
+      if (lines.length < 2) {
+        return;
       }
-      return;
-    }
-    if (!uri.fsPath.endsWith('.mbt')) {
-      return;
-    }
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    const content = new TextDecoder("utf-8").decode(bytes);
-    const language = await this.loadLanguage(options.language);
-    this.parser.setLanguage(language);
-    const tree = this.parser.parse(content);
-    if (!tree) {
-      throw new Error("Failed to parse the file");
-    }
-    const query = new TS.Query(language, options.query);
-    const matches = query.matches(tree.rootNode);
-    for (const [index, match] of matches.entries()) {
-      console.log(`matches[${index}]`);
-      const node = match.captures[0].node;
-      const tsStart = node.startPosition;
-      const tsEnd = node.endPosition;
-      const vsStart = new vscode.Position(tsStart.row, tsStart.column);
-      const vsEnd = new vscode.Position(tsEnd.row, tsEnd.column);
-      const result = {
-        uri,
-        range: new vscode.Range(vsStart, vsEnd),
-      };
-      this.results.push(result);
-      yield result;
-    }
+      const lastIndex = lines.length - 1;
+      buffer = lines[lastIndex];
+      for (const line of lines.slice(0, lastIndex)) {
+        const json = JSON.parse(line);
+        console.log("Search: json", json);
+        const uri = vscode.Uri.parse(`file://${json.path}`);
+        let lines = fileSet.get(uri);
+        if (lines === undefined) {
+          const fileBytes = await vscode.workspace.fs.readFile(uri);
+          const fileText = textDecoder.decode(fileBytes);
+          lines = fileText.split("\n");
+          fileSet.set(uri, lines);
+        }
+        const startLine = json.start.row;
+        const endLine = json.end.row;
+        const start = new vscode.Position(startLine, json.start.column);
+        const end = new vscode.Position(endLine, json.end.column);
+        const range = new vscode.Range(start, end);
+        this.results.push({
+          uri: uri,
+          range: range,
+          context: lines.slice(startLine, endLine + 1),
+        });
+        this.onResult.fire(this.results);
+      }
+    });
+    let stderr: string | undefined = undefined;
+    child.stderr.on("data", (data) => {
+      if (!stderr) {
+        stderr = data;
+      } else {
+        stderr += data;
+      }
+    });
+    await new Promise<void>((resolve, reject) => {
+      child.on("close", (code) => {
+        if (code !== 0) {
+          if (stderr !== undefined) {
+            reject(new Error(stderr));
+          } else {
+            reject(new Error(`moon-grep exited with ${code}`));
+          }
+        } else {
+          resolve();
+        }
+      });
+    });
   }
   public clear() {
     this.results = [];

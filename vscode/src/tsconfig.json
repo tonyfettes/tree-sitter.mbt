@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "composite": true,
-	  "module": "Node16",
+    "module": "Node16",
     "target": "ES2023",
     "outDir": "../dist",
     "lib": ["ES2023"],

@@ -59,12 +59,14 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "format": "prettier --write \"**/*.{ts,mts,js,mjs,json,html,css,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,mts,js,mjs,json,html,css,md}\""
+    "format": "prettier --write \"**/*.{ts,mts,js,mjs,tsx,jsx,json,html,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,mts,js,mjs,tsx,jsx,json,html,css,md}\""
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "~22.15.14",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "@types/vscode": "^1.99.1",
     "@typescript-eslint/eslint-plugin": "^8.32.0",
     "@typescript-eslint/parser": "^8.32.0",
@@ -79,6 +81,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tree-sitter-javascript": "^0.23.1",
     "web-tree-sitter": "^0.25.3"
   }

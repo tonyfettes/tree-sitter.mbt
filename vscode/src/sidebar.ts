@@ -55,7 +55,8 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "openMatch": {
-          this._openMatch(data.value.file, data.value.line);
+          console.log("openMatch", data);
+          // this._openMatch(data.value.file, data.value.line);
           break;
         }
         case "openInEditor": {
@@ -75,22 +76,43 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           cancellable: false,
         },
         async (_) => {
-          const results: Search.Result[] = [];
-          for (const folder of vscode.workspace.workspaceFolders || []) {
-            for await (const result of this.service.search(folder.uri, options)) {
-              results.push(result);
-              if (this.view) {
-                this.view.webview.postMessage({
-                  type: "result",
-                  results,
-                  stats: {
-                    matchCount: results.length,
-                    fileCount: new Set(results.map((r) => r.uri)).size,
-                  },
-                });
-              }
-            }
+          const workspaceFolders = vscode.workspace.workspaceFolders;
+          if (!workspaceFolders) {
+            vscode.window.showErrorMessage(`Search failed: no workspace folder available`);
+            return;
           }
+          this.service.onResult.event((results) => {
+            console.log("Sidebar: results", results);
+            if (this.view) {
+              this.view.webview.postMessage({
+                type: "results",
+                results: results.map((result) => {
+                  return {
+                    uri: vscode.workspace.asRelativePath(result.uri),
+                    range: {
+                      start: {
+                        line: result.range.start.line,
+                        character: result.range.start.character,
+                      },
+                      end: {
+                        line: result.range.end.line,
+                        character: result.range.end.character,
+                      },
+                    },
+                    lines: result.context,
+                  };
+                }),
+                stats: {
+                  matchCount: results.length,
+                  fileCount: new Set(results.map((result) => result.uri)).size,
+                },
+              });
+            }
+          });
+          const promises = workspaceFolders.map((folder) => {
+            return this.service.search(folder.uri, options);
+          });
+          await Promise.all(promises);
         }
       );
     } catch (error: any) {

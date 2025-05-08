@@ -121,6 +121,25 @@ body {
   padding-left: 4px;
 }
 
+/* Styling for InputBox when used in SearchOptions */
+.search-options .search-input-box {
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: var(--border-radius);
+  height: auto;
+  margin: 0;
+}
+
+.search-options .search-input {
+  padding: 2px 4px;
+  font-size: 11px;
+}
+
+.search-options .search-controls {
+  padding-left: 0;
+  gap: 0;
+}
+
 .control-button {
   display: flex;
   align-items: center;
@@ -149,7 +168,7 @@ body {
 
 .search-options {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   margin-top: 6px;
   font-size: 11px;
@@ -163,6 +182,71 @@ body {
 
 input[type="checkbox"] {
   margin: 0;
+}
+
+.file-pattern-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.file-pattern-label {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 2px;
+}
+
+.file-pattern-input-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: var(--border-radius);
+}
+
+.file-pattern-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--vscode-input-foreground);
+  padding: 2px 4px;
+  font-family: var(--vscode-font-family);
+  font-size: 11px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.file-pattern-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.file-pattern-input-container:focus-within {
+  border-color: var(--vscode-focusBorder);
+}
+
+.file-pattern-browse-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--vscode-icon-foreground);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.file-pattern-browse-button:hover {
+  opacity: 1;
+}
+
+.file-pattern-browse-button.active {
+  background-color: var(--vscode-editor-findMatchHighlightBackground);
+  color: var(--vscode-editor-findMatchHighlightForeground);
+  opacity: 1;
 }
 
 .search-results {
@@ -238,30 +322,27 @@ input[type="checkbox"] {
   background-color: var(--vscode-list-hoverBackground);
 }
 
-.match-item pre {
+.match-content {
   margin: 0;
   font-family: var(--vscode-editor-font-family);
   font-size: var(--vscode-editor-font-size);
-  white-space: pre-wrap;
-  word-break: break-all;
+  white-space: pre;
+  width: 100%;
 }
 
 .match-line {
-  color: var(--vscode-editorLineNumber-foreground);
-  margin-right: 8px;
-  opacity: 0.7;
-  user-select: none;
-  min-width: 30px;
-  text-align: right;
+  display: flex;
+  width: 100%;
 }
 
 .match-text {
-  flex: 1;
+  white-space: pre;
 }
 
 .match-highlight {
   background-color: var(--vscode-editor-findMatchHighlightBackground);
   outline: 1px solid var(--vscode-editor-findMatchHighlightBorder, transparent);
+  white-space: pre;
 }
 
 .collapsed .match-list {

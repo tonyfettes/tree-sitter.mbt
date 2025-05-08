@@ -50,6 +50,26 @@ const webviewHtmlPlugin = ({
   };
 };
 
+const templateHtmlPlugin: ESBuild.Plugin = {
+  name: "template-html-plugin",
+  setup(build) {
+    build.onLoad({ filter: /\.html$/ }, async (args) => {
+      if (args.suffix !== "?template") {
+        return;
+      }
+      const source = await Fs.promises.readFile(args.path, "utf-8");
+      const contents = `const template = document.createElement("template");
+template.innerHTML = \`${source.trim()}\`;
+
+export default template;`;
+      return {
+        contents,
+        loader: "js",
+      };
+    });
+  },
+};
+
 function findPackage(path: string): string | undefined {
   const packageJSON = Module.findPackageJSON(path, import.meta.url);
   if (!packageJSON) {
@@ -90,8 +110,8 @@ const treeSitterPlugin: ESBuild.Plugin = {
         throw new Error(`Could not find package for ${args.path}`);
       }
       return {
-        path: Path.join(packageDir, "tree-sitter.cjs")
-      }
+        path: Path.join(packageDir, "tree-sitter.cjs"),
+      };
     });
     build.onEnd(async () => {
       const wasmPath = findTreeSitterWasm("web-tree-sitter", "tree-sitter");
@@ -114,7 +134,7 @@ const treeSitterPlugin: ESBuild.Plugin = {
 
 async function webviewCtx(path: string): Promise<ESBuild.BuildContext> {
   return await ESBuild.context({
-    entryPoints: [`src/${path}/index.ts`],
+    entryPoints: [`src/${path}/index.tsx`],
     bundle: true,
     format: "iife",
     minify: production,
@@ -129,9 +149,12 @@ async function webviewCtx(path: string): Promise<ESBuild.BuildContext> {
         entryPoint: `src/${path}/index.html`,
         outfile: `dist/${path}/index.html`,
       }),
+      templateHtmlPlugin,
     ],
     loader: {
       ".ttf": "file",
+      ".tsx": "tsx",
+      ".jsx": "jsx",
     },
   });
 }
