@@ -9,8 +9,7 @@
     "tonyfettes/tree_sitter_json": "0.1.7",
     "tonyfettes/tree_sitter_markdown": "0.1.8",
     "tonyfettes/c": "0.1.12",
-    "tonyfettes/tree_sitter_yaml": "0.1.7",
-    "tonyfettes/encoding": "0.1.0"
+    "tonyfettes/tree_sitter_yaml": "0.1.7"
   },
   "readme": "README.md",
   "repository": "",
