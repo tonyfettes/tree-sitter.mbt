@@ -1,0 +1,29 @@
+{
+  "name": "moonbit-tree-sitter",
+  "version": "0.0.1",
+  "description": "This is a MoonBit binding to the [tree-sitter](https://tree-sitter.github.io/tree-sitter/index.html) incremental parsing library.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonyfettes/moonbit-tree-sitter.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tonyfettes/moonbit-tree-sitter/issues"
+  },
+  "homepage": "https://github.com/tonyfettes/moonbit-tree-sitter#readme",
+  "dependencies": {
+    "web-tree-sitter": "^0.25.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17"
+  }
+}

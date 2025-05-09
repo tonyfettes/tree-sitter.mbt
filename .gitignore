@@ -1,3 +1,4 @@
 target/
 .mooncakes/
 /publish/
+node_modules/
