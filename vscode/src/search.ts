@@ -1,11 +1,5 @@
 import * as vscode from "vscode";
-import * as TS from "web-tree-sitter";
-import TSJavascript from "tree-sitter-javascript";
 import * as ChildProcess from "child_process";
-
-export async function init() {
-  await TS.Parser.init();
-}
 
 export interface Result {
   uri: vscode.Uri;
@@ -21,15 +15,11 @@ export interface Options {
 }
 
 export class Service {
-  private parser: TS.Parser;
-  private languages: Map<string, TS.Language>;
   private results: Result[];
   private readonly extensionUri: vscode.Uri;
   public readonly onResult: vscode.EventEmitter<Result[]>;
   constructor(extensionUri: vscode.Uri) {
     this.extensionUri = extensionUri;
-    this.parser = new TS.Parser();
-    this.languages = new Map<string, TS.Language>();
     this.results = [];
     this.onResult = new vscode.EventEmitter();
   }
@@ -98,24 +88,5 @@ export class Service {
   }
   public clear() {
     this.results = [];
-  }
-  private async loadLanguage(name: string): Promise<TS.Language> {
-    const language = this.languages.get(name);
-    if (language) {
-      return language;
-    }
-    switch (name) {
-      case "javascript":
-        const language = await TS.Language.load(
-          vscode.Uri.joinPath(this.extensionUri, "dist", TSJavascript).fsPath
-        );
-        if (!language) {
-          throw new Error(`Failed to load language ${name} from ${TSJavascript}`);
-        }
-        this.languages.set(name, language);
-        return language;
-      default:
-        throw new Error(`Language ${name} not supported`);
-    }
   }
 }
