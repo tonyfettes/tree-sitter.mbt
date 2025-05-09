@@ -285,7 +285,7 @@ fn generate_query(
     mut opened : Bool
     mut closed : Bool
   } derive(Show)
-  if replace[node] is Some(replace) {
+  if replace.get(node) is Some(replace) {
     generate_replacements(node~, replace~, buffer~, extras=self.extras)
     return
   }
@@ -307,7 +307,7 @@ fn generate_query(
               continue
             }
             let replacement = replacement.or(capture.node().type_())
-            match replace[capture.node()] {
+            match replace.get(capture.node()) {
               Some(replace) =>
                 replace.push({ name, query: replacement, quantifier })
               None =>
@@ -342,7 +342,7 @@ fn generate_query(
       Match(_, _, ..) => ()
     }
   }
-  if replace[node] is Some(replace) {
+  if replace.get(node) is Some(replace) {
     generate_replacements(node~, replace~, buffer~, extras=self.extras)
     return
   }
@@ -676,7 +676,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
     Match(state~, ident~, start~, buffer~, quantifier~), offset, [.. source] => {
       let alias_ = buffer.to_string()
       buffer.reset()
-      guard self.entries[alias_] is Some(entry) else {
+      guard self.entries.get(alias_) is Some(entry) else {
         raise UnrecognizedEntry(
           Range::new(offset - alias_.length(), offset),
           alias_,

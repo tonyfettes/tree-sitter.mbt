@@ -336,7 +336,7 @@ pub fn Grammar::from_json(json : Json) -> Grammar!GrammarParseError {
     let visitor = fn(rule : Rule) -> Unit!GrammarParseError {
       match rule {
         Symbol(name) =>
-          if grammar.rules[name] is None {
+          if grammar.rules.get(name) is None {
             raise RuleNotFound(name)
           }
         _ => return
@@ -345,27 +345,27 @@ pub fn Grammar::from_json(json : Json) -> Grammar!GrammarParseError {
     rule.visit_rule!(visitor)
   }
   for supertype in grammar.supertypes {
-    guard grammar.rules[supertype.name] is Some(rule) else {
+    guard grammar.rules.get(supertype.name) is Some(rule) else {
       raise RuleNotFound(supertype.name)
     }
     supertype.rule = Some(rule)
   }
   for inline in grammar.inline {
-    guard grammar.rules[inline.name] is Some(rule) else {
+    guard grammar.rules.get(inline.name) is Some(rule) else {
       raise RuleNotFound(inline.name)
     }
     inline.rule = Some(rule)
   }
   for conflict in grammar.conflicts {
     for rule_name in conflict {
-      guard grammar.rules[rule_name.name] is Some(rule) else {
+      guard grammar.rules.get(rule_name.name) is Some(rule) else {
         raise RuleNotFound(rule_name.name)
       }
       rule_name.rule = Some(rule)
     }
   }
   if grammar.word is Some(word) {
-    guard grammar.rules[word.name] is Some(rule) else {
+    guard grammar.rules.get(word.name) is Some(rule) else {
       raise RuleNotFound(word.name)
     }
     word.rule = Some(rule)
