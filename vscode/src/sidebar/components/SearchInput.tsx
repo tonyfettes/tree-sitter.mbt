@@ -25,9 +25,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     });
   };
 
-  const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
-      onSearch();
+      // If Shift+Enter is pressed, let the default behavior happen (new line)
+      if (!e.shiftKey) {
+        e.preventDefault();
+        onSearch();
+      }
     }
   };
 
@@ -69,7 +73,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       placeholder="Search"
       value={value}
       onChange={onChange}
-      onKeyUp={handleKeyUp}
+      onKeyDown={handleKeyDown}
       controls={searchControls}
     />
   );

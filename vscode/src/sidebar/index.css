@@ -84,7 +84,7 @@ body {
 .replace-input-box {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   background-color: var(--vscode-input-background);
   border: 1px solid var(--vscode-input-border);
   border-radius: var(--border-radius);
@@ -103,6 +103,10 @@ body {
   outline: none;
   width: 100%;
   box-sizing: border-box;
+  min-height: 24px;
+  resize: none;
+  overflow: hidden;
+  line-height: 16px;
 }
 
 .search-input::placeholder,
@@ -119,6 +123,8 @@ body {
   display: flex;
   gap: 6px;
   padding-left: 4px;
+  padding-top: 2px;
+  align-self: flex-start;
 }
 
 /* Styling for InputBox when used in SearchOptions */
