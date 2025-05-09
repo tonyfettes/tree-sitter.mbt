@@ -1,34 +1,55 @@
 ///|
-type Language @tree_sitter_language.Language
+fn async_suspend[T](f : ((T) -> Unit) -> Unit) -> T = "%async.suspend"
 
 ///|
-pub fn Language::load(
-  language : @tree_sitter_language.Language
+type Language
+
+///|
+trait Loadable {
+  load(Self) -> Language!Async
+}
+
+///|
+extern "js" fn ts_language_load_bytes(
+  ts : TS,
+  bytes : @tree_sitter_language.Language,
+  resolve : (Language) -> Unit
+) -> Unit =
+  #|(ts, bytes, resolve) => {
+  #|  console.log("ts", ts);
+  #|  return ts.Language.load(bytes).then(resolve);
+  #|}
+
+///|
+pub impl Loadable for @tree_sitter_language.Language with load(
+  self : @tree_sitter_language.Language
 ) -> Language!Async {
-  language
+  async_suspend(fn(resolve) { ts_language_load_bytes(ts, self, resolve) })
 }
 
 ///|
-extern "c" fn ts_language_copy(self : Language) -> Language = "moonbit_ts_language_copy"
-
-///|
-/// Get another reference to the given language.
-pub fn Language::copy(self : Language) -> Language {
-  ts_language_copy(self)
+pub async fn Language::load[Loadable : Loadable](
+  loadable : Loadable
+) -> Language!Async {
+  loadable.load!()
 }
 
 ///|
-extern "c" fn ts_language_delete(self : Language) = "moonbit_ts_language_delete"
+extern "js" fn ts_language_is_null(language : Language) -> Bool =
+  #|(language) => {
+  #|  return language == null || language == undefined;
+  #|}
 
 ///|
-/// Free any dynamically-allocated resources for this language, if
-/// this is the last reference.
-pub fn Language::delete(self : Language) -> Unit {
-  ts_language_delete(self)
+impl Nullable for Language with is_null(self : Language) -> Bool {
+  ts_language_is_null(self)
 }
 
 ///|
-extern "c" fn ts_language_symbol_count(self : Language) -> UInt = "moonbit_ts_language_symbol_count"
+extern "js" fn ts_language_symbol_count(self : Language) -> UInt =
+  #|(language) => {
+  #|  return language.nodeTypeCount;
+  #|}
 
 ///|
 /// Get the number of distinct node types in the language.
@@ -37,7 +58,10 @@ pub fn Language::symbol_count(self : Language) -> Int {
 }
 
 ///|
-extern "c" fn ts_language_state_count(self : Language) -> UInt = "moonbit_ts_language_state_count"
+extern "js" fn ts_language_state_count(self : Language) -> UInt =
+  #|(language) => {
+  #|  return language.stateCount;
+  #|}
 
 ///|
 /// Get the number of valid states in this language.
@@ -46,15 +70,17 @@ pub fn Language::state_count(self : Language) -> Int {
 }
 
 ///|
-type Symbol UInt
+type Symbol UInt derive(Eq)
 
 ///|
 /// Get the numerical id for the given node type string.
-#borrow(name)
-extern "c" fn ts_language_symbol_for_name_(
+extern "js" fn ts_language_symbol_for_name_(
   self : Language,
   name : Bytes
-) -> UInt16 = "moonbit_ts_language_symbol_for_name"
+) -> UInt16 =
+  #|(language, name) => {
+  #|  return language.idForNodeType(name, true) || language.idForNodeType(name, false);
+  #|}
 
 ///|
 /// Get the numerical id for the given node type string.
@@ -75,7 +101,10 @@ pub fn Language::symbol_for_name(
 type FieldId UInt16
 
 ///|
-extern "c" fn ts_language_field_count(self : Language) -> Int = "moonbit_ts_language_field_count"
+extern "js" fn ts_language_field_count(self : Language) -> Int =
+  #|(language) => {
+  #|  return language.fieldCount;
+  #|}
 
 ///|
 /// Get the number of distinct field names in the language.
@@ -84,10 +113,24 @@ pub fn Language::field_count(self : Language) -> Int {
 }
 
 ///|
-extern "c" fn ts_language_field_name_for_id(
+extern "js" fn js_string_is_null(string : String) -> Bool =
+  #|(string) => {
+  #|  return string == null || string == undefined;
+  #|}
+
+///|
+impl Nullable for String with is_null(self : String) -> Bool {
+  js_string_is_null(self)
+}
+
+///|
+extern "js" fn ts_language_field_name_for_id(
   self : Language,
   id : FieldId
-) -> @c.Pointer[Byte] = "moonbit_ts_language_field_name_for_id"
+) -> String =
+  #|(language, id) => {
+  #|  return language.fieldNameForId(id);
+  #|}
 
 ///|
 /// Get the field name string for the given numerical id.
@@ -95,47 +138,33 @@ pub fn Language::field_name_for_id(
   self : Language,
   id : FieldId
 ) -> @string.View? {
-  let name_bytes = ts_language_field_name_for_id(self, id)
-  return decode_c_string(name_bytes)
+  if ts_language_field_name_for_id(self, id).to_option() is Some(string) {
+    Some(string)
+  } else {
+    None
+  }
 }
 
 ///|
-fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> @string.View? {
-  if c_string.is_null() {
-    return None
-  }
-  let buffer = @buffer.new()
-  match length {
-    None =>
-      for i = 0; c_string[i] != 0; i = i + 1 {
-        buffer.write_byte(c_string[i])
-      }
-    Some(length) =>
-      for i = 0; i < length; i = i + 1 {
-        buffer.write_byte(c_string[i])
-      }
-  }
-  let name = buffer.contents()
-  let name = @encoding.decode_lossy(encoding=UTF8, name)
-  Some(name)
-}
-
-///|
-#borrow(name)
-extern "c" fn Language::_field_id_for_name(
+extern "js" fn Language::_field_id_for_name(
   self : Language,
-  name : Bytes
-) -> UInt = "moonbit_ts_language_field_id_for_name"
+  name : String
+) -> UInt =
+  #|(language, name) => {
+  #|  return language.fieldIdForName(name);
+  #|}
 
 ///|
 /// Get the numerical id for the given field name string.
 pub fn Language::field_id_for_name(self : Language, name : @string.View) -> Int {
-  let name_bytes = @encoding.encode(encoding=UTF8, name)
-  Language::_field_id_for_name(self, name_bytes) |> uint_to_int()
+  Language::_field_id_for_name(self, name.to_string()) |> uint_to_int()
 }
 
 ///|
-extern "c" fn ts_language_supertypes(self : Language) -> Array[Symbol] = "moonbit_ts_language_supertypes"
+extern "js" fn ts_language_supertypes(self : Language) -> Array[Symbol] =
+  #|(language) => {
+  #|  return language.supertypes;
+  #|}
 
 ///|
 /// Get a list of all supertype symbols for the language.
@@ -144,7 +173,10 @@ pub fn Language::supertypes(self : Language) -> Array[Symbol] {
 }
 
 ///|
-extern "c" fn ts_language_subtypes(self : Language) -> Array[Symbol] = "moonbit_ts_language_subtypes"
+extern "js" fn ts_language_subtypes(self : Language) -> Array[Symbol] =
+  #|(language) => {
+  #|  return language.subtypes;
+  #|}
 
 ///|
 /// Get a list of all subtype symbol ids for a given supertype symbol.
@@ -155,19 +187,22 @@ pub fn Language::subtypes(self : Language) -> Array[Symbol] {
 }
 
 ///|
-extern "c" fn ts_language_symbol_name(
+extern "js" fn ts_language_symbol_name(
   self : Language,
   symbol : Symbol
-) -> @c.Pointer[Byte] = "moonbit_ts_language_symbol_name"
+) -> String =
+  #|(language, symbol) => {
+  #|  return language.nodeTypeForId(symbol);
+  #|}
 
 ///|
 /// Get a node type string for the given numerical id.
 pub fn Language::symbol_name(self : Language, symbol : Symbol) -> @string.View? {
-  let name_bytes = ts_language_symbol_name(self, symbol)
-  if name_bytes.is_null() {
-    return None
+  if ts_language_symbol_name(self, symbol).to_option() is Some(name) {
+    Some(name)
+  } else {
+    None
   }
-  return decode_c_string(name_bytes)
 }
 
 ///|
@@ -202,7 +237,22 @@ fn SymbolType::to_int(self : SymbolType) -> UInt {
 }
 
 ///|
-extern "c" fn ts_language_symbol_type(self : Language, symbol : Symbol) -> UInt = "moonbit_ts_language_symbol_type"
+extern "js" fn ts_language_symbol_is_named(
+  self : Language,
+  symbol : Symbol
+) -> Bool =
+  #|(language, symbol) => {
+  #|  return language.nodeTypeIsNamed(symbol);
+  #|}
+
+///|
+extern "js" fn ts_language_symbol_is_visible(
+  self : Language,
+  symbol : Symbol
+) -> Bool =
+  #|(language, symbol) => {
+  #|  return language.nodeTypeIsVisible(symbol);
+  #|}
 
 ///|
 /// Check whether the given node type id belongs to named nodes, anonymous nodes,
@@ -210,11 +260,25 @@ extern "c" fn ts_language_symbol_type(self : Language, symbol : Symbol) -> UInt 
 ///
 /// See also `Node::is_named`. Hidden nodes are never returned from the API.
 pub fn Language::symbol_type(self : Language, symbol : Symbol) -> SymbolType {
-  return SymbolType::of_int(ts_language_symbol_type(self, symbol))
+  let named = ts_language_symbol_is_named(self, symbol)
+  let visible = ts_language_symbol_is_visible(self, symbol)
+  let supertypes = self.supertypes()
+  if named && visible {
+    return SymbolType::Regular
+  } else if visible {
+    return SymbolType::Anonymous
+  } else if supertypes.contains(symbol) {
+    return SymbolType::Supertype
+  } else {
+    return SymbolType::Auxiliary
+  }
 }
 
 ///|
-extern "c" fn ts_language_version(self : Language) -> UInt = "moonbit_ts_language_version"
+extern "js" fn ts_language_version(self : Language) -> UInt =
+  #|(language) => {
+  #|  return language.version;
+  #|}
 
 ///|
 /// Get the ABI version number for this language. This version number is used
@@ -228,7 +292,10 @@ pub fn Language::version(self : Language) -> Int {
 }
 
 ///|
-extern "c" fn ts_language_abi_version(self : Language) -> UInt = "moonbit_ts_language_abi_version"
+extern "js" fn ts_language_abi_version(self : Language) -> UInt =
+  #|(language) => {
+  #|  return language.abiVersion;
+  #|}
 
 ///|
 /// Get the ABI version number for this language. This version number is used
@@ -247,25 +314,37 @@ pub fn Language::abi_version(self : Language) -> Int {
 /// of the language. This version information should be used to signal if a given parser might
 /// be incompatible with existing queries when upgrading between major versions, or minor versions
 /// if it's in zerover.
-type LanguageMetadata Bytes
+type LanguageMetadata
 
 ///|
-pub fn LanguageMetadata::major_version(self : LanguageMetadata) -> Byte {
-  self._[0]
-}
+pub extern "js" fn LanguageMetadata::major_version(
+  self : LanguageMetadata
+) -> Byte =
+  #|(metadata) => {
+  #|  return metadata.major_version;
+  #|}
 
 ///|
-pub fn LanguageMetadata::minor_version(self : LanguageMetadata) -> Byte {
-  self._[1]
-}
+pub extern "js" fn LanguageMetadata::minor_version(
+  self : LanguageMetadata
+) -> Byte =
+  #|(metadata) => {
+  #|  return metadata.minor_version;
+  #|}
 
 ///|
-pub fn LanguageMetadata::patch_version(self : LanguageMetadata) -> Byte {
-  self._[2]
-}
+pub extern "js" fn LanguageMetadata::patch_version(
+  self : LanguageMetadata
+) -> Byte =
+  #|(metadata) => {
+  #|  return metadata.patch_version;
+  #|}
 
 ///|
-extern "c" fn ts_language_metadata(self : Language) -> LanguageMetadata = "moonbit_ts_language_metadata"
+extern "js" fn ts_language_metadata(self : Language) -> LanguageMetadata =
+  #|(language) => {
+  #|  return language.metadata;
+  #|}
 
 ///|
 /// Get the metadata for this language. This information is generated by the
@@ -281,11 +360,14 @@ pub fn Language::metadata(self : Language) -> LanguageMetadata {
 type StateId UInt16
 
 ///|
-extern "c" fn ts_language_next_state(
+extern "js" fn ts_language_next_state(
   self : Language,
   state : StateId,
   symbol : Symbol
-) -> StateId = "moonbit_ts_language_next_state"
+) -> StateId =
+  #|(language, state, symbol) => {
+  #|  return language.nextState(state, symbol);
+  #|}
 
 ///|
 /// Get the next parse state. Combine this with lookahead iterators to generate
@@ -300,11 +382,17 @@ pub fn Language::next_state(
 }
 
 ///|
-extern "c" fn ts_language_name(self : Language) -> @c.Pointer[Byte] = "moonbit_ts_language_name"
+extern "js" fn ts_language_name(self : Language) -> String =
+  #|(language) => {
+  #|  return language.name;
+  #|}
 
 ///|
 /// Get the name of this language. This returns `None` in older parsers.
 pub fn Language::name(self : Language) -> @string.View? {
-  let name = ts_language_name(self._)
-  return decode_c_string(name)
+  if ts_language_name(self).to_option() is Some(name) {
+    Some(name)
+  } else {
+    None
+  }
 }

@@ -838,3 +838,19 @@ pub fn Node::next_symbols(self : Node) -> Iter[Symbol] {
     }
   })
 }
+
+///|
+pub fn Node::next_symbol_names(self : Node) -> Iter[@string.View] {
+  let language = self.language()
+  Iter::new(fn(yield_) {
+    for symbol in self.next_symbols() {
+      guard language.symbol_name(symbol) is Some(name) else { continue }
+      match yield_(name) {
+        IterContinue => continue
+        IterEnd => break IterEnd
+      }
+    } else {
+      IterContinue
+    }
+  })
+}

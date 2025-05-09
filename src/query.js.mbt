@@ -2,7 +2,10 @@
 type Query
 
 ///|
-extern "c" fn Query::null() -> Query = "moonbit_c_null"
+extern "js" fn Query::null() -> Query =
+  #|() => {
+  #|  return null;
+  #|}
 
 ///|
 type! QueryError {
@@ -40,12 +43,23 @@ fn QueryError::from(offset : UInt, type_ : UInt) -> QueryError {
 }
 
 ///|
-#borrow(source, error)
-extern "c" fn Query::_new(
+extern "js" fn ts_query_new(
+  ts : TS,
   language : Language,
-  source : Bytes,
+  source : String,
   error : FixedArray[UInt]
-) -> Query = "moonbit_ts_query_new"
+) -> Query =
+  #|(ts, language, source, error) => {
+  #|  try {
+  #|    const query = new ts.Query(language, source);
+  #|    error[1] = 0;
+  #|    return query;
+  #|  } catch (queryError) {
+  #|    error[0] = queryError.index;
+  #|    error[1] = queryError.type;
+  #|    return null;
+  #|  }
+  #|}
 
 ///|
 /// Create a new query from a string containing one or more S-expression
@@ -59,8 +73,7 @@ pub fn Query::new(
   source : @string.View
 ) -> Query!QueryError {
   let error = FixedArray::make(2, 0U)
-  let source = @encoding.encode(encoding=UTF8, source)
-  let query = Query::_new(language, source, error)
+  let query = ts_query_new(ts, language, source.to_string(), error)
   if error[1] == 0 {
     query
   } else {
@@ -69,44 +82,49 @@ pub fn Query::new(
 }
 
 ///|
-/// Get the number of patterns in the query.
-#borrow(self)
-extern "c" fn Query::_pattern_count(self : Query) -> UInt = "moonbit_ts_query_pattern_count"
+extern "js" fn ts_query_pattern_count(self : Query) -> UInt =
+  #|() => {
+  #|  return self.patternCount;
+  #|}
 
 ///|
 /// Get the number of patterns in the query.
 pub fn Query::pattern_count(self : Query) -> Int {
-  uint_to_int(self._pattern_count())
+  self |> ts_query_pattern_count() |> uint_to_int()
 }
 
 ///|
-/// Get the number of captures in the query.
-#borrow(self)
-extern "c" fn Query::_capture_count(self : Query) -> UInt = "moonbit_ts_query_capture_count"
+extern "js" fn ts_query_capture_count(self : Query) -> UInt =
+  #|() => {
+  #|  return self.captureCount;
+  #|}
 
 ///|
 /// Get the number of captures in the query.
 pub fn Query::capture_count(self : Query) -> Int {
-  uint_to_int(self._capture_count())
+  self |> ts_query_capture_count() |> uint_to_int()
 }
 
 ///|
-/// Get the number of string literals in the query.
-#borrow(self)
-extern "c" fn Query::_string_count(self : Query) -> UInt = "moonbit_ts_query_string_count"
+extern "js" fn ts_query_string_count(self : Query) -> UInt =
+  #|() => {
+  #|  return self.stringCount;
+  #|}
 
 ///|
 /// Get the number of string literals in the query.
 pub fn Query::string_count(self : Query) -> Int {
-  uint_to_int(self._string_count())
+  self |> ts_query_string_count() |> uint_to_int()
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_start_byte_for_pattern(
+extern "js" fn ts_query_start_byte_for_pattern(
   self : Query,
   pattern_index : UInt
-) -> UInt = "moonbit_ts_query_start_byte_for_pattern"
+) -> UInt =
+  #|(patternIndex) => {
+  #|  return self.startIndexForPattern(patternIndex);
+  #|}
 
 ///|
 /// Get the byte offset where the given pattern starts in the query's source.
@@ -115,15 +133,17 @@ extern "c" fn Query::_start_byte_for_pattern(
 /// code strings.
 pub fn Query::start_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
   let pattern_index = int_to_uint(pattern_index)
-  self._start_byte_for_pattern(pattern_index) |> uint_to_int()
+  ts_query_start_byte_for_pattern(self, pattern_index) |> uint_to_int()
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_end_byte_for_pattern(
+extern "js" fn ts_query_end_byte_for_pattern(
   self : Query,
   pattern_index : UInt
-) -> UInt = "moonbit_ts_query_end_byte_for_pattern"
+) -> UInt =
+  #|(patternIndex) => {
+  #|  return self.endIndexForPattern(patternIndex);
+  #|}
 
 ///|
 /// Get the byte offset where the given pattern ends in the query's source.
@@ -132,15 +152,8 @@ extern "c" fn Query::_end_byte_for_pattern(
 /// code strings.
 pub fn Query::end_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
   let pattern_index = int_to_uint(pattern_index)
-  self._end_byte_for_pattern(pattern_index) |> uint_to_int()
+  ts_query_end_byte_for_pattern(self, pattern_index) |> uint_to_int()
 }
-
-///|
-#borrow(self)
-extern "c" fn Query::_predicates_for_pattern(
-  self : Query,
-  pattern_index : UInt
-) -> FixedArray[UInt] = "moonbit_ts_query_predicates_for_pattern"
 
 ///|
 priv enum QueryPredicateStepType {
@@ -160,74 +173,28 @@ fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
 }
 
 ///|
-pub enum QueryPredicateStep {
-  Capture(@string.View)
-  String(@string.View)
-} derive(Show)
-
-///|
-pub typealias QueryPredicate = Array[QueryPredicateStep]
-
-///|
-/// Get all of the predicates for the given pattern in the query.
-///
-/// The predicates are represented as a single array of array of steps.
-/// There are two types of steps in this array:
-/// - `QueryPredicateStep::Capture` - Steps with this type represent names
-///    of captures. Their `value_id` can be used with the
-///    `Query::capture_name_for_id` function to obtain the name of the capture.
-/// - `QueryPredicateStep::String` - Steps with this type represent literal
-///    strings. Their `value_id` can be used with the
-///    `Query::string_value_for_id` function to obtain their string value.
-pub fn Query::predicates_for_pattern(
-  self : Query,
-  pattern_index : Int
-) -> Array[QueryPredicate] {
-  let pattern_index = int_to_uint(pattern_index)
-  let flatten_predicates = Query::_predicates_for_pattern(self, pattern_index)
-  let predicates = []
-  let mut predicate = []
-  for i in 0..<(flatten_predicates.length() / 2) {
-    let value = flatten_predicates[i * 2 + 1]
-    let value = uint_to_int(value)
-    let type_ = QueryPredicateStepType::of_uint(flatten_predicates[i * 2])
-    match type_ {
-      Capture => {
-        let name = Query::capture_name_for_id(self, value)
-        predicate.push(QueryPredicateStep::Capture(name))
-      }
-      String => {
-        let value = Query::string_value_for_id(self, value)
-        predicate.push(QueryPredicateStep::String(value))
-      }
-      Done => {
-        predicates.push(predicate)
-        predicate = []
-      }
-    }
-  }
-  predicates
-}
-
-///|
-#borrow(self)
-extern "c" fn Query::_is_pattern_rooted(
+extern "js" fn ts_query_is_pattern_rooted(
   self : Query,
   pattern_index : UInt
-) -> Bool = "moonbit_ts_query_is_pattern_rooted"
+) -> Bool =
+  #|(query, patternIndex) => {
+  #|  return query.isPatternRooted(patternIndex);
+  #|}
 
 ///|
 /// Check if the given pattern in the query has a single root node.
 pub fn Query::is_pattern_rooted(self : Query, pattern_index : Int) -> Bool {
-  self._is_pattern_rooted(int_to_uint(pattern_index))
+  ts_query_is_pattern_rooted(self, int_to_uint(pattern_index))
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_is_pattern_non_local(
+extern "js" fn ts_query_is_pattern_non_local(
   self : Query,
   pattern_index : UInt
-) -> Bool = "moonbit_ts_query_is_pattern_non_local"
+) -> Bool =
+  #|(query, patternIndex) => {
+  #|  return query.isPatternNonLocal(patternIndex);
+  #|}
 
 ///|
 /// Check if the given pattern in the query is 'non local'.
@@ -237,15 +204,17 @@ extern "c" fn Query::_is_pattern_non_local(
 /// patterns disable certain optimizations that would otherwise be possible
 /// when executing a query on a specific range of a syntax tree.
 pub fn Query::is_pattern_non_local(self : Query, pattern_index : Int) -> Bool {
-  self._is_pattern_non_local(int_to_uint(pattern_index))
+  ts_query_is_pattern_non_local(self, int_to_uint(pattern_index))
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_is_pattern_guaranteed_at_step(
+extern "js" fn ts_query_is_pattern_guaranteed_at_step(
   self : Query,
   byte_offset : UInt
-) -> Bool = "moonbit_ts_query_is_pattern_guaranteed_at_step"
+) -> Bool =
+  #|(query, byteIndex) => {
+  #|  return query.isPatternGuaranteedAtStep(byteIndex);
+  #|}
 
 ///|
 /// Check if a given pattern is guaranteed to match once a given step is reached.
@@ -254,16 +223,17 @@ pub fn Query::is_pattern_guaranteed_at_step(
   self : Query,
   byte_offset : Int
 ) -> Bool {
-  self._is_pattern_guaranteed_at_step(int_to_uint(byte_offset))
+  ts_query_is_pattern_guaranteed_at_step(self, int_to_uint(byte_offset))
 }
 
 ///|
-#borrow(self, length)
-extern "c" fn Query::_capture_name_for_id(
+extern "js" fn ts_query_capture_name_for_id(
   self : Query,
-  capture_id : UInt,
-  length : FixedArray[UInt]
-) -> @c.Pointer[Byte] = "moonbit_ts_query_capture_name_for_id"
+  capture_id : UInt
+) -> String =
+  #|(query, captureId) => {
+  #|  return query.captureNames[captureId];
+  #|}
 
 ///|
 /// Get the name of one of the query's captures. Each capture is associated with a
@@ -273,9 +243,7 @@ pub fn Query::capture_name_for_id(
   capture_id : Int
 ) -> @string.View {
   let capture_id = int_to_uint(capture_id)
-  let length : FixedArray[UInt] = [0U]
-  let name = Query::_capture_name_for_id(self, capture_id, length)
-  return decode_c_string(name, length=length[0].reinterpret_as_int()).unwrap()
+  ts_query_capture_name_for_id(self, capture_id)
 }
 
 ///|
@@ -300,12 +268,14 @@ fn Quantifier::of_uint(value : UInt) -> Quantifier {
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_capture_quantifier_for_id(
+extern "js" fn ts_query_capture_quantifier_for_id(
   self : Query,
   pattern_index : UInt,
   capture_index : UInt
-) -> UInt = "moonbit_ts_query_capture_quantifier_for_id"
+) -> UInt =
+  #|(query, patternIndex, captureIndex) => {
+  #|  return query.captureQuantifiers[patternIndex][captureIndex];
+  #|}
 
 ///|
 /// Get the quantifier of the query's captures. Each capture is
@@ -318,34 +288,15 @@ pub fn Query::capture_quantifier_for_id(
   let pattern_index = int_to_uint(pattern_index)
   let capture_index = int_to_uint(capture_index)
   Quantifier::of_uint(
-    Query::_capture_quantifier_for_id(self, pattern_index, capture_index),
+    ts_query_capture_quantifier_for_id(self, pattern_index, capture_index),
   )
 }
 
 ///|
-#borrow(self, length)
-extern "c" fn Query::_string_value_for_id(
-  self : Query,
-  string_id : UInt,
-  length : FixedArray[UInt]
-) -> @c.Pointer[Byte] = "moonbit_ts_query_string_value_for_id"
-
-///|
-/// Get the value of one of the query's string literals. Each string is associated with a
-/// numeric id based on the order that it appeared in the query's source.
-pub fn Query::string_value_for_id(
-  self : Query,
-  string_id : Int
-) -> @string.View {
-  let string_id = int_to_uint(string_id)
-  let length : FixedArray[UInt] = [0U]
-  let value = Query::_string_value_for_id(self, string_id, length)
-  return decode_c_string(value, length=length[0].reinterpret_as_int()).unwrap()
-}
-
-///|
-#borrow(self, name)
-extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_query_disable_capture"
+extern "js" fn ts_query_disable_capture(self : Query, name : String) =
+  #|(query, name) => {
+  #|  return query.disableCapture(name);
+  #|}
 
 ///|
 /// Disable a certain capture within a query.
@@ -354,13 +305,14 @@ extern "c" fn Query::_disable_capture(self : Query, name : Bytes) = "moonbit_ts_
 /// any resource usage associated with recording the capture. Currently, there
 /// is no way to undo this.
 pub fn Query::disable_capture(self : Query, name : @string.View) -> Unit {
-  let name = @encoding.encode(encoding=UTF8, name)
-  Query::_disable_capture(self, name)
+  ts_query_disable_capture(self, name.to_string())
 }
 
 ///|
-#borrow(self)
-extern "c" fn Query::_disable_pattern(self : Query, pattern_index : UInt) = "moonbit_ts_query_disable_pattern"
+extern "js" fn ts_query_disable_pattern(self : Query, pattern_index : UInt) =
+  #|(query, patternIndex) => {
+  #|  return query.disablePattern(patternIndex);
+  #|}
 
 ///|
 /// Disable a certain pattern within a query.
@@ -368,19 +320,18 @@ extern "c" fn Query::_disable_pattern(self : Query, pattern_index : UInt) = "moo
 /// This prevents the pattern from matching and removes most of the overhead
 /// associated with the pattern. Currently, there is no way to undo this.
 pub fn Query::disable_pattern(self : Query, pattern_index : Int) -> Unit {
-  self._disable_pattern(int_to_uint(pattern_index))
+  ts_query_disable_pattern(self, int_to_uint(pattern_index))
 }
 
-///|
-pub fn Query::matches(self : Query, node : Node) -> Iter[QueryMatch] {
-  let cursor = QueryCursor::new()
-  cursor.exec(self, node)
-  cursor.matches()
-}
+pub extern "js" fn Query::matches(self : Query, node : Node) -> Array[QueryMatch] =
+  #|(query, node) => {
+  #|  return query.matches(node);
+  #|}
 
-///|
-pub fn Query::captures(self : Query, node : Node) -> Iter[QueryCapture] {
-  let cursor = QueryCursor::new()
-  cursor.exec(self, node)
-  cursor.captures()
-}
+pub extern "js" fn Query::captures(
+  self : Query,
+  node : Node
+) -> Array[QueryCapture] =
+  #|(query, node) => {
+  #|  return query.captures(node);
+  #|}
