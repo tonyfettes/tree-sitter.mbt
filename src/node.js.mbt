@@ -792,3 +792,14 @@ pub fn Node::next_symbol_names(self : Node) -> Iter[String] {
   guard iterator is Some(iterator) else { return Iter::empty() }
   iterator.symbol_names()
 }
+
+///|
+pub fn Node::query(
+  self : Node,
+  source : @string.View
+) -> QueryCursor!QueryError {
+  let query = Query::new!(self.language(), source)
+  let query_cursor = QueryCursor::new()
+  query_cursor.exec(query, self)
+  return query_cursor
+}

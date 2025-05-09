@@ -147,3 +147,8 @@ extern "js" fn ts_tree_get_changed_ranges(
 pub fn Tree::get_changed_ranges(self : Tree, other : Tree) -> Array[Range] {
   ts_tree_get_changed_ranges(self, other)
 }
+
+///|
+pub fn Tree::query(self : Tree, query : @string.View) -> QueryCursor!QueryError {
+  self.root_node().query!(query)
+}
