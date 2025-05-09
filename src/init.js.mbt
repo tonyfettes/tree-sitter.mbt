@@ -1,4 +1,4 @@
-type TS
+priv type TS
 
 let ts : TS = import_web_tree_sitter()
 
