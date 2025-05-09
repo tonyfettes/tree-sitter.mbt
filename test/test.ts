@@ -3,6 +3,7 @@ import * as Moon from "./moon.ts";
 import * as MoonBit from "./moonbit.ts";
 import * as TS from "web-tree-sitter";
 import * as Fs from "node:fs";
+import * as Path from "node:path";
 
 type MoonBitTestExports = {
   test_exp: (language: TS.Language) => MoonBit.Result<MoonBit.Unit, any>;
@@ -24,7 +25,10 @@ const exports = await Moon.load<MoonBitTestExports>({
 });
 
 const wasmBytes = await Fs.promises.readFile(
-  "/Users/haoxiang/Workspace/moonbit/feihaoxiang/moonbit-tree-sitter-languages/bindings/tree_sitter_moonbit/tree-sitter-moonbit.wasm"
+  Path.join(
+    import.meta.dirname,
+    ".mooncakes/tonyfettes/tree_sitter_moonbit/tree-sitter-moonbit.wasm"
+  )
 );
 
 const language = await TS.Language.load(wasmBytes);
