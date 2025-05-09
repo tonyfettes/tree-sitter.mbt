@@ -25,6 +25,7 @@ export class Service {
     this.onResult = new vscode.EventEmitter();
   }
   public async search(uri: vscode.Uri, options: Options): Promise<void> {
+    this.clear();
     const args = [options.query, uri.fsPath];
     const grepUri = vscode.Uri.joinPath(this.extensionUri, grepPath);
     const child = ChildProcess.spawn(grepUri.fsPath, args);
@@ -86,5 +87,6 @@ export class Service {
   }
   public clear() {
     this.results = [];
+    this.onResult.fire(this.results);
   }
 }
