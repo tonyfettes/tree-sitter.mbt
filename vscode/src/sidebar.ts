@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import sidebarHtml from "./sidebar/index.html";
 import type * as Search from "./search";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
@@ -159,10 +158,24 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.css")
     );
 
-    return sidebarHtml
-      .replaceAll(/{{nonce}}/g, nonce)
-      .replaceAll(/{{cspSource}}/g, webview.cspSource)
-      .replaceAll(/{{scriptUri}}/g, scriptUri.toString())
-      .replaceAll(/{{styleUri}}/g, styleUri.toString());
+    const cspSource = webview.cspSource;
+
+    return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}'; font-src ${cspSource};"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="${styleUri}" nonce="${nonce}" />
+    <script nonce="${nonce}" src="${scriptUri}"></script>
+    <title>Moon Grep Search</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
   }
 }
