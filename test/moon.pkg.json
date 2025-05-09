@@ -15,8 +15,7 @@
     "tonyfettes/tree_sitter_moonbit",
     "tonyfettes/tree_sitter/query_language",
     "tonyfettes/uv",
-    "tonyfettes/uv/async",
-    "moonbitlang/x/fs"
+    "tonyfettes/uv/async"
   ],
   "test-import": [
     "tonyfettes/tree_sitter",
