@@ -5,14 +5,9 @@ fn async_suspend[T](f : ((T) -> Unit) -> Unit) -> T = "%async.suspend"
 type Language
 
 ///|
-trait Loadable {
-  load(Self) -> Language!Async
-}
-
-///|
 extern "js" fn ts_language_load_bytes(
   ts : TS,
-  bytes : @tree_sitter_language.Language,
+  bytes : Bytes,
   resolve : (Language) -> Unit
 ) -> Unit =
   #|(ts, bytes, resolve) => {
@@ -21,17 +16,8 @@ extern "js" fn ts_language_load_bytes(
   #|}
 
 ///|
-pub impl Loadable for @tree_sitter_language.Language with load(
-  self : @tree_sitter_language.Language
-) -> Language!Async {
-  async_suspend(fn(resolve) { ts_language_load_bytes(ts, self, resolve) })
-}
-
-///|
-pub async fn Language::load[Loadable : Loadable](
-  loadable : Loadable
-) -> Language!Async {
-  loadable.load!()
+pub async fn Language::load(bytes : Bytes) -> Language!Async {
+  async_suspend(fn(resolve) { ts_language_load_bytes(ts, bytes, resolve) })
 }
 
 ///|

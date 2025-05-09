@@ -1,12 +1,5 @@
 ///|
-type Language @tree_sitter_language.Language
-
-///|
-pub fn Language::load(
-  language : @tree_sitter_language.Language
-) -> Language!Async {
-  language
-}
+pub(all) type Language @tree_sitter_language.Language
 
 ///|
 extern "c" fn ts_language_copy(self : Language) -> Language = "moonbit_ts_language_copy"
