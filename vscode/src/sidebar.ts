@@ -152,10 +152,10 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     const nonce = WebviewViewProvider.getNonce();
 
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.js")
+      vscode.Uri.joinPath(this.extensionUri, "sidebar", "index.js")
     );
     const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, "dist", "sidebar", "index.css")
+      vscode.Uri.joinPath(this.extensionUri, "sidebar", "index.css")
     );
 
     const cspSource = webview.cspSource;

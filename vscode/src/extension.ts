@@ -1,4 +1,4 @@
-import vscode from "vscode";
+import * as vscode from "vscode";
 import * as Sidebar from "./sidebar";
 import * as Search from "./search";
 

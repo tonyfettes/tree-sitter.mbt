@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as ChildProcess from "child_process";
+import grepPath from "../../bin/target/native/release/build/grep/grep.exe";
 
 export interface Result {
   uri: vscode.Uri;
@@ -25,10 +26,10 @@ export class Service {
   }
   public async search(uri: vscode.Uri, options: Options): Promise<void> {
     const args = [options.query, uri.fsPath];
-    const child = ChildProcess.spawn(
-      "/Users/haoxiang/Workspace/moonbit/feihaoxiang/moonbit-tree-sitter/bin/target/native/release/build/grep/grep.exe",
-      args
-    );
+    const grepUri = vscode.Uri.joinPath(this.extensionUri, grepPath);
+    console.log("grepUri.fsPath", grepUri.fsPath);
+    const child = ChildProcess.spawn(grepUri.fsPath, args);
+    console.log("spawned");
     const fileSet: Map<vscode.Uri, string[]> = new Map();
     const textDecoder = new TextDecoder();
     let buffer = "";
@@ -42,7 +43,7 @@ export class Service {
       buffer = lines[lastIndex];
       for (const line of lines.slice(0, lastIndex)) {
         const json = JSON.parse(line);
-        console.log("Search: json", json);
+        console.log("json", json);
         const uri = vscode.Uri.parse(`file://${json.path}`);
         let lines = fileSet.get(uri);
         if (lines === undefined) {
@@ -74,6 +75,7 @@ export class Service {
     });
     await new Promise<void>((resolve, reject) => {
       child.on("close", (code) => {
+        console.log("grep exited with code", code);
         if (code !== 0) {
           if (stderr !== undefined) {
             reject(new Error(stderr));

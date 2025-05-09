@@ -4,7 +4,7 @@
   "description": "",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.99.0"
+    "vscode": "^1.100.0"
   },
   "categories": [
     "Other"
@@ -13,7 +13,8 @@
     "onView:moon-grep-search",
     "onCommand:moon-grep.search"
   ],
-  "main": "./dist/extension.js",
+  "main": "./src/extension.ts",
+  "type": "module",
   "contributes": {
     "commands": [
       {

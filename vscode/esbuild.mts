@@ -27,107 +27,66 @@ const esbuildProblemMatcherPlugin: ESBuild.Plugin = {
   },
 };
 
-const webviewHtmlPlugin = ({
-  entryPoint,
-  outfile,
-}: {
-  entryPoint: string;
-  outfile: string;
-}): ESBuild.Plugin => {
-  return {
-    name: "webview-html-plugin",
-    setup(build) {
-      build.onEnd(async () => {
-        const html = await Fs.promises.readFile(entryPoint, "utf-8");
-        const output = html
-          .replaceAll(/{{styleUri}}/g, "./index.css")
-          .replaceAll(/{{scriptUri}}/g, "./index.js")
-          .replaceAll(/{{nonce}}/g, "NONCE")
-          .replaceAll(/{{cspSource}}/g, "CSP_SOURCE");
-        await Fs.promises.writeFile(outfile, output);
-      });
-    },
-  };
-};
-
-const templateHtmlPlugin: ESBuild.Plugin = {
-  name: "template-html-plugin",
-  setup(build) {
-    build.onLoad({ filter: /\.html$/ }, async (args) => {
-      if (args.suffix !== "?template") {
-        return;
-      }
-      const source = await Fs.promises.readFile(args.path, "utf-8");
-      const contents = `const template = document.createElement("template");
-template.innerHTML = \`${source.trim()}\`;
-
-export default template;`;
-      return {
-        contents,
-        loader: "js",
-      };
-    });
-  },
-};
-
-function findPackage(path: string): string | undefined {
-  const packageJSON = Module.findPackageJSON(path, import.meta.url);
-  if (!packageJSON) {
-    return undefined;
-  }
-  return Path.dirname(packageJSON);
-}
-
-function findTreeSitterWasm(path: string, name?: string): string | undefined {
-  const wasmName = name || path;
-  const packageJSON = Module.findPackageJSON(path, import.meta.url);
-  if (!packageJSON) {
-    return undefined;
-  }
-  const packageDir = Path.dirname(packageJSON);
-  const wasmPath = Path.join(packageDir, `${wasmName}.wasm`);
-  if (Fs.existsSync(wasmPath)) {
-    return wasmPath;
+function findOutdir(buildOptions: ESBuild.BuildOptions): string | undefined {
+  if (buildOptions.outdir) {
+    return buildOptions.outdir;
+  } else if (buildOptions.outfile) {
+    return Path.dirname(buildOptions.outfile);
   }
   return undefined;
 }
 
-const treeSitterPlugin: ESBuild.Plugin = {
-  name: "tree-sitter-plugin",
+const executablePlugin: ESBuild.Plugin = {
+  name: "executable-plugin",
   setup(build) {
-    build.onResolve({ filter: /tree-sitter-javascript/ }, (args): ESBuild.OnResolveResult => {
-      const wasmPath = findTreeSitterWasm(args.path);
-      if (!wasmPath) {
-        throw new Error(`Could not find tree-sitter-wasm for ${args.path}`);
-      }
+    build.onResolve({ filter: /\.exe$/ }, (args): ESBuild.OnResolveResult => {
       return {
-        path: wasmPath,
+        path: Path.join(args.resolveDir, args.path),
+        namespace: "exe",
       };
     });
-    build.onResolve({ filter: /web-tree-sitter/ }, (args) => {
-      const packageDir = findPackage(args.path);
-      if (!packageDir) {
-        throw new Error(`Could not find package for ${args.path}`);
+    build.onLoad(
+      { filter: /\.exe$/, namespace: "exe" },
+      async (args): Promise<ESBuild.OnLoadResult> => {
+        const outdir = findOutdir(build.initialOptions);
+        if (!outdir) {
+          throw new Error(`Could not find outdir for executable`);
+        }
+        if (!Fs.existsSync(outdir)) {
+          await Fs.promises.mkdir(outdir, { recursive: true });
+        }
+        const sourcePath = Path.resolve(args.path);
+        const destFile = Path.basename(args.path);
+        const destPath = Path.join(outdir, destFile);
+        await Fs.promises.copyFile(sourcePath, destPath);
+        return {
+          contents: `export default "${destFile}";`,
+          loader: "js",
+        };
       }
-      return {
-        path: Path.join(packageDir, "tree-sitter.cjs"),
-      };
-    });
+    );
+  },
+};
+
+const vscodePlugin: ESBuild.Plugin = {
+  name: "vscode-plugin",
+  setup(build) {
     build.onEnd(async () => {
-      const wasmPath = findTreeSitterWasm("web-tree-sitter", "tree-sitter");
-      if (!wasmPath) {
-        throw new Error(`Could not find tree-sitter-wasm for web-tree-sitter`);
+      const outfile = build.initialOptions.outfile;
+      if (!outfile) {
+        throw new Error(`Could not find outfile for vscode`);
       }
-      let outdir: string | undefined = undefined;
-      if (build.initialOptions.outdir) {
-        outdir = build.initialOptions.outdir;
-      } else if (build.initialOptions.outfile) {
-        outdir = Path.dirname(build.initialOptions.outfile);
-      }
+      const outdir = findOutdir(build.initialOptions);
       if (!outdir) {
-        throw new Error(`Could not find outdir for web-tree-sitter`);
+        throw new Error(`Could not find outdir for vscode`);
       }
-      await Fs.promises.copyFile(wasmPath, Path.join(outdir, "tree-sitter.wasm"));
+      const packageJSON = JSON.parse(await Fs.promises.readFile("package.json", "utf-8"));
+      packageJSON["main"] = Path.relative(outdir, outfile);
+      await Fs.promises.writeFile(
+        Path.join(outdir, "package.json"),
+        JSON.stringify(packageJSON, null, 2),
+        "utf-8"
+      );
     });
   },
 };
@@ -143,14 +102,7 @@ async function webviewCtx(path: string): Promise<ESBuild.BuildContext> {
     platform: "browser",
     outfile: `dist/${path}/index.js`,
     logLevel: "silent",
-    plugins: [
-      esbuildProblemMatcherPlugin,
-      webviewHtmlPlugin({
-        entryPoint: `src/${path}/index.html`,
-        outfile: `dist/${path}/index.html`,
-      }),
-      templateHtmlPlugin,
-    ],
+    plugins: [esbuildProblemMatcherPlugin],
     loader: {
       ".ttf": "file",
       ".tsx": "tsx",
@@ -163,7 +115,7 @@ async function main() {
   const extensionCtx = await ESBuild.context({
     entryPoints: ["src/extension.ts"],
     bundle: true,
-    format: "cjs",
+    format: "esm",
     minify: production,
     sourcemap: !production,
     sourcesContent: false,
@@ -171,7 +123,7 @@ async function main() {
     outfile: "dist/extension.js",
     external: ["vscode"],
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin, treeSitterPlugin],
+    plugins: [esbuildProblemMatcherPlugin, executablePlugin, vscodePlugin],
     loader: {
       ".html": "text",
       ".wasm": "file",

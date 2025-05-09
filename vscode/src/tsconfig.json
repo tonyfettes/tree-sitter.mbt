@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "composite": true,
-    "module": "Node16",
+    "module": "ESNext",
     "target": "ES2023",
     "outDir": "../dist",
     "lib": ["ES2023"],
@@ -9,7 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "bundler",
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true
