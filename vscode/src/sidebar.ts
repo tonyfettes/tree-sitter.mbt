@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type * as Search from "./search";
+import { MatchRange } from "./sidebar/types";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";
@@ -55,7 +56,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
         }
         case "openMatch": {
           console.log("openMatch", data);
-          // this._openMatch(data.value.file, data.value.line);
+          this._openMatch(data.uri, data.range);
           break;
         }
         case "openInEditor": {
@@ -126,18 +127,20 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private _openMatch(file: string, line: number) {
+  private _openMatch(file: string, range: MatchRange) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       return;
     }
-
+    console.log("workspaceFolder", workspaceFolder);
+    console.log("file", file);
     const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
+    console.log("fileUri", fileUri.toString());
 
     vscode.window.showTextDocument(fileUri, {
       selection: new vscode.Range(
-        new vscode.Position(line - 1, 0),
-        new vscode.Position(line - 1, 0)
+        new vscode.Position(range.start.line, range.start.character),
+        new vscode.Position(range.end.line, range.end.character)
       ),
     });
   }
