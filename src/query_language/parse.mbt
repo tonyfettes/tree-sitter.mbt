@@ -165,9 +165,19 @@ pub fn Entry::new(
 ///|
 struct Parser {
   language : @tree_sitter.Language
+  parser : @tree_sitter.Parser
   contexts : Map[String, Context]
   entries : Map[String, Entry]
   extras : Array[String]
+}
+
+///|
+pub fn Parser::language(self : Parser) -> @tree_sitter.Language {
+  self.language
+}
+
+pub fn Parser::parser(self : Parser) -> @tree_sitter.Parser {
+  self.parser
 }
 
 ///|
@@ -186,7 +196,9 @@ pub fn Parser::new(
   for name, context in contexts {
     parsed_contexts.set(name, context)
   }
-  Parser::{ language, contexts: parsed_contexts, entries, extras }
+  let parser = @tree_sitter.Parser::new()
+  parser.set_language(language)
+  Parser::{ language, parser, contexts: parsed_contexts, entries, extras }
 }
 
 ///|
@@ -216,8 +228,7 @@ fn generate_replacement(
     buffer.write_char(')')
   }
   let node_extras = []
-  for symbol in node.next_symbols() {
-    guard node.language().symbol_name(symbol) is Some(symbol) else { continue }
+  for symbol in node.next_symbol_names() {
     let symbol = symbol.to_string()
     if extras.contains(symbol) {
       node_extras.push(symbol)
@@ -298,11 +309,11 @@ fn generate_query(
         if range.start + offset <= node.start_byte() &&
           range.end + offset >= node.end_byte() {
           let cursor = try {
-            node.query!("\{matches} @\{name}")
+            @tree_sitter.Query::new!(self.language, "\{matches} @\{name}")
           } catch {
             e => raise QueryError(e)
           }
-          for capture in cursor.captures() {
+          for capture in cursor.captures(node) {
             if capture.name() != name {
               continue
             }
@@ -497,7 +508,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       continue Empty(children~), offset + 1, source
     }
     Empty(children=queries), _, [] => {
-      let parser = @tree_sitter.parser(self.language)
+      let parser = @tree_sitter.Parser::new()
+      parser.set_language(self.language)
       let quasi = query.to_string()
       let errors = []
       let query = StringBuilder::new()
@@ -514,12 +526,12 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           continue
         }
         let cursor = try {
-          tree.query!(context.select)
+          @tree_sitter.Query::new!(self.language, context.select)
         } catch {
           e => raise QueryError(e)
         }
         let nodes = []
-        for capture in cursor.captures() {
+        for capture in cursor.captures(tree.root_node()) {
           if capture.name() != name {
             continue
           }
