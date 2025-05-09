@@ -55,7 +55,6 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           break;
         }
         case "openMatch": {
-          console.log("openMatch", data);
           this._openMatch(data.uri, data.range);
           break;
         }
@@ -82,7 +81,6 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
             return;
           }
           this.service.onResult.event((results) => {
-            console.log("Sidebar: results", results);
             if (this.view) {
               this.view.webview.postMessage({
                 type: "results",
@@ -132,10 +130,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     if (!workspaceFolder) {
       return;
     }
-    console.log("workspaceFolder", workspaceFolder);
-    console.log("file", file);
     const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
-    console.log("fileUri", fileUri.toString());
 
     vscode.window.showTextDocument(fileUri, {
       selection: new vscode.Range(
