@@ -42,6 +42,13 @@ export class Service {
       buffer = lines[lastIndex];
       for (const line of lines.slice(0, lastIndex)) {
         const json = JSON.parse(line);
+        if (json.error) {
+          vscode.window.showErrorMessage(json.error);
+          continue;
+        }
+        if (json.path === undefined) {
+          continue;
+        }
         const uri = vscode.Uri.parse(`file://${json.path}`);
         let lines = fileSet.get(uri);
         if (lines === undefined) {
