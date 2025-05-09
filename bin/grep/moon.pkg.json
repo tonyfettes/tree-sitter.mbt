@@ -1,0 +1,11 @@
+{
+  "is-main": true,
+  "import": [
+    "tonyfettes/uv",
+    "tonyfettes/tree_sitter/query_language",
+    "tonyfettes/tree_sitter_moonbit",
+    "tonyfettes/tree_sitter",
+    "tonyfettes/encoding",
+    "tonyfettes/tree_sitter_language"
+  ]
+}
