@@ -24,19 +24,19 @@ export const InputBox: React.FC<InputBoxProps> = ({
 }) => {
   const baseClassName = className.includes("replace") ? "replace-input-box" : "search-input-box";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   // Function to adjust textarea height based on content
   const adjustHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       // Set the height to match the content (with a minimum height)
       const newHeight = Math.max(24, textarea.scrollHeight);
       textarea.style.height = `${newHeight}px`;
     }
   };
-  
+
   // Adjust height when value changes
   useEffect(() => {
     adjustHeight();
