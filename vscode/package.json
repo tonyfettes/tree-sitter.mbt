@@ -9,10 +9,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:moon-grep-search",
-    "onCommand:moon-grep.search"
-  ],
+  "activationEvents": [],
   "main": "./src/extension.ts",
   "type": "module",
   "contributes": {
