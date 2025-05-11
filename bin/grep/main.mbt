@@ -9,7 +9,6 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
   if moonbit_parser_value.val is Some(parser) {
     return parser
   }
-  let language = @tree_sitter.Language::load!(moonbit_language)
   let contexts : Map[String, @query_language.Context] = {
     "exp": @query_language.Context::new!(
       #|fn main {
@@ -134,7 +133,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
   }
   let extras = ["semicolon"]
   let parser = @query_language.Parser::new(
-    language,
+    moonbit_language,
     contexts~,
     entries~,
     extras~,
