@@ -142,7 +142,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
 ///|
 pub fn test_query_language_exp(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|$a:exp == $b:exp
+    #|$exp:a == $exp:b
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
@@ -183,7 +183,7 @@ pub fn test_query_language_exp(language : @tree_sitter.Language) -> Unit! {
 pub fn test_query_language_top(language : @tree_sitter.Language) -> Unit! {
   let query =
     #|fn main {
-    #|  println($a:exp)
+    #|  println($exp:a)
     #|}
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
@@ -230,7 +230,7 @@ pub fn test_query_language_fn_ambiguity(
   language : @tree_sitter.Language
 ) -> Unit! {
   let query =
-    #|fn $a:id {
+    #|fn $id:a {
     #|}
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
@@ -294,11 +294,11 @@ pub fn test_query_language_fn_ambiguity(
 ///|
 pub fn test_query_language_concat(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|match $a:exp {
-    #|  $b:pat => $c:exp
+    #|match $exp:a {
+    #|  $pat:b => $exp:c
     #|}
-    #|$d:exp
-    #|return $f:exp
+    #|$exp:d
+    #|return $exp:f
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
@@ -366,7 +366,7 @@ pub fn test_query_language_concat(language : @tree_sitter.Language) -> Unit! {
 ///|
 pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|let $a:id : $b:ty = $c:exp
+    #|let $id:a : $ty:b = $exp:c
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
@@ -434,7 +434,7 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
 pub fn test_query_language_id(language : @tree_sitter.Language) -> Unit! {
   let query =
     #|match a {
-    #|  $a:id => $b:exp
+    #|  $id:a => $exp:b
     #|}
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
@@ -498,11 +498,11 @@ pub fn test_query_language_quantifier(
   language : @tree_sitter.Language
 ) -> Unit! {
   let query =
-    #|guard $a:exp is $b:pat else {
-    #|  $_:{
-    #|    $c:exp
-    #|  $}*
-    #|  return $d:exp
+    #|guard $exp:a is $pat:b else {
+    #|  ${
+    #|    $exp:c
+    #|  }*
+    #|  return $exp:d
     #|}
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
@@ -591,12 +591,7 @@ pub fn test_query_language_quantifier(
 ///|
 pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|[
-    #|  $_:{
-    #|    $x:exp,
-    #|  $}+
-    #|  $x:exp
-    #|]
+    #|[${$exp:x,}+ $exp:x]
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
@@ -648,7 +643,7 @@ pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
 ///|
 pub fn test_query_language_case(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|$_:{ $a:pat, $}* $a:pat => $b:exp
+    #|${ $pat:a, }* $pat:a => $exp:b
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(

@@ -22,10 +22,10 @@ type! ParseError {
 
 ///|
 priv enum Query {
-  Group(String, Range, quantifier~ : Quantifier, Array[Query])
+  Group(range~ : Range, quantifier~ : Quantifier, Array[Query])
   Match(
-    String,
-    Range,
+    name~ : String,
+    range~ : Range,
     quantifier~ : Quantifier,
     matches~ : @string.View,
     replace~ : @string.View?
@@ -33,38 +33,26 @@ priv enum Query {
 } derive(Show)
 
 ///|
+fn Query::group(
+  range~ : Range,
+  quantifier~ : Quantifier,
+  children~ : Array[Query]
+) -> Query {
+  Group(range~, quantifier~, children)
+}
+
+///|
 fn Query::range(self : Query) -> Range {
   match self {
-    Group(_, range, _, ..) => range
-    Match(_, range, ..) => range
-  }
-}
-
-///|
-fn Query::name(self : Query) -> String {
-  match self {
-    Group(name, _, _, ..) => name
-    Match(name, _, ..) => name
-  }
-}
-
-///|
-fn Query::matches(self : Query) -> @string.View {
-  match self {
-    Group(_, _, _, ..) => []
-    Match(_, _, matches~, ..) => matches
+    Group(range~, _, ..) => range
+    Match(range~, ..) => range
   }
 }
 
 ///|
 priv enum GroupState {
   Empty(children~ : Array[Query])
-  Group(
-    state~ : GroupState,
-    children~ : Array[Query],
-    ident~ : String,
-    start~ : Int
-  )
+  Group(state~ : GroupState, children~ : Array[Query], start~ : Int)
 }
 
 ///|
@@ -79,8 +67,8 @@ fn GroupState::children(self : GroupState) -> Array[Query] {
 fn GroupState::to_parse_state(self : GroupState) -> ParseState {
   match self {
     Empty(children~) => ParseState::Empty(children~)
-    Group(state~, children~, ident~, start~) =>
-      ParseState::Group(state~, children~, ident~, start~)
+    Group(state~, children~, start~) =>
+      ParseState::Group(state~, children~, start~)
   }
 }
 
@@ -95,16 +83,11 @@ priv enum Quantifier {
 ///|
 priv enum ParseState {
   Empty(children~ : Array[Query])
-  Group(
-    state~ : GroupState,
-    children~ : Array[Query],
-    ident~ : String,
-    start~ : Int
-  )
-  Ident(state~ : GroupState, buffer~ : StringBuilder)
+  Group(state~ : GroupState, children~ : Array[Query], start~ : Int)
+  Entry(state~ : GroupState, buffer~ : StringBuilder)
   Match(
     state~ : GroupState,
-    ident~ : String,
+    entry~ : Entry,
     start~ : Int,
     quantifier~ : Quantifier,
     buffer~ : StringBuilder
@@ -176,6 +159,7 @@ pub fn Parser::language(self : Parser) -> @tree_sitter.Language {
   self.language
 }
 
+///|
 pub fn Parser::parser(self : Parser) -> @tree_sitter.Parser {
   self.parser
 }
@@ -290,7 +274,6 @@ fn generate_query(
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
   struct Group {
-    name : String
     range : Range
     quantifier : Quantifier
     mut opened : Bool
@@ -305,7 +288,7 @@ fn generate_query(
   let children_queries = []
   for query in queries {
     match query {
-      Match(name, range, quantifier~, matches~, replace=replacement) =>
+      Match(name~, range~, quantifier~, matches~, replace=replacement) =>
         if range.start + offset <= node.start_byte() &&
           range.end + offset >= node.end_byte() {
           let cursor = try {
@@ -330,7 +313,7 @@ fn generate_query(
         } else {
           children_queries.push(query)
         }
-      Group(_, range, queries, ..) =>
+      Group(range~, quantifier=_, queries) =>
         if range.start + offset <= node.start_byte() &&
           range.end + offset >= node.end_byte() {
           children_queries.append(queries)
@@ -342,15 +325,14 @@ fn generate_query(
   let children_groups : Array[Group] = []
   for query in children_queries {
     match query {
-      Group(name, range, _, quantifier~) =>
+      Group(range~, _, quantifier~) =>
         children_groups.push(Group::{
-          name,
           range,
           quantifier,
           opened: false,
           closed: false,
         })
-      Match(_, _, ..) => ()
+      Match(..) => ()
     }
   }
   if replace.get(node) is Some(replace) {
@@ -411,9 +393,6 @@ fn generate_query(
             OneOrMore => buffer.write_string(")+")
             ZeroOrOne => buffer.write_string(")?")
             One => buffer.write_string(")")
-          }
-          if group.name != "_" {
-            buffer.write_string(" @\{group.name}")
           }
           group.closed = true
           continue
@@ -495,12 +474,15 @@ fn lowest_common_ancestor(
 
 ///|
 pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
-  let mut numeric_ident = 0
   let state = ParseState::Empty(children=[])
   let query = Buffer::new()
   loop state, 0, source {
+    Empty(children~), offset, ['$', '{', .. source] =>
+      continue Group(state=Empty(children~), children=[], start=query.length()),
+        offset + 2,
+        source
     Empty(children~), offset, ['$', .. source] =>
-      continue Ident(state=Empty(children~), buffer=StringBuilder::new()),
+      continue Entry(state=Empty(children~), buffer=StringBuilder::new()),
         offset + 1,
         source
     Empty(children~), offset, [char, .. source] => {
@@ -508,6 +490,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       continue Empty(children~), offset + 1, source
     }
     Empty(children=queries), _, [] => {
+      println("queries: \{queries}")
       let parser = @tree_sitter.Parser::new()
       parser.set_language(self.language)
       let quasi = query.to_string()
@@ -624,25 +607,21 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       }
       query.to_string()
     }
-    Ident(state~, buffer~), offset, [':', char, .. source] => {
-      let ident = buffer.to_string()
-      let ident = if ident.is_empty() {
-        let ident = numeric_ident.to_string()
-        numeric_ident += 1
-        ident
-      } else {
-        ident
-      }
+    Entry(state~, buffer~), offset, [':', char, .. source] => {
+      let entry = buffer.to_string()
       buffer.reset()
+      guard self.entries.get(entry) is Some(entry) else {
+        raise UnrecognizedEntry(
+          Range::new(offset - entry.length(), offset),
+          entry,
+        )
+      }
       match char {
-        '{' =>
-          continue Group(state~, children=[], start=query.length(), ident~),
-            offset + 2,
-            source
         'a'..<'z' | 'A'..<'Z' | '_' as char => {
           let start = query.length()
+          query.write_string(entry.placeholder.to_string())
           buffer.write_char(char)
-          continue Match(state~, ident~, start~, buffer~, quantifier=One),
+          continue Match(state~, entry~, start~, buffer~, quantifier=One),
             offset + 1,
             source
         }
@@ -650,57 +629,50 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
       }
     }
-    Ident(state~, buffer~),
+    Entry(state~, buffer~),
     offset,
     ['a'..<'z' | 'A'..<'Z' | '_' as char, .. source] => {
       buffer.write_char(char)
-      continue Ident(state~, buffer~), offset + 1, source
+      continue Entry(state~, buffer~), offset + 1, source
     }
-    Ident(..), offset, [char, ..] =>
+    Entry(..), offset, [char, ..] =>
       raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
-    Ident(..), offset, [] => raise MissingColon(Range::new(offset, offset + 1))
-    Match(state~, ident~, start~, buffer~, quantifier~),
+    Entry(..), offset, [] => raise MissingColon(Range::new(offset, offset + 1))
+    Match(state~, entry~, start~, buffer~, quantifier~),
     offset,
     ['a'..<'z' | 'A'..<'Z' | '_' as char, .. source] => {
       buffer.write_char(char)
-      continue Match(state~, ident~, start~, buffer~, quantifier~),
+      continue Match(state~, entry~, start~, buffer~, quantifier~),
         offset + 1,
         source
     }
-    Match(state~, ident~, start~, buffer~, quantifier=One),
+    Match(state~, entry~, start~, buffer~, quantifier=One),
     offset,
     ['*', .. source] =>
-      continue Match(state~, ident~, start~, buffer~, quantifier=ZeroOrMore),
+      continue Match(state~, entry~, start~, buffer~, quantifier=ZeroOrMore),
         offset + 1,
         source
-    Match(state~, ident~, start~, buffer~, quantifier=One),
+    Match(state~, entry~, start~, buffer~, quantifier=One),
     offset,
     ['+', .. source] =>
-      continue Match(state~, ident~, start~, buffer~, quantifier=OneOrMore),
+      continue Match(state~, entry~, start~, buffer~, quantifier=OneOrMore),
         offset + 1,
         source
-    Match(state~, ident~, start~, buffer~, quantifier=One),
+    Match(state~, entry~, start~, buffer~, quantifier=One),
     offset,
     ['?', .. source] =>
-      continue Match(state~, ident~, start~, buffer~, quantifier=ZeroOrOne),
+      continue Match(state~, entry~, start~, buffer~, quantifier=ZeroOrOne),
         offset + 1,
         source
-    Match(state~, ident~, start~, buffer~, quantifier~), offset, [.. source] => {
-      let alias_ = buffer.to_string()
+    Match(state~, entry~, start~, buffer~, quantifier~), offset, [.. source] => {
+      let ident = buffer.to_string()
       buffer.reset()
-      guard self.entries.get(alias_) is Some(entry) else {
-        raise UnrecognizedEntry(
-          Range::new(offset - alias_.length(), offset),
-          alias_,
-        )
-      }
-      query.write_string(entry.placeholder.to_string())
       state
       .children()
       .push(
         Match(
-          ident,
-          Range::{ start, end: query.length() },
+          name=ident,
+          range=Range::{ start, end: query.length() },
           matches=entry.matches,
           replace=entry.replace,
           quantifier~,
@@ -708,7 +680,15 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       )
       continue state.to_parse_state(), offset, source
     }
-    Group(state~, children~, ident~, start~), offset, ['$', '}', .. source] => {
+    Group(state~, children~, start~), offset, [.. "\\{", .. source] => {
+      query.write_char('{')
+      continue Group(state~, children~, start~), offset + 2, source
+    }
+    Group(state~, children~, start~), offset, [.. "\\}", .. source] => {
+      query.write_char('}')
+      continue Group(state~, children~, start~), offset + 2, source
+    }
+    Group(state~, children~, start~), offset, ['}', .. source] => {
       let (quantifier, source) = match source {
         ['*', .. source] => (ZeroOrMore, source)
         ['+', .. source] => (OneOrMore, source)
@@ -719,24 +699,23 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       .children()
       .push(
         Group(
-          ident,
-          Range::{ start, end: query.length() },
+          range=Range::{ start, end: query.length() },
           quantifier~,
           children,
         ),
       )
       continue state.to_parse_state(), offset + 2, source
     }
-    Group(state~, children~, ident~, start~), offset, ['$', .. source] =>
-      continue Ident(
-          state=Group(state~, children~, ident~, start~),
+    Group(state~, children~, start~), offset, ['$', .. source] =>
+      continue Entry(
+          state=Group(state~, children~, start~),
           buffer=StringBuilder::new(),
         ),
         offset + 1,
         source
-    Group(state~, children~, ident~, start~), offset, [char, .. source] => {
+    Group(state~, children~, start~), offset, [char, .. source] => {
       query.write_char(char)
-      continue Group(state~, children~, ident~, start~), offset + 1, source
+      continue Group(state~, children~, start~), offset + 1, source
     }
     Group(start~, ..), offset, [] =>
       raise UnterminatedGroup(Range::new(start, offset))
