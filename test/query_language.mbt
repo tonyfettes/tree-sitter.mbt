@@ -38,14 +38,14 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
       #|}
       ,
       selector=
-        #|(pattern)
+        #|(pattern) @pat
       ,
     ),
     "ty": @query_language.Context::new!(
       #|let x : $ = 42
       ,
       selector=
-        #|(type)
+        #|(type) @ty
       ,
     ),
     "case": @query_language.Context::new!(
@@ -85,7 +85,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
         #|  (simple_expression)
         #|] @exp
       ,
-      placeholder="{ ... }",
+      placeholder="{...}",
     ),
     "top": @query_language.Entry::new(
       matches=
@@ -528,8 +528,8 @@ pub fn test_query_language_quantifier(
       #|  (block_expression
       #|   ("{")
       #|   .
-      #|   ((statement_expression
-      #|     ((expression) @c))
+      #|   (((statement_expression) @c
+      #|     (semicolon))
       #|    .
       #|    (semicolon)*)*
       #|   .
@@ -591,7 +591,7 @@ pub fn test_query_language_quantifier(
 ///|
 pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
   let query =
-    #|[${$exp:x,}+ $exp:x]
+    #|[${ $exp:x, }+ $exp:x]
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
@@ -601,8 +601,7 @@ pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
       #|(array_expression
       #| ("[")
       #| .
-      #| ((expression
-      #|   ((pipeline_expression) @x))
+      #| (((expression) @x)
       #|  .
       #|  (","))+
       #| .
@@ -651,8 +650,7 @@ pub fn test_query_language_case(language : @tree_sitter.Language) -> Unit! {
     content=
       #|;; matrix
       #|(matrix_case_clause
-      #| ((pattern
-      #|   ((simple_pattern) @a))
+      #| (((pattern) @a)
       #|  .
       #|  (","))*
       #| .
@@ -696,4 +694,40 @@ pub fn test_query_language_case(language : @tree_sitter.Language) -> Unit! {
     { "a": ["B"], "b": ["2"] },
     { "a": ["C", "D"], "b": ["3"] },
   ])
+}
+
+///|
+pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
+  let query =
+    #|${
+    #|fn init \{
+    #|  ${
+    #|    $exp:a
+    #|  }*
+    #|\}
+    #|}+
+  let parser = moonbit_parser!(language)
+  let query = parser.parse!(query)
+  inspect!(
+    query |> @sexp.prettify!(),
+    content=
+      #|;; top
+      #|((structure_item
+      #|  (function_definition
+      #|   ("fn")
+      #|   .
+      #|   (function_identifier
+      #|    (lowercase_identifier))
+      #|   .
+      #|   (block_expression
+      #|    ("{")
+      #|    .
+      #|    (((statement_expression) @a
+      #|      (semicolon))
+      #|     .
+      #|     (semicolon)*)*
+      #|    .
+      #|    ("}")))))+
+    ,
+  )
 }

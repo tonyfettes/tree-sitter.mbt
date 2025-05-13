@@ -46,3 +46,8 @@ test "group" {
 test "case" {
   start!(fn() { test_query_language_case!(@tree_sitter_moonbit.language()) })
 }
+
+///|
+test "escape" {
+  start!(fn() { test_query_language_escape!(@tree_sitter_moonbit.language()) })
+}

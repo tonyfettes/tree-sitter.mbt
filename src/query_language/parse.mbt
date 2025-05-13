@@ -2,7 +2,7 @@
 priv struct Range {
   start : Int
   end : Int
-} derive(Show)
+} derive(Show, ToJson)
 
 ///|
 fn Range::new(start : Int, end : Int) -> Range {
@@ -17,7 +17,6 @@ type! ParseError {
   UnterminatedGroup(Range)
   MissingColon(Range)
   UnrecognizedEntry(Range, String)
-  UnrecognizedSymbol(@string.View)
 } derive(Show)
 
 ///|
@@ -30,7 +29,7 @@ priv enum Query {
     matches~ : @string.View,
     replace~ : @string.View?
   )
-} derive(Show)
+} derive(Show, ToJson)
 
 ///|
 fn Query::group(
@@ -78,7 +77,7 @@ priv enum Quantifier {
   ZeroOrMore
   One
   OneOrMore
-} derive(Show)
+} derive(Show, ToJson)
 
 ///|
 priv enum ParseState {
@@ -265,9 +264,9 @@ fn generate_replacements(
 }
 
 ///|
-fn generate_query(
+fn generate_query_for_children(
   self : Parser,
-  node : @tree_sitter.Node,
+  children : Array[@tree_sitter.Node],
   queries~ : Array[Query],
   replace~ : Map[@tree_sitter.Node, Array[Replacement]],
   offset~ : Int,
@@ -276,9 +275,144 @@ fn generate_query(
   struct Group {
     range : Range
     quantifier : Quantifier
-    mut opened : Bool
     mut closed : Bool
-  } derive(Show)
+  } derive(Show, ToJson)
+
+  // We use a queue to maintain the active set of queries.
+  let mut queries_queue : @deque.T[Query] = @deque.from_array(queries)
+  let opened_groups : Array[Group] = []
+  for i, child in children {
+    // BFS traversal of the queries. Basically we are looking for all the
+    // queries that match the current child node.
+    // 1. If the query is a match.
+    //    a. If its range covers the child node, we add it to the child queries,
+    //       and remove it from the queue.
+    //    b. If its range does not cover the child node, we schedule it for
+    //       processing later by adding it to the next queue.
+    // 2. If the query is a group.
+    //    a. If its range covers the child node, we unpack the queries inside
+    //       the group and add them to the current queue so that they get
+    //       processed immediately.
+    //    b. If its range intersects the child node, we add it to the child
+    //       queries, and remove it from the queue.
+    //    c. If its range has no intersection with the child node, we add it to
+    //       the next queue so that it gets processed later.
+    let child_queries = []
+    let queries_queue_next = @deque.new()
+    while queries_queue.pop_front() is Some(query) {
+      fn intersects_with(node : @tree_sitter.Node, range : Range) -> Bool {
+        // The range of tree-sitter node is exclusive on the right side.
+        // This means range [a, b) has no intersection with [b, c). Therefore
+        // we should not use '<=' and '>=' here.
+        node.start_byte() < range.end + offset &&
+        node.end_byte() > range.start + offset
+      }
+
+      fn covered_by(node : @tree_sitter.Node, range : Range) -> Bool {
+        node.start_byte() >= range.start + offset &&
+        node.end_byte() <= range.end + offset
+      }
+
+      fn covers(node : @tree_sitter.Node, range : Range) -> Bool {
+        node.start_byte() <= range.start + offset &&
+        node.end_byte() >= range.end + offset
+      }
+
+      match query {
+        Match(range~, ..) =>
+          if covers(child, range) {
+            child_queries.push(query)
+          } else {
+            queries_queue_next.push_back(query)
+          }
+        Group(range~, group_queries, quantifier~) =>
+          if covered_by(child, range) {
+            buffer.write_char('(')
+            opened_groups.push(Group::{ range, quantifier, closed: false })
+            for group_query in group_queries {
+              queries_queue.push_back(group_query)
+            }
+          } else if intersects_with(child, range) {
+            child_queries.push(query)
+          } else {
+            queries_queue_next.push_back(query)
+          }
+      }
+    }
+    queries_queue = queries_queue_next
+    if self.extras.contains(child.type_().to_string()) {
+      // Handle extras. Ideally this should be done by using the next_symbols()
+      // functionality provided by tree-sitter. However, it seems that it will
+      // missing some of the symbols, thus we have to do it manually.
+      match self.extras {
+        [] => ()
+        [extra] => {
+          buffer.write_string("(")
+          buffer.write_string(extra)
+          buffer.write_string(")*")
+        }
+        extras => {
+          buffer.write_string("[")
+          for extra in extras {
+            buffer.write_char('(')
+            buffer.write_string(extra)
+            buffer.write_char(')')
+          }
+          buffer.write_string("]*")
+        }
+      }
+    } else {
+      generate_query!(
+        self,
+        child,
+        queries=child_queries,
+        replace~,
+        offset~,
+        buffer~,
+      )
+    }
+    let last = i == children.length() - 1
+    for group in opened_groups {
+      if not(group.closed) {
+        let should_close = if not(last) {
+          let next_child = children[i + 1]
+          if next_child.start_byte() >= group.range.end + offset {
+            true
+          } else {
+            false
+          }
+        } else {
+          // Always close the group that spans beyond the last child.
+          true
+        }
+        if should_close {
+          match group.quantifier {
+            ZeroOrMore => buffer.write_string(")*")
+            OneOrMore => buffer.write_string(")+")
+            ZeroOrOne => buffer.write_string(")?")
+            One => buffer.write_string(")")
+          }
+          group.closed = true
+        }
+      }
+    }
+    // We emit anchor between each child node to make sure there is no extra
+    // nodes between them when pattern matching.
+    if not(last) {
+      buffer.write_string(" . ")
+    }
+  }
+}
+
+///|
+fn generate_query(
+  self : Parser,
+  node : @tree_sitter.Node,
+  queries~ : Array[Query],
+  replace~ : Map[@tree_sitter.Node, Array[Replacement]],
+  offset~ : Int,
+  buffer~ : StringBuilder
+) -> Unit!ParseError {
   if replace.get(node) is Some(replace) {
     generate_replacements(node~, replace~, buffer~, extras=self.extras)
     return
@@ -322,19 +456,6 @@ fn generate_query(
         }
     }
   }
-  let children_groups : Array[Group] = []
-  for query in children_queries {
-    match query {
-      Group(range~, _, quantifier~) =>
-        children_groups.push(Group::{
-          range,
-          quantifier,
-          opened: false,
-          closed: false,
-        })
-      Match(..) => ()
-    }
-  }
   if replace.get(node) is Some(replace) {
     generate_replacements(node~, replace~, buffer~, extras=self.extras)
     return
@@ -347,61 +468,13 @@ fn generate_query(
   }
   buffer.write_string(type_)
   let children = node.children().collect()
-  for i, child in children {
-    for group in children_groups {
-      if not(group.opened) && child.start_byte() >= group.range.start + offset {
-        buffer.write_char('(')
-        group.opened = true
-      }
-    }
-    if self.extras.contains(child.type_().to_string()) {
-      match self.extras {
-        [] => ()
-        [extra] => {
-          buffer.write_string("(")
-          buffer.write_string(extra)
-          buffer.write_string(")*")
-        }
-        extras => {
-          buffer.write_string("[")
-          for extra in extras {
-            buffer.write_char('(')
-            buffer.write_string(extra)
-            buffer.write_char(')')
-          }
-          buffer.write_string("]*")
-        }
-      }
-    } else {
-      let queries = []
-      for query in children_queries {
-        let query_range = query.range()
-        if query_range.start + offset <= child.end_byte() &&
-          query_range.end + offset >= child.start_byte() {
-          queries.push(query)
-        }
-      }
-      generate_query!(self, child, queries~, replace~, offset~, buffer~)
-    }
-    if i < children.length() - 1 {
-      let next_child = children[i + 1]
-      for group in children_groups {
-        if not(group.closed) &&
-          next_child.start_byte() >= group.range.end + offset {
-          match group.quantifier {
-            ZeroOrMore => buffer.write_string(")*")
-            OneOrMore => buffer.write_string(")+")
-            ZeroOrOne => buffer.write_string(")?")
-            One => buffer.write_string(")")
-          }
-          group.closed = true
-          continue
-        }
-      } else {
-        buffer.write_string(" . ")
-      }
-    }
-  }
+  self.generate_query_for_children!(
+    children,
+    queries=children_queries,
+    replace~,
+    offset~,
+    buffer~,
+  )
   buffer.write_char(')')
 }
 
@@ -490,7 +563,6 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       continue Empty(children~), offset + 1, source
     }
     Empty(children=queries), _, [] => {
-      println("queries: \{queries}")
       let parser = @tree_sitter.Parser::new()
       parser.set_language(self.language)
       let quasi = query.to_string()
@@ -525,9 +597,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
         }
         query.write_string(";; \{name}\n")
         if nodes is [] {
-          generate_query!(
-            self,
-            strip_colocated_nodes(tree.root_node()),
+          self.generate_query_for_children!(
+            [strip_colocated_nodes(tree.root_node())],
             queries~,
             replace=Map::new(),
             offset=context.prefix.length(),
@@ -539,9 +610,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           } else {
             node
           }
-          generate_query!(
-            self,
-            node,
+          self.generate_query_for_children!(
+            [node],
             queries~,
             replace=Map::new(),
             offset=context.prefix.length(),
@@ -565,39 +635,13 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
               node.start_byte() >= start_byte && node.end_byte() <= end_byte
             })
             .collect()
-          for i, node in ancestor_children {
-            if self.extras.contains(node.type_().to_string()) {
-              match self.extras {
-                [] => ()
-                [extra] => {
-                  query.write_string("(")
-                  query.write_string(extra)
-                  query.write_string(")*")
-                }
-                extras => {
-                  query.write_string("[")
-                  for extra in extras {
-                    query.write_char('(')
-                    query.write_string(extra)
-                    query.write_char(')')
-                  }
-                  query.write_string("]*")
-                }
-              }
-            } else {
-              generate_query!(
-                self,
-                node,
-                queries~,
-                replace=Map::new(),
-                offset=context.prefix.length(),
-                buffer=query,
-              )
-            }
-            if i < ancestor_children.length() - 1 {
-              query.write_string(" . ")
-            }
-          }
+          self.generate_query_for_children!(
+            ancestor_children,
+            queries~,
+            replace=Map::new(),
+            offset=context.prefix.length(),
+            buffer=query,
+          )
           query.write_char(')')
         }
         query.write_char('\n')
@@ -706,6 +750,14 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       )
       continue state.to_parse_state(), offset + 2, source
     }
+    Group(state~, children~, start~), offset, ['$', '{', .. source] =>
+      continue Group(
+          state=Group(state~, children~, start~),
+          children=[],
+          start=query.length(),
+        ),
+        offset + 2,
+        source
     Group(state~, children~, start~), offset, ['$', .. source] =>
       continue Entry(
           state=Group(state~, children~, start~),
