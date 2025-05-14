@@ -53,7 +53,7 @@ impl Language {
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
   symbol_count(Self) -> Int
-  symbol_for_name(Self, @string.StringView) -> Symbol
+  symbol_for_name(Self, @string.StringView) -> Symbol?
   symbol_name(Self, Symbol) -> @string.StringView?
   symbol_type(Self, Symbol) -> SymbolType
   #deprecated
@@ -122,24 +122,30 @@ impl Node {
   next_named_sibling(Self) -> Self?
   next_parse_state(Self) -> StateId
   next_sibling(Self) -> Self?
+  next_symbol_names(Self) -> Iter[@string.StringView]
+  next_symbols(Self) -> Iter[Symbol]
   parent(Self) -> Self?
   parse_state(Self) -> StateId
   prev_named_sibling(Self) -> Self?
   prev_sibling(Self) -> Self?
   query(Self, @string.StringView) -> QueryCursor!QueryError
+  range(Self) -> Range
   start_byte(Self) -> Int
   start_point(Self) -> Point
   string(Self) -> @string.StringView
   symbol(Self) -> Symbol
+  symbols(Self) -> Iter[Symbol]
+  text(Self) -> @string.StringView
   type_(Self) -> @string.StringView
   walk(Self) -> TreeCursor
 }
+impl Eq for Node
 impl Hash for Node
 impl Show for Node
 impl ToJson for Node
 
 pub type! ParseError {
-  NoLanguageAssigned
+  MissingLanguage
   Cancelled
 }
 impl Show for ParseError
@@ -191,12 +197,14 @@ impl Query {
   capture_count(Self) -> Int
   capture_name_for_id(Self, Int) -> @string.StringView
   capture_quantifier_for_id(Self, Int, Int) -> Quantifier
+  captures(Self, Node) -> Iter[QueryCapture]
   disable_capture(Self, @string.StringView) -> Unit
   disable_pattern(Self, Int) -> Unit
   end_byte_for_pattern(Self, Int) -> Int
   is_pattern_guaranteed_at_step(Self, Int) -> Bool
   is_pattern_non_local(Self, Int) -> Bool
   is_pattern_rooted(Self, Int) -> Bool
+  matches(Self, Node) -> Iter[QueryMatch]
   new(Language, @string.StringView) -> Self!QueryError
   pattern_count(Self) -> Int
   predicates_for_pattern(Self, Int) -> Array[Array[QueryPredicateStep]]

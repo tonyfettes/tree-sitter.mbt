@@ -9,9 +9,16 @@ import(
 fn parse(Parser, @string.StringView) -> String!ParseError
 
 // Types and methods
+type Context
+impl Context {
+  new(@string.StringView, strip~ : Bool = .., selector~ : @string.StringView) -> Self!ContextError
+}
+
+type ContextError
+
 type Entry
 impl Entry {
-  new(query~ : String, placeholder~ : String) -> Self
+  new(matches~ : @string.StringView, replace? : @string.StringView, placeholder~ : @string.StringView) -> Self
 }
 
 type ParseError
@@ -19,11 +26,11 @@ impl Show for ParseError
 
 type Parser
 impl Parser {
-  new(@tree_sitter.Language, contexts~ : Map[String, String], entries~ : Map[String, Entry], extras~ : Array[String] = ..) -> Self!ParserCreationError
+  language(Self) -> @tree_sitter.Language
+  new(@tree_sitter.Language, contexts~ : Map[String, Context], entries~ : Map[String, Entry], extras~ : Array[String] = ..) -> Self
   parse(Self, @string.StringView) -> String!ParseError
+  parser(Self) -> @tree_sitter.Parser
 }
-
-type ParserCreationError
 
 // Type aliases
 

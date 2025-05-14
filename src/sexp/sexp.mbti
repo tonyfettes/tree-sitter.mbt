@@ -21,6 +21,7 @@ fn print_to(Array[Sexp], &Logger, indent~ : Int = ..) -> Unit
 pub enum Atom {
   Symbol(String)
   String(String)
+  Concat
   Capture(String)
   Command(String)
   Comment(String)
@@ -30,12 +31,34 @@ impl Eq for Atom
 impl Show for Atom
 impl ToJson for Atom
 
+type List
+impl List {
+  new(open~ : Char = .., Array[Sexp], close~ : Char = .., quantifier~ : Quantifier = ..) -> Self
+}
+impl Eq for List
+impl Show for List
+impl ToJson for List
+
+pub enum Quantifier {
+  ZeroOrOne
+  ZeroOrMore
+  One
+  OneOrMore
+}
+impl Quantifier {
+  from_char(Char) -> Self!SexpError
+}
+impl Eq for Quantifier
+impl Show for Quantifier
+impl ToJson for Quantifier
+
 pub enum Sexp {
   Atom(Atom)
   Pair(String, Sexp)
-  List(Char, Array[Sexp], Char)
+  List(List)
 }
 impl Sexp {
+  list(open~ : Char = .., Array[Self], close~ : Char = .., quantifier~ : Quantifier = ..) -> Self
   parse(@string.StringView) -> Self!SexpError
   pretty(Self) -> Self
   print_to(Self, &Logger, indent~ : Int = ..) -> Unit
@@ -51,6 +74,7 @@ pub type! SexpError {
   MissingValue(@string.StringView)
   ExtraContent(ArrayView[Sexp])
   InvalidPairKey(@string.StringView)
+  InvalidQuantifier(Char)
 }
 impl Show for SexpError
 
