@@ -213,23 +213,17 @@ pub fn Parser::new(
 }
 
 ///|
-priv struct Replacement {
-  name : @string.View
-  query : @string.View
-} derive(Show)
-
-///|
-fn generate_replacement(
+fn generate_capture(
   node~ : @tree_sitter.Node,
-  replace~ : Replacement,
+  name~ : String,
   buffer~ : StringBuilder,
   extras~ : Array[String]
 ) -> Unit {
   buffer.write_string("((")
-  buffer.write_string(replace.query.to_string())
-  if replace.name != "_" {
+  buffer.write_string(node.type_().to_string())
+  if name != "_" {
     buffer.write_string(") @")
-    buffer.write_string(replace.name.to_string())
+    buffer.write_string(name)
   } else {
     buffer.write_char(')')
   }
@@ -261,19 +255,19 @@ fn generate_replacement(
 }
 
 ///|
-fn generate_instances(
+fn generate_captures(
   node~ : @tree_sitter.Node,
-  instances~ : Array[Replacement],
+  captures~ : Array[String],
   buffer~ : StringBuilder,
   extras~ : Array[String]
 ) -> Unit {
-  match instances {
+  match captures {
     [] => abort("Empty replacement")
-    [replace] => generate_replacement(node~, replace~, buffer~, extras~)
+    [replace] => generate_capture(node~, name=replace, buffer~, extras~)
     replaces => {
       buffer.write_char('[')
       for replace in replaces {
-        generate_replacement(node~, replace~, buffer~, extras~)
+        generate_capture(node~, name=replace, buffer~, extras~)
       }
       buffer.write_char(']')
     }
@@ -285,7 +279,7 @@ fn generate_query_for_children(
   self : Parser,
   children : Array[@tree_sitter.Node],
   quotes~ : Array[Quote],
-  instances~ : Map[@tree_sitter.Node, Array[Replacement]],
+  captures~ : Map[@tree_sitter.Node, Array[String]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
@@ -365,7 +359,7 @@ fn generate_query_for_children(
         self,
         child,
         quotes=child_quotes,
-        instances~,
+        captures~,
         offset~,
         buffer~,
       )
@@ -415,12 +409,12 @@ fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
   quotes~ : Array[Quote],
-  instances~ : Map[@tree_sitter.Node, Array[Replacement]],
+  captures~ : Map[@tree_sitter.Node, Array[String]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
-  if instances.get(node) is Some(instances) {
-    generate_instances(node~, instances~, buffer~, extras=self.extras)
+  if captures.get(node) is Some(captures) {
+    generate_captures(node~, captures~, buffer~, extras=self.extras)
     return
   }
   // Queries that does not capture the current node, therefore they are
@@ -440,10 +434,9 @@ fn generate_query(
             if capture.name() != name {
               continue
             }
-            let replacement = capture.node().type_()
-            match instances.get(capture.node()) {
-              Some(replace) => replace.push({ name, query: replacement })
-              None => instances[capture.node()] = [{ name, query: replacement }]
+            match captures.get(capture.node()) {
+              Some(replace) => replace.push(name)
+              None => captures[capture.node()] = [name]
             }
           }
         } else {
@@ -458,8 +451,8 @@ fn generate_query(
         }
     }
   }
-  if instances.get(node) is Some(replace) {
-    generate_instances(node~, instances=replace, buffer~, extras=self.extras)
+  if captures.get(node) is Some(replace) {
+    generate_captures(node~, captures=replace, buffer~, extras=self.extras)
     return
   }
   let children = node.children().collect()
@@ -478,7 +471,7 @@ fn generate_query(
       self.generate_query_for_children!(
         children,
         quotes=children_quotes,
-        instances~,
+        captures~,
         offset~,
         buffer~,
       )
@@ -488,7 +481,7 @@ fn generate_query(
     self.generate_query_for_children!(
       children,
       quotes=children_quotes,
-      instances~,
+      captures~,
       offset~,
       buffer~,
     )
@@ -585,7 +578,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           self.generate_query_for_children!(
             [strip_colocated_nodes(tree.root_node())],
             quotes~,
-            instances=Map::new(),
+            captures=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
@@ -598,7 +591,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           self.generate_query_for_children!(
             [node],
             quotes~,
-            instances=Map::new(),
+            captures=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
@@ -623,7 +616,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           self.generate_query_for_children!(
             ancestor_children,
             quotes~,
-            instances=Map::new(),
+            captures=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
