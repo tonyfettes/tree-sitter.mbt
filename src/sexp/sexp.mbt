@@ -30,11 +30,12 @@ pub impl Show for Quantifier with output(self : Quantifier, logger : &Logger) ->
 pub enum Atom {
   Symbol(String)
   String(String)
-  Concat
+  Anchor
   Capture(String)
-  Command(String)
   Comment(String)
   Newline
+  Predicate(String)
+  Directive(String)
 } derive(Eq, ToJson)
 
 ///|
@@ -42,20 +43,26 @@ pub impl Show for Atom with output(self : Atom, logger : &Logger) -> Unit {
   match self {
     Symbol(symbol) => logger.write_string(symbol)
     String(string) => logger.write_string(string.escape())
-    Concat => logger.write_char('.')
+    Anchor => logger.write_char('.')
     Capture(capture) => {
       logger.write_char('@')
       logger.write_string(capture)
-    }
-    Command(command) => {
-      logger.write_char('#')
-      logger.write_string(command)
     }
     Comment(comment) => {
       logger.write_char(';')
       logger.write_string(comment)
     }
     Newline => logger.write_char('\n')
+    Predicate(predicate) => {
+      logger.write_char('#')
+      logger.write_string(predicate)
+      logger.write_char('?')
+    }
+    Directive(directive) => {
+      logger.write_char('#')
+      logger.write_string(directive)
+      logger.write_char('!')
+    }
   }
 }
 

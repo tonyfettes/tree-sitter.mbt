@@ -7,6 +7,7 @@ pub type! SexpError {
   ExtraContent(@array.View[Sexp])
   InvalidPairKey(@string.View)
   InvalidQuantifier(Char)
+  InvalidCommand(@string.View)
 } derive(Show)
 
 ///|
@@ -77,7 +78,7 @@ fn parse_list(
       continue source
     }
     ['.', .. source] => {
-      sexp.push(Atom(Concat))
+      sexp.push(Atom(Anchor))
       continue source
     }
     ['(', .. source] => {
@@ -122,11 +123,16 @@ fn parse_list(
     ['#', .. source] => {
       let command = StringBuilder::new()
       match parse_symbol(source, command) {
-        [':', ..] => raise SexpError::InvalidPairKey(command.to_string())
-        [.. source] => {
-          sexp.push(Atom(Command(command.to_string())))
+        ['?', .. source] => {
+          sexp.push(Atom(Predicate(command.to_string())))
           continue source
         }
+        ['!', .. source] => {
+          sexp.push(Atom(Directive(command.to_string())))
+          continue source
+        }
+        [':', ..] => raise SexpError::InvalidPairKey(command.to_string())
+        [.. source] => raise SexpError::InvalidCommand(source)
       }
     }
     ['@', .. source] => {
