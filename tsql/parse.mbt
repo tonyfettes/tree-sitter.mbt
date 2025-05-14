@@ -20,28 +20,22 @@ type! ParseError {
 } derive(Show)
 
 ///|
-priv enum Query {
-  Group(range~ : Range, quantifier~ : Quantifier, Array[Query])
-  Match(
-    name~ : String,
-    range~ : Range,
-    quantifier~ : Quantifier,
-    matches~ : @string.View,
-    replace~ : @string.View?
-  )
+priv enum Quote {
+  Group(range~ : Range, quantifier~ : Quantifier, Array[Quote])
+  Match(name~ : String, range~ : Range, query~ : @string.View)
 } derive(Show, ToJson)
 
 ///|
-fn Query::group(
+fn Quote::group(
   range~ : Range,
   quantifier~ : Quantifier,
-  children~ : Array[Query]
-) -> Query {
+  children~ : Array[Quote]
+) -> Quote {
   Group(range~, quantifier~, children)
 }
 
 ///|
-fn Query::range(self : Query) -> Range {
+fn Quote::range(self : Quote) -> Range {
   match self {
     Group(range~, _, ..) => range
     Match(range~, ..) => range
@@ -50,12 +44,12 @@ fn Query::range(self : Query) -> Range {
 
 ///|
 priv enum GroupState {
-  Empty(children~ : Array[Query])
-  Group(state~ : GroupState, children~ : Array[Query], start~ : Int)
+  Empty(children~ : Array[Quote])
+  Group(state~ : GroupState, children~ : Array[Quote], start~ : Int)
 }
 
 ///|
-fn GroupState::children(self : GroupState) -> Array[Query] {
+fn GroupState::children(self : GroupState) -> Array[Quote] {
   match self {
     Empty(children~) => children
     Group(children~, ..) => children
@@ -81,14 +75,13 @@ priv enum Quantifier {
 
 ///|
 priv enum ParseState {
-  Empty(children~ : Array[Query])
-  Group(state~ : GroupState, children~ : Array[Query], start~ : Int)
+  Empty(children~ : Array[Quote])
+  Group(state~ : GroupState, children~ : Array[Quote], start~ : Int)
   Entry(state~ : GroupState, buffer~ : StringBuilder)
   Match(
     state~ : GroupState,
     entry~ : Entry,
     start~ : Int,
-    quantifier~ : Quantifier,
     buffer~ : StringBuilder
   )
 }
@@ -130,18 +123,16 @@ pub fn Context::new!(
 
 ///|
 struct Entry {
-  matches : @string.View
-  replace : @string.View?
+  query : @string.View
   placeholder : @string.View
 }
 
 ///|
 pub fn Entry::new(
   matches~ : @string.View,
-  replace? : @string.View,
   placeholder~ : @string.View
 ) -> Entry {
-  Entry::{ matches, replace, placeholder }
+  Entry::{ query: matches, placeholder }
 }
 
 ///|
@@ -196,7 +187,6 @@ pub fn Parser::new(
 priv struct Replacement {
   name : @string.View
   query : @string.View
-  quantifier : Quantifier
 } derive(Show)
 
 ///|
@@ -207,10 +197,6 @@ fn generate_replacement(
   extras~ : Array[String]
 ) -> Unit {
   buffer.write_string("((")
-  match replace.quantifier {
-    One => ()
-    ZeroOrMore | OneOrMore | ZeroOrOne => buffer.write_char('(')
-  }
   buffer.write_string(replace.query.to_string())
   if replace.name != "_" {
     buffer.write_string(") @")
@@ -242,23 +228,17 @@ fn generate_replacement(
       buffer.write_string("]")
     }
   }
-  match replace.quantifier {
-    ZeroOrMore => buffer.write_string(")*")
-    OneOrMore => buffer.write_string(")+")
-    ZeroOrOne => buffer.write_string(")?")
-    One => ()
-  }
   buffer.write_char(')')
 }
 
 ///|
-fn generate_replacements(
+fn generate_instances(
   node~ : @tree_sitter.Node,
-  replace~ : Array[Replacement],
+  instances~ : Array[Replacement],
   buffer~ : StringBuilder,
   extras~ : Array[String]
 ) -> Unit {
-  match replace {
+  match instances {
     [] => abort("Empty replacement")
     [replace] => generate_replacement(node~, replace~, buffer~, extras~)
     replaces => {
@@ -275,8 +255,8 @@ fn generate_replacements(
 fn generate_query_for_children(
   self : Parser,
   children : Array[@tree_sitter.Node],
-  queries~ : Array[Query],
-  replace~ : Map[@tree_sitter.Node, Array[Replacement]],
+  quotes~ : Array[Quote],
+  instances~ : Map[@tree_sitter.Node, Array[Replacement]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
@@ -286,28 +266,28 @@ fn generate_query_for_children(
     mut closed : Bool
   } derive(Show, ToJson)
 
-  // We use a queue to maintain the active set of queries.
-  let mut queries_queue : @deque.T[Query] = @deque.from_array(queries)
+  // We use a queue to maintain the active set of quotes.
+  let mut quotes_queue : @deque.T[Quote] = @deque.from_array(quotes)
   let opened_groups : Array[Group] = []
   for i, child in children {
-    // BFS traversal of the queries. Basically we are looking for all the
-    // queries that match the current child node.
-    // 1. If the query is a match.
-    //    a. If its range covers the child node, we add it to the child queries,
+    // BFS traversal of the quotes. Basically we are looking for all the
+    // quotes that match the current child node.
+    // 1. If the quote is a match.
+    //    a. If its range covers the child node, we add it to the child quotes,
     //       and remove it from the queue.
     //    b. If its range does not cover the child node, we schedule it for
     //       processing later by adding it to the next queue.
-    // 2. If the query is a group.
-    //    a. If its range covers the child node, we unpack the queries inside
+    // 2. If the quote is a group.
+    //    a. If its range covers the child node, we unpack the quotes inside
     //       the group and add them to the current queue so that they get
     //       processed immediately.
     //    b. If its range intersects the child node, we add it to the child
-    //       queries, and remove it from the queue.
+    //       quotes, and remove it from the queue.
     //    c. If its range has no intersection with the child node, we add it to
     //       the next queue so that it gets processed later.
-    let child_queries = []
-    let queries_queue_next = @deque.new()
-    while queries_queue.pop_front() is Some(query) {
+    let child_quotes = []
+    let quotes_queue_next = @deque.new()
+    while quotes_queue.pop_front() is Some(quote) {
       fn intersects_with(node : @tree_sitter.Node, range : Range) -> Bool {
         // The range of tree-sitter node is exclusive on the right side.
         // This means range [a, b) has no intersection with [b, c). Therefore
@@ -326,28 +306,28 @@ fn generate_query_for_children(
         node.end_byte() >= range.end + offset
       }
 
-      match query {
+      match quote {
         Match(range~, ..) =>
           if covers(child, range) {
-            child_queries.push(query)
+            child_quotes.push(quote)
           } else {
-            queries_queue_next.push_back(query)
+            quotes_queue_next.push_back(quote)
           }
-        Group(range~, group_queries, quantifier~) =>
+        Group(range~, group_quotes, quantifier~) =>
           if covered_by(child, range) {
             buffer.write_char('(')
             opened_groups.push(Group::{ range, quantifier, closed: false })
-            for group_query in group_queries {
-              queries_queue.push_back(group_query)
+            for group_quote in group_quotes {
+              quotes_queue.push_back(group_quote)
             }
           } else if intersects_with(child, range) {
-            child_queries.push(query)
+            child_quotes.push(quote)
           } else {
-            queries_queue_next.push_back(query)
+            quotes_queue_next.push_back(quote)
           }
       }
     }
-    queries_queue = queries_queue_next
+    quotes_queue = quotes_queue_next
     if self.extras.contains(child.type_().to_string()) {
       // Handle extras. Ideally this should be done by using the next_symbols()
       // functionality provided by tree-sitter. However, it seems that it will
@@ -373,8 +353,8 @@ fn generate_query_for_children(
       generate_query!(
         self,
         child,
-        queries=child_queries,
-        replace~,
+        quotes=child_quotes,
+        instances~,
         offset~,
         buffer~,
       )
@@ -423,25 +403,25 @@ fn Parser::id(self : Parser) -> Int {
 fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
-  queries~ : Array[Query],
-  replace~ : Map[@tree_sitter.Node, Array[Replacement]],
+  quotes~ : Array[Quote],
+  instances~ : Map[@tree_sitter.Node, Array[Replacement]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
-  if replace.get(node) is Some(replace) {
-    generate_replacements(node~, replace~, buffer~, extras=self.extras)
+  if instances.get(node) is Some(instances) {
+    generate_instances(node~, instances~, buffer~, extras=self.extras)
     return
   }
   // Queries that does not capture the current node, therefore they are
   // passed to the children.
-  let children_queries = []
-  for query in queries {
-    match query {
-      Match(name~, range~, quantifier~, matches~, replace=replacement) =>
+  let children_quotes = []
+  for quote in quotes {
+    match quote {
+      Match(name~, range~, query~) =>
         if range.start + offset <= node.start_byte() &&
           range.end + offset >= node.end_byte() {
           let cursor = try {
-            @tree_sitter.Query::new!(self.language, "\{matches} @\{name}")
+            @tree_sitter.Query::new!(self.language, "\{query} @\{name}")
           } catch {
             e => raise QueryError(e)
           }
@@ -449,30 +429,26 @@ fn generate_query(
             if capture.name() != name {
               continue
             }
-            let replacement = replacement.or(capture.node().type_())
-            match replace.get(capture.node()) {
-              Some(replace) =>
-                replace.push({ name, query: replacement, quantifier })
-              None =>
-                replace[capture.node()] = [
-                  { name, query: replacement, quantifier },
-                ]
+            let replacement = capture.node().type_()
+            match instances.get(capture.node()) {
+              Some(replace) => replace.push({ name, query: replacement })
+              None => instances[capture.node()] = [{ name, query: replacement }]
             }
           }
         } else {
-          children_queries.push(query)
+          children_quotes.push(quote)
         }
-      Group(range~, quantifier=_, queries) =>
+      Group(range~, quantifier=_, quotes) =>
         if range.start + offset <= node.start_byte() &&
           range.end + offset >= node.end_byte() {
-          children_queries.append(queries)
+          children_quotes.append(quotes)
         } else {
-          children_queries.push(query)
+          children_quotes.push(quote)
         }
     }
   }
-  if replace.get(node) is Some(replace) {
-    generate_replacements(node~, replace~, buffer~, extras=self.extras)
+  if instances.get(node) is Some(replace) {
+    generate_instances(node~, instances=replace, buffer~, extras=self.extras)
     return
   }
   let children = node.children().collect()
@@ -484,12 +460,14 @@ fn generate_query(
     buffer.write_string(node.type_().to_string())
     if children.length() == 0 {
       let id = "_id_\{self.id()}"
-      buffer.write_string(") @\{id} (#eq? @\{id} \{node.text().to_json().stringify()})")
+      buffer.write_string(
+        ") @\{id} (#eq? @\{id} \{node.text().to_json().stringify()})",
+      )
     } else {
       self.generate_query_for_children!(
         children,
-        queries=children_queries,
-        replace~,
+        quotes=children_quotes,
+        instances~,
         offset~,
         buffer~,
       )
@@ -498,8 +476,8 @@ fn generate_query(
     buffer.write_string(node.type_().to_json().stringify())
     self.generate_query_for_children!(
       children,
-      queries=children_queries,
-      replace~,
+      quotes=children_quotes,
+      instances~,
       offset~,
       buffer~,
     )
@@ -558,7 +536,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       query.write_char(char)
       continue Empty(children~), offset + 1, source
     }
-    Empty(children=queries), _, [] => {
+    Empty(children=quotes), _, [] => {
       let parser = @tree_sitter.Parser::new()
       parser.set_language(self.language)
       let quasi = query.to_string()
@@ -595,8 +573,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
         if nodes is [] {
           self.generate_query_for_children!(
             [strip_colocated_nodes(tree.root_node())],
-            queries~,
-            replace=Map::new(),
+            quotes~,
+            instances=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
@@ -608,8 +586,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           }
           self.generate_query_for_children!(
             [node],
-            queries~,
-            replace=Map::new(),
+            quotes~,
+            instances=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
@@ -633,8 +611,8 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
             .collect()
           self.generate_query_for_children!(
             ancestor_children,
-            queries~,
-            replace=Map::new(),
+            quotes~,
+            instances=Map::new(),
             offset=context.prefix.length(),
             buffer=query,
           )
@@ -661,9 +639,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
           let start = query.length()
           query.write_string(entry.placeholder.to_string())
           buffer.write_char(char)
-          continue Match(state~, entry~, start~, buffer~, quantifier=One),
-            offset + 1,
-            source
+          continue Match(state~, entry~, start~, buffer~), offset + 1, source
         }
         char =>
           raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
@@ -678,33 +654,13 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
     Entry(..), offset, [char, ..] =>
       raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
     Entry(..), offset, [] => raise MissingColon(Range::new(offset, offset + 1))
-    Match(state~, entry~, start~, buffer~, quantifier~),
+    Match(state~, entry~, start~, buffer~),
     offset,
     ['a'..<'z' | 'A'..<'Z' | '_' as char, .. source] => {
       buffer.write_char(char)
-      continue Match(state~, entry~, start~, buffer~, quantifier~),
-        offset + 1,
-        source
+      continue Match(state~, entry~, start~, buffer~), offset + 1, source
     }
-    Match(state~, entry~, start~, buffer~, quantifier=One),
-    offset,
-    ['*', .. source] =>
-      continue Match(state~, entry~, start~, buffer~, quantifier=ZeroOrMore),
-        offset + 1,
-        source
-    Match(state~, entry~, start~, buffer~, quantifier=One),
-    offset,
-    ['+', .. source] =>
-      continue Match(state~, entry~, start~, buffer~, quantifier=OneOrMore),
-        offset + 1,
-        source
-    Match(state~, entry~, start~, buffer~, quantifier=One),
-    offset,
-    ['?', .. source] =>
-      continue Match(state~, entry~, start~, buffer~, quantifier=ZeroOrOne),
-        offset + 1,
-        source
-    Match(state~, entry~, start~, buffer~, quantifier~), offset, [.. source] => {
+    Match(state~, entry~, start~, buffer~), offset, [.. source] => {
       let ident = buffer.to_string()
       buffer.reset()
       state
@@ -713,9 +669,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
         Match(
           name=ident,
           range=Range::{ start, end: query.length() },
-          matches=entry.matches,
-          replace=entry.replace,
-          quantifier~,
+          query=entry.query,
         ),
       )
       continue state.to_parse_state(), offset, source
