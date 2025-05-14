@@ -189,7 +189,9 @@ pub fn test_query_language_top(language : @tree_sitter.Language) -> Unit! {
       #|  ("fn")
       #|  .
       #|  (function_identifier
-      #|   (lowercase_identifier))
+      #|   ((lowercase_identifier) @_id_0
+      #|    (#eq? @_id_0
+      #|     "main")))
       #|  .
       #|  (block_expression
       #|   ("{")
@@ -202,7 +204,9 @@ pub fn test_query_language_top(language : @tree_sitter.Language) -> Unit! {
       #|        (apply_expression
       #|         (simple_expression
       #|          (qualified_identifier
-      #|           (lowercase_identifier)))
+      #|           ((lowercase_identifier) @_id_1
+      #|            (#eq? @_id_1
+      #|             "println"))))
       #|         .
       #|         ("(")
       #|         .
@@ -363,7 +367,7 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
   let parser = moonbit_parser!(language)
   let query = parser.parse!(query)
   inspect!(
-    @sexp.prettify!(query),
+    query |> @sexp.prettify!(),
     content=
       #|;; exp
       #|(let_expression
@@ -374,7 +378,9 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
       #|   ((lowercase_identifier) @a)))
       #| .
       #| (type_annotation
-      #|  (colon)
+      #|  ((colon) @_id_0
+      #|   (#eq? @_id_0
+      #|    ":"))
       #|  .
       #|  ((type) @b))
       #| .
@@ -389,13 +395,16 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
       #|  ((lowercase_identifier) @a)
       #|  .
       #|  (type_annotation
-      #|   (colon)
+      #|   ((colon) @_id_1
+      #|    (#eq? @_id_1
+      #|     ":"))
       #|   .
       #|   ((type) @b))
       #|  .
       #|  ("=")
       #|  .
       #|  ((expression) @c)))
+
     ,
   )
   let source =
@@ -418,8 +427,10 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
   }
   @json.inspect!(captures, content={
     "a": ["a", "b"],
+    "_id_1": [":"],
     "b": ["Int", "Bool"],
     "c": ["42", "true"],
+    "_id_0": [":"],
   })
 }
 
@@ -441,7 +452,9 @@ pub fn test_query_language_id(language : @tree_sitter.Language) -> Unit! {
       #| (compound_expression
       #|  (simple_expression
       #|   (qualified_identifier
-      #|    (lowercase_identifier))))
+      #|    ((lowercase_identifier) @_id_0
+      #|     (#eq? @_id_0
+      #|      "a")))))
       #| .
       #| ("{")
       #| .
@@ -483,7 +496,7 @@ pub fn test_query_language_id(language : @tree_sitter.Language) -> Unit! {
       }
     }
   }
-  @json.inspect!(captures, content={ "a": ["a"], "b": ["1"] })
+  @json.inspect!(captures, content={ "_id_0": ["a"], "a": ["a"], "b": ["1"] })
 }
 
 ///|
@@ -511,7 +524,9 @@ pub fn test_query_language_quantifier(
       #|   (is_expression
       #|    ((simple_expression) @a)
       #|    .
-      #|    (is_keyword)
+      #|    ((is_keyword) @_id_0
+      #|     (#eq? @_id_0
+      #|      "is"))
       #|    .
       #|    ((simple_pattern) @b))))
       #| .
@@ -570,10 +585,17 @@ pub fn test_query_language_quantifier(
     matches.push(captures)
   }
   @json.inspect!(matches, content=[
-    { "a": ["a"], "b": ["None"], "d": ["3"] },
-    { "a": ["a"], "b": ["Some"], "c": ["println(\"a\")"], "d": ["4"] },
+    { "a": ["a"], "_id_0": ["is"], "b": ["None"], "d": ["3"] },
     {
       "a": ["a"],
+      "_id_0": ["is"],
+      "b": ["Some"],
+      "c": ["println(\"a\")"],
+      "d": ["4"],
+    },
+    {
+      "a": ["a"],
+      "_id_0": ["is"],
       "b": ["Some"],
       "c": ["println(\"a\")", "println(\"b\")"],
       "d": ["5"],
@@ -710,7 +732,9 @@ pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
       #|   ("fn")
       #|   .
       #|   (function_identifier
-      #|    (lowercase_identifier))
+      #|    ((lowercase_identifier) @_id_0
+      #|     (#eq? @_id_0
+      #|      "init")))
       #|   .
       #|   (block_expression
       #|    ("{")
@@ -745,7 +769,7 @@ pub fn test_query_language_match_id(language : @tree_sitter.Language) -> Unit! {
       #|   (qualified_identifier
       #|    ((lowercase_identifier) @_id_0
       #|     (#eq? @_id_0
-      #|      a)))))
+      #|      "a")))))
       #| .
       #| ("{")
       #| .
