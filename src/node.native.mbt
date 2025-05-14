@@ -98,6 +98,16 @@ pub fn Node::end_byte(self : Node) -> Int {
 extern "c" fn ts_node_string(self : TSNode, tree : TSTree) -> Bytes = "moonbit_ts_node_string"
 
 ///|
+/// Get the node's end position in terms of rows and columns.
+#borrow(self, tree)
+extern "c" fn ts_node_end_point(self : TSNode, tree : TSTree) -> Point = "moonbit_ts_node_end_point"
+
+///|
+pub fn Node::end_point(self : Node) -> Point {
+  return ts_node_end_point(self.node, self.tree)
+}
+
+///|
 /// Get an S-expression representing the node as a string.
 pub fn Node::string(self : Node) -> @string.View {
   return @encoding.decode_lossy(
@@ -113,16 +123,6 @@ pub impl Show for Node with output(self : Node, logger : &@builtin.Logger) -> Un
   } catch {
     _ => logger.write_string(self.string().to_string())
   }
-}
-
-///|
-/// Get the node's end position in terms of rows and columns.
-#borrow(self, tree)
-extern "c" fn ts_node_end_point(self : TSNode, tree : TSTree) -> Point = "moonbit_ts_node_end_point"
-
-///|
-pub fn Node::end_point(self : Node) -> Point {
-  return ts_node_end_point(self.node, self.tree)
 }
 
 ///|
