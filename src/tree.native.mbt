@@ -97,9 +97,9 @@ extern "c" fn ts_tree_included_ranges(self : TSTree) -> FixedArray[UInt] = "moon
 pub fn Tree::included_ranges(self : Tree) -> Array[Range] {
   let flatten_ranges = ts_tree_included_ranges(self.tree)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
-    Range::_new(
-      Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
-      Point::_new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
+    ts_range_new(
+      ts_point_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
+      ts_point_new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
       flatten_ranges[i * 6 + 4],
       flatten_ranges[i * 6 + 5],
     )
@@ -146,9 +146,9 @@ extern "c" fn ts_tree_get_changed_ranges(
 pub fn Tree::get_changed_ranges(self : Tree, other : Tree) -> Array[Range] {
   let flatten_ranges = ts_tree_get_changed_ranges(self.tree, other.tree)
   Array::makei(flatten_ranges.length() / 6, fn(i) {
-    Range::_new(
-      Point::_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
-      Point::_new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
+    ts_range_new(
+      ts_point_new(flatten_ranges[i * 6], flatten_ranges[i * 6 + 1]),
+      ts_point_new(flatten_ranges[i * 6 + 2], flatten_ranges[i * 6 + 3]),
       flatten_ranges[i * 6 + 4],
       flatten_ranges[i * 6 + 5],
     )

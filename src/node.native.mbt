@@ -108,6 +108,16 @@ pub fn Node::end_point(self : Node) -> Point {
 }
 
 ///|
+pub fn Node::range(self : Node) -> Range {
+  return Range::new(
+    self.start_point(),
+    self.end_point(),
+    self.start_byte(),
+    self.end_byte(),
+  )
+}
+
+///|
 /// Get an S-expression representing the node as a string.
 pub fn Node::string(self : Node) -> @string.View {
   return @encoding.decode_lossy(

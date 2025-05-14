@@ -22,7 +22,7 @@ pub fn Input::new[DecodeFunction : DecodeFunction](
 type InputEdit FixedArray[UInt]
 
 ///|
-fn InputEdit::_new(
+fn ts_input_edit_new(
   start_byte : UInt,
   old_end_byte : UInt,
   new_end_byte : UInt,
@@ -34,12 +34,12 @@ fn InputEdit::_new(
     start_byte,
     old_end_byte,
     new_end_byte,
-    start_point._row(),
-    start_point._column(),
-    old_end_point._row(),
-    old_end_point._column(),
-    new_end_point._row(),
-    new_end_point._column(),
+    ts_point_row(start_point),
+    ts_point_column(start_point),
+    ts_point_row(old_end_point),
+    ts_point_column(old_end_point),
+    ts_point_row(new_end_point),
+    ts_point_column(new_end_point),
   ]
 }
 
@@ -55,7 +55,7 @@ pub fn InputEdit::new(
   let start_byte = int_to_uint(start_byte)
   let old_end_byte = int_to_uint(old_end_byte)
   let new_end_byte = int_to_uint(new_end_byte)
-  InputEdit::_new(
+  ts_input_edit_new(
     start_byte, old_end_byte, new_end_byte, start_point, old_end_point, new_end_point,
   )
 }

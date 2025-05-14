@@ -22,23 +22,23 @@ pub fn Point::new(row : Int, column : Int) -> Point {
 }
 
 ///|
-extern "js" fn Point::_row(self : Point) -> UInt =
+extern "js" fn ts_point_row(self : Point) -> UInt =
   #|(point) => {
   #|  return point.row;
   #|}
 
 ///|
 pub fn Point::row(self : Point) -> Int {
-  uint_to_int(self._row())
+  uint_to_int(ts_point_row(self))
 }
 
 ///|
-extern "js" fn Point::_column(self : Point) -> UInt =
+extern "js" fn ts_point_column(self : Point) -> UInt =
   #|(point) => {
   #|  return point.column;
   #|}
 
 ///|
 pub fn Point::column(self : Point) -> Int {
-  uint_to_int(self._column())
+  uint_to_int(ts_point_column(self))
 }

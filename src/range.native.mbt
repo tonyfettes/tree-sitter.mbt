@@ -9,17 +9,17 @@ pub impl Show for Range with output(self : Range, logger : &@builtin.Logger) -> 
 }
 
 ///|
-fn Range::_new(
+fn ts_range_new(
   start_point : Point,
   end_point : Point,
   start_byte : UInt,
   end_byte : UInt
 ) -> Range {
   [
-    start_point._row(),
-    start_point._column(),
-    end_point._row(),
-    end_point._column(),
+    ts_point_row(start_point),
+    ts_point_column(start_point),
+    ts_point_row(end_point),
+    ts_point_column(end_point),
     start_byte,
     end_byte,
   ]
@@ -34,35 +34,35 @@ pub fn Range::new(
 ) -> Range {
   let start_byte = int_to_uint(start_byte)
   let end_byte = int_to_uint(end_byte)
-  Range::_new(start_point, end_point, start_byte, end_byte)
+  ts_range_new(start_point, end_point, start_byte, end_byte)
 }
 
 ///|
 pub fn Range::start_point(self : Range) -> Point {
-  Point::_new(self._[0], self._[1])
+  ts_point_new(self._[0], self._[1])
 }
 
 ///|
 pub fn Range::end_point(self : Range) -> Point {
-  Point::_new(self._[2], self._[3])
+  ts_point_new(self._[2], self._[3])
 }
 
 ///|
-fn Range::_start_byte(self : Range) -> UInt {
+fn ts_range_start_byte(self : Range) -> UInt {
   self._[4]
 }
 
 ///|
 pub fn Range::start_byte(self : Range) -> Int {
-  uint_to_int(self._start_byte())
+  uint_to_int(ts_range_start_byte(self))
 }
 
 ///|
-fn Range::_end_byte(self : Range) -> UInt {
+fn ts_range_end_byte(self : Range) -> UInt {
   self._[5]
 }
 
 ///|
 pub fn Range::end_byte(self : Range) -> Int {
-  uint_to_int(self._end_byte())
+  uint_to_int(ts_range_end_byte(self))
 }

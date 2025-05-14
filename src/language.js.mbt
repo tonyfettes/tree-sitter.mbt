@@ -132,7 +132,7 @@ pub fn Language::field_name_for_id(
 }
 
 ///|
-extern "js" fn Language::_field_id_for_name(
+extern "js" fn ts_language_field_id_for_name(
   self : Language,
   name : String
 ) -> UInt =
@@ -143,7 +143,7 @@ extern "js" fn Language::_field_id_for_name(
 ///|
 /// Get the numerical id for the given field name string.
 pub fn Language::field_id_for_name(self : Language, name : @string.View) -> Int {
-  Language::_field_id_for_name(self, name.to_string()) |> uint_to_int()
+  ts_language_field_id_for_name(self, name.to_string()) |> uint_to_int()
 }
 
 ///|
