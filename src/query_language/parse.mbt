@@ -484,7 +484,7 @@ fn generate_query(
     buffer.write_string(node.type_().to_string())
     if children.length() == 0 {
       let id = "_id_\{self.id()}"
-      buffer.write_string(") @\{id} (#eq? @\{id} \{node.text()})")
+      buffer.write_string(") @\{id} (#eq? @\{id} \{node.text().to_json().stringify()})")
     } else {
       self.generate_query_for_children!(
         children,
