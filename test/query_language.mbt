@@ -1,11 +1,5 @@
 ///|
-let moonbit_parser_value : Ref[@query_language.Parser?] = Ref::new(None)
-
-///|
 fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
-  if moonbit_parser_value.val is Some(parser) {
-    return parser
-  }
   let contexts : Map[String, @query_language.Context] = {
     "exp": @query_language.Context::new!(
       #|fn main {
@@ -135,7 +129,6 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
     entries~,
     extras~,
   )
-  moonbit_parser_value.val = Some(parser)
   return parser
 }
 
