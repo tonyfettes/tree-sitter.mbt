@@ -165,7 +165,7 @@ pub fn Entry::new(
 }
 
 ///|
-struct Parser {
+struct Language {
   language : @tree_sitter.Language
   parser : @tree_sitter.Parser
   contexts : Map[String, Context]
@@ -175,13 +175,8 @@ struct Parser {
 }
 
 ///|
-pub fn Parser::language(self : Parser) -> @tree_sitter.Language {
+pub fn Language::language(self : Language) -> @tree_sitter.Language {
   self.language
-}
-
-///|
-pub fn Parser::parser(self : Parser) -> @tree_sitter.Parser {
-  self.parser
 }
 
 ///|
@@ -190,19 +185,19 @@ type! ContextError {
 }
 
 ///|
-pub fn Parser::new(
+pub fn Language::new(
   language : @tree_sitter.Language,
   contexts~ : Map[String, Context],
   entries~ : Map[String, Entry],
   extras~ : Array[String] = []
-) -> Parser {
+) -> Language {
   let parsed_contexts = Map::new(capacity=contexts.size())
   for name, context in contexts {
     parsed_contexts.set(name, context)
   }
   let parser = @tree_sitter.Parser::new()
   parser.set_language(language)
-  Parser::{
+  Language::{
     language,
     parser,
     contexts: parsed_contexts,
@@ -276,7 +271,7 @@ fn generate_captures(
 
 ///|
 fn generate_query_for_children(
-  self : Parser,
+  self : Language,
   children : Array[@tree_sitter.Node],
   quotes~ : Array[Quote],
   captures~ : Map[@tree_sitter.Node, Array[String]],
@@ -312,8 +307,23 @@ fn generate_query_for_children(
     let quotes_queue_next = @deque.new()
     while quotes_queue.pop_front() is Some(quote) {
       match quote {
-        Match(range~, ..) =>
-          if range.covered_by(child, offset~) {
+        Match(range~, name~, query~) =>
+          if range.covers(child, offset~) {
+            let cursor = try {
+              @tree_sitter.Query::new!(self.language, "\{query} @\{name}")
+            } catch {
+              e => raise QueryError(e)
+            }
+            for capture in cursor.captures(child) {
+              if capture.name() != name {
+                continue
+              }
+              match captures.get(capture.node()) {
+                Some(captures) => captures.push(name)
+                None => captures[capture.node()] = [name]
+              }
+            }
+          } else if range.covered_by(child, offset~) {
             child_quotes.push(quote)
           } else {
             quotes_queue_next.push_back(quote)
@@ -398,7 +408,7 @@ fn generate_query_for_children(
 }
 
 ///|
-fn Parser::id(self : Parser) -> Int {
+fn Language::id(self : Language) -> Int {
   let id = self.id
   self.id += 1
   id
@@ -406,7 +416,7 @@ fn Parser::id(self : Parser) -> Int {
 
 ///|
 fn generate_query(
-  self : Parser,
+  self : Language,
   node : @tree_sitter.Node,
   quotes~ : Array[Quote],
   captures~ : Map[@tree_sitter.Node, Array[String]],
@@ -415,44 +425,6 @@ fn generate_query(
 ) -> Unit!ParseError {
   if captures.get(node) is Some(captures) {
     generate_captures(node~, captures~, buffer~, extras=self.extras)
-    return
-  }
-  // Queries that does not capture the current node, therefore they are
-  // passed to the children.
-  let children_quotes = []
-  for quote in quotes {
-    match quote {
-      Match(name~, range~, query~) =>
-        if range.start + offset <= node.start_byte() &&
-          range.end + offset >= node.end_byte() {
-          let cursor = try {
-            @tree_sitter.Query::new!(self.language, "\{query} @\{name}")
-          } catch {
-            e => raise QueryError(e)
-          }
-          for capture in cursor.captures(node) {
-            if capture.name() != name {
-              continue
-            }
-            match captures.get(capture.node()) {
-              Some(replace) => replace.push(name)
-              None => captures[capture.node()] = [name]
-            }
-          }
-        } else {
-          children_quotes.push(quote)
-        }
-      Group(range~, quantifier=_, quotes) =>
-        if range.start + offset <= node.start_byte() &&
-          range.end + offset >= node.end_byte() {
-          children_quotes.append(quotes)
-        } else {
-          children_quotes.push(quote)
-        }
-    }
-  }
-  if captures.get(node) is Some(replace) {
-    generate_captures(node~, captures=replace, buffer~, extras=self.extras)
     return
   }
   let children = node.children().collect()
@@ -470,7 +442,7 @@ fn generate_query(
     } else {
       self.generate_query_for_children!(
         children,
-        quotes=children_quotes,
+        quotes~,
         captures~,
         offset~,
         buffer~,
@@ -480,7 +452,7 @@ fn generate_query(
     buffer.write_string(node.type_().to_json().stringify())
     self.generate_query_for_children!(
       children,
-      quotes=children_quotes,
+      quotes~,
       captures~,
       offset~,
       buffer~,
@@ -524,9 +496,177 @@ fn lowest_common_ancestor(
 }
 
 ///|
-pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
+struct Query {
+  parser : @tree_sitter.Parser
+  query : @tree_sitter.Query
+}
+
+///|
+fn Query::new(
+  parser : @tree_sitter.Parser,
+  query : @tree_sitter.Query
+) -> Query {
+  Query::{ parser, query }
+}
+
+///|
+pub fn Query::search(
+  self : Query,
+  source : @string.View
+) -> Array[Map[String, Array[String]]]! {
+  let node = self.parser.parse_string!(source).root_node()
+  self.matches(node)
+}
+
+///|
+pub fn Query::matches(
+  self : Query,
+  node : @tree_sitter.Node
+) -> Array[Map[String, Array[String]]] {
+  let matches = []
+  matches~: for matched in self.query.matches(node) {
+    let captures : Map[String, Array[String]] = Map::new()
+    for capture in matched.captures() {
+      let name = capture.name().to_string()
+      let node = capture.node()
+      match captures.get(name) {
+        Some(nodes) => nodes.push(node.text().to_string())
+        None => captures[name] = [node.text().to_string()]
+      }
+    }
+    for predicate in matched.predicates() {
+      match predicate {
+        [String("eq?"), a, b] => {
+          fn read {
+            @tree_sitter.String(string) => [string]
+            Capture(name) =>
+              match captures.get(name.to_string()) {
+                None => []
+                Some(nodes) => nodes.map(fn(node) { node })
+              }
+          }
+
+          let a = read(a)
+          let b = read(b)
+          if a != b {
+            continue matches~
+          }
+        }
+        _ => ()
+      }
+    }
+    let captures = captures
+      .iter()
+      .filter(fn { (key, _) => not(key.char_at(0) == '_') })
+      |> Map::from_iter()
+    matches.push(captures)
+  }
+  matches
+}
+
+///|
+fn Language::compile_quotes(
+  self : Language,
+  quotes : Array[Quote],
+  query : Buffer
+) -> Query!ParseError {
+  let parser = self.parser
+  let quasi = query.to_string()
+  let errors = []
+  let query = StringBuilder::new()
+  for name, context in self.contexts {
+    let tree = try {
+      parser.parse_string!("\{context.prefix}\{quasi}\{context.suffix}")
+    } catch {
+      e => {
+        errors.push(e)
+        continue
+      }
+    }
+    if tree.root_node().has_error() {
+      continue
+    }
+    let cursor = try {
+      @tree_sitter.Query::new!(self.language, context.select)
+    } catch {
+      e => raise QueryError(e)
+    }
+    let nodes = []
+    for capture in cursor.captures(tree.root_node()) {
+      if capture.name() != name {
+        continue
+      }
+      if self.extras.contains(capture.node().type_().to_string()) {
+        continue
+      }
+      nodes.push(capture.node())
+    }
+    query.write_string(";; \{name}\n")
+    if nodes is [] {
+      self.generate_query_for_children!(
+        [strip_colocated_nodes(tree.root_node())],
+        quotes~,
+        captures=Map::new(),
+        offset=context.prefix.length(),
+        buffer=query,
+      )
+    } else if nodes is [node] {
+      let node = if context.strip { strip_colocated_nodes(node) } else { node }
+      self.generate_query_for_children!(
+        [node],
+        quotes~,
+        captures=Map::new(),
+        offset=context.prefix.length(),
+        buffer=query,
+      )
+    } else {
+      let ancestor = lowest_common_ancestor(tree.root_node(), nodes)
+      query.write_char('(')
+      let mut start_byte = ancestor.end_byte()
+      let mut end_byte = ancestor.start_byte()
+      for node in nodes {
+        guard ancestor.child_with_descendant(node) is Some(parent) else {
+          continue
+        }
+        start_byte = @math.minimum(start_byte, parent.start_byte())
+        end_byte = @math.maximum(end_byte, parent.end_byte())
+      }
+      let ancestor_children = ancestor
+        .children()
+        .filter(fn(node) {
+          node.start_byte() >= start_byte && node.end_byte() <= end_byte
+        })
+        .collect()
+      self.generate_query_for_children!(
+        ancestor_children,
+        quotes~,
+        captures=Map::new(),
+        offset=context.prefix.length(),
+        buffer=query,
+      )
+      query.write_char(')')
+    }
+    query.write_char('\n')
+  }
+  if errors.length() > 0 {
+    raise ParseError(errors)
+  }
+  let query = query.to_string()
+  let query = try {
+    @tree_sitter.Query::new!(self.language, query)
+  } catch {
+    e => raise QueryError(e)
+  }
+  Query::new(self.parser, query)
+}
+
+///|
+fn Language::parse(
+  self : Language,
+  source : @string.View,
+  query : Buffer
+) -> Array[Quote]!ParseError {
   let state = ParseState::Empty(children=[])
-  let query = Buffer::new()
   loop state, 0, source {
     Empty(children~), offset, ['$', '{', .. source] =>
       continue Group(state=Empty(children~), children=[], start=query.length()),
@@ -540,95 +680,7 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
       query.write_char(char)
       continue Empty(children~), offset + 1, source
     }
-    Empty(children=quotes), _, [] => {
-      let parser = @tree_sitter.Parser::new()
-      parser.set_language(self.language)
-      let quasi = query.to_string()
-      let errors = []
-      let query = StringBuilder::new()
-      for name, context in self.contexts {
-        let tree = try {
-          parser.parse_string!("\{context.prefix}\{quasi}\{context.suffix}")
-        } catch {
-          e => {
-            errors.push(e)
-            continue
-          }
-        }
-        if tree.root_node().has_error() {
-          continue
-        }
-        let cursor = try {
-          @tree_sitter.Query::new!(self.language, context.select)
-        } catch {
-          e => raise QueryError(e)
-        }
-        let nodes = []
-        for capture in cursor.captures(tree.root_node()) {
-          if capture.name() != name {
-            continue
-          }
-          if self.extras.contains(capture.node().type_().to_string()) {
-            continue
-          }
-          nodes.push(capture.node())
-        }
-        query.write_string(";; \{name}\n")
-        if nodes is [] {
-          self.generate_query_for_children!(
-            [strip_colocated_nodes(tree.root_node())],
-            quotes~,
-            captures=Map::new(),
-            offset=context.prefix.length(),
-            buffer=query,
-          )
-        } else if nodes is [node] {
-          let node = if context.strip {
-            strip_colocated_nodes(node)
-          } else {
-            node
-          }
-          self.generate_query_for_children!(
-            [node],
-            quotes~,
-            captures=Map::new(),
-            offset=context.prefix.length(),
-            buffer=query,
-          )
-        } else {
-          let ancestor = lowest_common_ancestor(tree.root_node(), nodes)
-          query.write_char('(')
-          let mut start_byte = ancestor.end_byte()
-          let mut end_byte = ancestor.start_byte()
-          for node in nodes {
-            guard ancestor.child_with_descendant(node) is Some(parent) else {
-              continue
-            }
-            start_byte = @math.minimum(start_byte, parent.start_byte())
-            end_byte = @math.maximum(end_byte, parent.end_byte())
-          }
-          let ancestor_children = ancestor
-            .children()
-            .filter(fn(node) {
-              node.start_byte() >= start_byte && node.end_byte() <= end_byte
-            })
-            .collect()
-          self.generate_query_for_children!(
-            ancestor_children,
-            quotes~,
-            captures=Map::new(),
-            offset=context.prefix.length(),
-            buffer=query,
-          )
-          query.write_char(')')
-        }
-        query.write_char('\n')
-      }
-      if errors.length() > 0 {
-        raise ParseError(errors)
-      }
-      query.to_string()
-    }
+    Empty(children=quotes), _, [] => quotes
     Entry(state~, buffer~), offset, [':', char, .. source] => {
       let entry = buffer.to_string()
       buffer.reset()
@@ -726,4 +778,14 @@ pub fn parse(self : Parser, source : @string.View) -> String!ParseError {
     Group(start~, ..), offset, [] =>
       raise UnterminatedGroup(Range::new(start, offset))
   }
+}
+
+///|
+pub fn Language::compile(
+  self : Language,
+  source : @string.View
+) -> Query!ParseError {
+  let query = Buffer::new()
+  let quotes = self.parse!(source, query)
+  self.compile_quotes!(quotes, query)
 }
