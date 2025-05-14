@@ -151,6 +151,7 @@ struct Parser {
   contexts : Map[String, Context]
   entries : Map[String, Entry]
   extras : Array[String]
+  mut id : Int
 }
 
 ///|
@@ -181,7 +182,14 @@ pub fn Parser::new(
   }
   let parser = @tree_sitter.Parser::new()
   parser.set_language(language)
-  Parser::{ language, parser, contexts: parsed_contexts, entries, extras }
+  Parser::{
+    language,
+    parser,
+    contexts: parsed_contexts,
+    entries,
+    extras,
+    id: 0,
+  }
 }
 
 ///|
@@ -405,13 +413,10 @@ fn generate_query_for_children(
 }
 
 ///|
-let id : Ref[Int] = Ref::new(0)
-
-///|
-fn gen() -> Int {
-  let gen = id.val
-  id.val += 1
-  gen
+fn Parser::id(self : Parser) -> Int {
+  let id = self.id
+  self.id += 1
+  id
 }
 
 ///|
@@ -478,7 +483,7 @@ fn generate_query(
     }
     buffer.write_string(node.type_().to_string())
     if children.length() == 0 {
-      let id = "_id_\{gen()}"
+      let id = "_id_\{self.id()}"
       buffer.write_string(") @\{id} (#eq? @\{id} \{node.text()})")
     } else {
       self.generate_query_for_children!(
