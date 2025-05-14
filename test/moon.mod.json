@@ -10,7 +10,10 @@
     "tonyfettes/tree_sitter_markdown": "0.1.15",
     "tonyfettes/c": "0.1.12",
     "tonyfettes/tree_sitter_yaml": "0.1.15",
-    "tonyfettes/uv": "0.3.2"
+    "tonyfettes/uv": "0.3.2",
+    "tonyfettes/tree_sitter/tsql": {
+      "path": "../tsql"
+    }
   },
   "readme": "README.md",
   "repository": "",

@@ -1,0 +1,10 @@
+{
+  "test-import": [
+    {
+      "path": "tonyfettes/tree_sitter/tsql",
+      "alias": "ql"
+    },
+    "tonyfettes/tree_sitter",
+    "tonyfettes/tree_sitter_moonbit"
+  ]
+}
