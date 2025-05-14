@@ -405,6 +405,16 @@ fn generate_query_for_children(
 }
 
 ///|
+let id : Ref[Int] = Ref::new(0)
+
+///|
+fn gen() -> Int {
+  let gen = id.val
+  id.val += 1
+  gen
+}
+
+///|
 fn generate_query(
   self : Parser,
   node : @tree_sitter.Node,
@@ -460,21 +470,35 @@ fn generate_query(
     generate_replacements(node~, replace~, buffer~, extras=self.extras)
     return
   }
-  buffer.write_char('(')
-  let type_ = if node.is_named() {
-    node.type_().to_string()
-  } else {
-    node.type_().to_json().stringify()
-  }
-  buffer.write_string(type_)
   let children = node.children().collect()
-  self.generate_query_for_children!(
-    children,
-    queries=children_queries,
-    replace~,
-    offset~,
-    buffer~,
-  )
+  buffer.write_char('(')
+  if node.is_named() {
+    if children.length() == 0 {
+      buffer.write_char('(')
+    }
+    buffer.write_string(node.type_().to_string())
+    if children.length() == 0 {
+      let id = "_id_\{gen()}"
+      buffer.write_string(") @\{id} (#eq? @\{id} \{node.text()})")
+    } else {
+      self.generate_query_for_children!(
+        children,
+        queries=children_queries,
+        replace~,
+        offset~,
+        buffer~,
+      )
+    }
+  } else {
+    buffer.write_string(node.type_().to_json().stringify())
+    self.generate_query_for_children!(
+      children,
+      queries=children_queries,
+      replace~,
+      offset~,
+      buffer~,
+    )
+  }
   buffer.write_char(')')
 }
 

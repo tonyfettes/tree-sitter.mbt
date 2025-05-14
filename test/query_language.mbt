@@ -731,3 +731,69 @@ pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
     ,
   )
 }
+
+///|
+pub fn test_query_language_match_id(language : @tree_sitter.Language) -> Unit! {
+  let query =
+    #|match a {
+    #|  $pat:p => $exp:e
+    #|}
+  let parser = moonbit_parser!(language)
+  let query = parser.parse!(query)
+  inspect!(
+    query |> @sexp.prettify!(),
+    content=
+      #|;; exp
+      #|(match_expression
+      #| ("match")
+      #| .
+      #| (compound_expression
+      #|  (simple_expression
+      #|   (qualified_identifier
+      #|    ((lowercase_identifier) @_id_0
+      #|     (#eq? @_id_0
+      #|      a)))))
+      #| .
+      #| ("{")
+      #| .
+      #| (case_clause
+      #|  ((pattern) @p)
+      #|  .
+      #|  ("=>")
+      #|  .
+      #|  ((statement_expression) @e))
+      #| .
+      #| (semicolon)*
+      #| .
+      #| ("}"))
+    ,
+  )
+  let source =
+    #|fn main {
+    #|  match a {
+    #|    _ => 1
+    #|  }
+    #|  match b {
+    #|    _ => 1
+    #|  }
+    #|}
+  let parser = parser.parser()
+  let tree = parser.parse_string!(source)
+  let query_cursor = @tree_sitter.Query::new!(language, query)
+  let captures : Map[@string.View, Array[@string.View]] = {}
+  for matched in query_cursor.matches(tree.root_node()) {
+    for capture in matched.captures() {
+      let name = capture.name()
+      if captures.get(name) is Some(captures) {
+        captures.push(capture.node().text())
+      } else {
+        captures[name] = [capture.node().text()]
+      }
+    }
+  }
+  @json.inspect!(captures, content={
+    "_id_0": ["a", "b"],
+    "p": ["_", "_"],
+    "e": ["1", "1"],
+  })
+}

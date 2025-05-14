@@ -51,3 +51,8 @@ test "case" {
 test "escape" {
   start!(fn() { test_query_language_escape!(@tree_sitter_moonbit.language()) })
 }
+
+///|
+test "match_id" {
+  start!(fn() { test_query_language_match_id!(@tree_sitter_moonbit.language()) })
+}
