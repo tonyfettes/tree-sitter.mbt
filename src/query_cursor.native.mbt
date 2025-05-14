@@ -244,10 +244,11 @@ pub fn QueryCapture::name(self : QueryCapture) -> @string.View {
 
 ///|
 struct QueryMatch {
+  query : Query
   id : Int
   pattern_index : Int
   captures : FixedArray[QueryCapture]
-} derive(Show)
+}
 
 ///|
 pub impl ToJson for QueryMatch with to_json(self) -> Json {
@@ -271,6 +272,11 @@ pub fn QueryMatch::pattern_index(self : QueryMatch) -> Int {
 ///|
 pub fn QueryMatch::captures(self : QueryMatch) -> Iter[QueryCapture] {
   self.captures.iter()
+}
+
+///|
+pub fn QueryMatch::predicates(self : QueryMatch) -> Array[QueryPredicate] {
+  self.query.predicates_for_pattern(self.pattern_index)
 }
 
 ///|
@@ -341,7 +347,7 @@ pub fn QueryCursor::next_match(self : QueryCursor) -> QueryMatch? {
   })
   let id = uint_to_int(ts_query_match_id(ts_match))
   let pattern_index = uint_to_int(ts_query_match_pattern_index(ts_match))
-  Some(QueryMatch::{ id, pattern_index, captures })
+  Some(QueryMatch::{ query: self.query, id, pattern_index, captures })
 }
 
 ///|
