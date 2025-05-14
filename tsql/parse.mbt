@@ -10,6 +10,35 @@ fn Range::new(start : Int, end : Int) -> Range {
 }
 
 ///|
+fn Range::covers(
+  self : Range,
+  node : @tree_sitter.Node,
+  offset~ : Int = 0
+) -> Bool {
+  node.start_byte() >= self.start + offset &&
+  node.end_byte() <= self.end + offset
+}
+
+///|
+fn Range::covered_by(
+  self : Range,
+  node : @tree_sitter.Node,
+  offset~ : Int = 0
+) -> Bool {
+  node.start_byte() <= self.start + offset &&
+  node.end_byte() >= self.end + offset
+}
+
+///|
+fn Range::intersects_with(
+  self : Range,
+  node : @tree_sitter.Node,
+  offset~ : Int = 0
+) -> Bool {
+  node.start_byte() < self.end + offset && node.end_byte() > self.start + offset
+}
+
+///|
 type! ParseError {
   ParseError(Array[@tree_sitter.ParseError])
   QueryError(@tree_sitter.QueryError)
@@ -288,39 +317,21 @@ fn generate_query_for_children(
     let child_quotes = []
     let quotes_queue_next = @deque.new()
     while quotes_queue.pop_front() is Some(quote) {
-      fn intersects_with(node : @tree_sitter.Node, range : Range) -> Bool {
-        // The range of tree-sitter node is exclusive on the right side.
-        // This means range [a, b) has no intersection with [b, c). Therefore
-        // we should not use '<=' and '>=' here.
-        node.start_byte() < range.end + offset &&
-        node.end_byte() > range.start + offset
-      }
-
-      fn covered_by(node : @tree_sitter.Node, range : Range) -> Bool {
-        node.start_byte() >= range.start + offset &&
-        node.end_byte() <= range.end + offset
-      }
-
-      fn covers(node : @tree_sitter.Node, range : Range) -> Bool {
-        node.start_byte() <= range.start + offset &&
-        node.end_byte() >= range.end + offset
-      }
-
       match quote {
         Match(range~, ..) =>
-          if covers(child, range) {
+          if range.covered_by(child, offset~) {
             child_quotes.push(quote)
           } else {
             quotes_queue_next.push_back(quote)
           }
         Group(range~, group_quotes, quantifier~) =>
-          if covered_by(child, range) {
+          if range.covers(child, offset~) {
             buffer.write_char('(')
             opened_groups.push(Group::{ range, quantifier, closed: false })
             for group_quote in group_quotes {
               quotes_queue.push_back(group_quote)
             }
-          } else if intersects_with(child, range) {
+          } else if range.intersects_with(child, offset~) {
             child_quotes.push(quote)
           } else {
             quotes_queue_next.push_back(quote)
