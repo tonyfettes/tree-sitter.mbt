@@ -1,7 +1,8 @@
 ///|
-fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
-  let contexts : Map[String, @query_language.Context] = {
-    "exp": @query_language.Context::new!(
+fn moonbit_parser() -> @tsql.Parser! {
+  let language = @tree_sitter_moonbit.language()
+  let contexts : Map[String, @tsql.Context] = {
+    "exp": @tsql.Context::new!(
       #|fn main {
       #|  $
       #|}
@@ -18,13 +19,13 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
         #|    "}"))))
       ,
     ),
-    "top": @query_language.Context::new!(
+    "top": @tsql.Context::new!(
       "$",
       selector=
         #|(structure_item) @top
       ,
     ),
-    "pat": @query_language.Context::new!(
+    "pat": @tsql.Context::new!(
       #|fn main {
       #|  match x {
       #|    $ => y
@@ -35,14 +36,14 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
         #|(pattern) @pat
       ,
     ),
-    "ty": @query_language.Context::new!(
+    "ty": @tsql.Context::new!(
       #|let x : $ = 42
       ,
       selector=
         #|(type) @ty
       ,
     ),
-    "case": @query_language.Context::new!(
+    "case": @tsql.Context::new!(
       #|fn main {
       #|  match x {
       #|    $
@@ -53,7 +54,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
         #|(case_clause) @case
       ,
     ),
-    "matrix": @query_language.Context::new!(
+    "matrix": @tsql.Context::new!(
       #|fn main {
       #|  loop a, b {
       #|    $
@@ -65,8 +66,8 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
       ,
     ),
   }
-  let entries : Map[String, @query_language.Entry] = {
-    "exp": @query_language.Entry::new(
+  let entries : Map[String, @tsql.Entry] = {
+    "exp": @tsql.Entry::new(
       matches=
         #|[
         #|  (expression)
@@ -81,7 +82,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
       ,
       placeholder="{...}",
     ),
-    "top": @query_language.Entry::new(
+    "top": @tsql.Entry::new(
       matches=
         #|[
         #|  (structure_item)
@@ -91,7 +92,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
         #|type! A Int
       ,
     ),
-    "pat": @query_language.Entry::new(
+    "pat": @tsql.Entry::new(
       matches=
         #|[
         #|  (pattern)
@@ -100,7 +101,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
       ,
       placeholder="_",
     ),
-    "id": @query_language.Entry::new(
+    "id": @tsql.Entry::new(
       matches=
         #|[
         #|  (identifier)
@@ -112,7 +113,7 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
       ,
       placeholder="id",
     ),
-    "ty": @query_language.Entry::new(
+    "ty": @tsql.Entry::new(
       matches=
         #|[
         #|  (type)
@@ -123,20 +124,15 @@ fn moonbit_parser(language : @tree_sitter.Language) -> @query_language.Parser! {
     ),
   }
   let extras = ["semicolon"]
-  let parser = @query_language.Parser::new(
-    language,
-    contexts~,
-    entries~,
-    extras~,
-  )
+  let parser = @tsql.Parser::new(language, contexts~, entries~, extras~)
   return parser
 }
 
 ///|
-pub fn test_query_language_exp(language : @tree_sitter.Language) -> Unit! {
+test "exp" {
   let query =
     #|$exp:a == $exp:b
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -173,12 +169,12 @@ pub fn test_query_language_exp(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_top(language : @tree_sitter.Language) -> Unit! {
+test "top" {
   let query =
     #|fn main {
     #|  println($exp:a)
     #|}
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -223,13 +219,11 @@ pub fn test_query_language_top(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_fn_ambiguity(
-  language : @tree_sitter.Language
-) -> Unit! {
+test "fn_ambiguity" {
   let query =
     #|fn $id:a {
     #|}
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     @sexp.prettify!(query),
@@ -289,14 +283,14 @@ pub fn test_query_language_fn_ambiguity(
 }
 
 ///|
-pub fn test_query_language_concat(language : @tree_sitter.Language) -> Unit! {
+test "concat" {
   let query =
     #|match $exp:a {
     #|  $pat:b => $exp:c
     #|}
     #|$exp:d
     #|return $exp:f
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -361,10 +355,10 @@ pub fn test_query_language_concat(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
+test "ty" {
   let query =
     #|let $id:a : $ty:b = $exp:c
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -404,7 +398,6 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
       #|  ("=")
       #|  .
       #|  ((expression) @c)))
-
     ,
   )
   let source =
@@ -435,12 +428,12 @@ pub fn test_query_language_ty(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_id(language : @tree_sitter.Language) -> Unit! {
+test "id" {
   let query =
     #|match a {
     #|  $id:a => $exp:b
     #|}
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     @sexp.prettify!(query),
@@ -500,9 +493,7 @@ pub fn test_query_language_id(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_quantifier(
-  language : @tree_sitter.Language
-) -> Unit! {
+test "quantifier" {
   let query =
     #|guard $exp:a is $pat:b else {
     #|  ${
@@ -510,7 +501,7 @@ pub fn test_query_language_quantifier(
     #|  }*
     #|  return $exp:d
     #|}
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -604,10 +595,10 @@ pub fn test_query_language_quantifier(
 }
 
 ///|
-pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
+test "group" {
   let query =
     #|[${ $exp:x, }+ $exp:x]
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -655,10 +646,10 @@ pub fn test_query_language_group(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_case(language : @tree_sitter.Language) -> Unit! {
+test "case" {
   let query =
     #|${ $pat:a, }* $pat:a => $exp:b
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     @sexp.prettify!(query),
@@ -712,7 +703,7 @@ pub fn test_query_language_case(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
+test "escape" {
   let query =
     #|${
     #|fn init \{
@@ -721,7 +712,7 @@ pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
     #|  }*
     #|\}
     #|}+
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -750,12 +741,12 @@ pub fn test_query_language_escape(language : @tree_sitter.Language) -> Unit! {
 }
 
 ///|
-pub fn test_query_language_match_id(language : @tree_sitter.Language) -> Unit! {
+test "match_id" {
   let query =
     #|match a {
     #|  $pat:p => $exp:e
     #|}
-  let parser = moonbit_parser!(language)
+  let parser = moonbit_parser!()
   let query = parser.parse!(query)
   inspect!(
     query |> @sexp.prettify!(),
@@ -796,7 +787,7 @@ pub fn test_query_language_match_id(language : @tree_sitter.Language) -> Unit! {
     #|}
   let parser = parser.parser()
   let tree = parser.parse_string!(source)
-  let query_cursor = @tree_sitter.Query::new!(language, query)
+  let query_cursor = @tree_sitter.Query::new!(parser.language().unwrap(), query)
   let captures : Map[@string.View, Array[@string.View]] = {}
   for matched in query_cursor.matches(tree.root_node()) {
     for capture in matched.captures() {

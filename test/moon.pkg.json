@@ -13,7 +13,6 @@
     "tonyfettes/tree_sitter",
     "tonyfettes/tree_sitter/sexp",
     "tonyfettes/tree_sitter_moonbit",
-    "tonyfettes/tree_sitter/query_language",
     "tonyfettes/uv",
     "tonyfettes/uv/async"
   ],
@@ -24,7 +23,6 @@
     "tonyfettes/tree_sitter_json",
     "tonyfettes/tree_sitter_yaml",
     "tonyfettes/encoding",
-    "tonyfettes/tree_sitter/query_language",
     "tonyfettes/tree_sitter/sexp",
     "tonyfettes/tree_sitter_language"
   ],
