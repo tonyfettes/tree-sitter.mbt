@@ -48,10 +48,5 @@
     "tonyfettes/tree_sitter_json",
     "tonyfettes/tree_sitter_markdown",
     "tonyfettes/tree_sitter_yaml"
-  ],
-  "link": {
-    "native": {
-      "cc": "/opt/homebrew/opt/llvm/bin/clang"
-    }
-  }
+  ]
 }
