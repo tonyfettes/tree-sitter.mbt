@@ -35,9 +35,9 @@ def linux_flags():
 
 def windows_flags():
     return {
-        "stub-cc": "cl.exe",
+        "stub-cc": "cl",
         "stub-cc-flags": "/DEBUG /fsanitize=address",
-        "cc": "cl.exe",
+        "cc": "cl",
         "cc-flags": "/DEBUG /fsanitize=address",
     }
 
