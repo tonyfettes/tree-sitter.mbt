@@ -163,7 +163,23 @@ fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
 pub enum QueryPredicateStep {
   Capture(String)
   String(String)
-} derive(Show)
+}
+
+///|
+pub impl Show for QueryPredicateStep with output(
+  self,
+  logger : &@builtin.Logger
+) -> Unit {
+  match self {
+    Capture(name) => logger.write_string("@\{name}")
+    String(value) => logger.write_string(value.escape())
+  }
+}
+
+///|
+pub impl ToJson for QueryPredicateStep with to_json(self) -> Json {
+  self.to_string().to_json()
+}
 
 ///|
 pub typealias QueryPredicate = Array[QueryPredicateStep]
