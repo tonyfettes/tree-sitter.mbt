@@ -1,0 +1,40 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "pattern",
+      "camelcase": "Pattern",
+      "title": "Pattern",
+      "scope": "source.pattern",
+      "file-types": [
+        "pattern"
+      ],
+      "injection-regex": "^pattern$",
+      "class-name": "TreeSitterPattern"
+    }
+  ],
+  "metadata": {
+    "version": "0.0.1",
+    "license": "MIT",
+    "description": "Pattern grammar for tree-sitter",
+    "authors": [
+      {
+        "name": "Haoxiang Fei",
+        "email": "feihaoxiang@idea.edu.cn",
+        "url": "https://github.com/tonyfettes"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/tonyfettes/tree-sitter.mbt"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true,
+    "zig": false
+  }
+}
