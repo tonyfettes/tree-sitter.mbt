@@ -1003,8 +1003,12 @@ moonbit_ts_query_new(
     moonbit_ts_query_delete, sizeof(MoonBitTSQuery)
   );
   moonbit_ts_trace("query = %p\n", (void *)query);
+  uint32_t error_offset = 0;
+  TSQueryError error_type = TSQueryErrorNone;
   query->query =
-    ts_query_new(language, (const char *)source, length, &error[0], &error[1]);
+    ts_query_new(language, (const char *)source, length, &error_offset, &error_type);
+  error[0] = error_offset;
+  error[1] = error_type;
   moonbit_ts_trace("query->query = %p\n", (void *)query->query);
   return query;
 }
