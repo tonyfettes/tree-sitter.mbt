@@ -25,8 +25,11 @@ test "query with predicates" {
   inspect!(predicates.length(), content="1")
 
   // Test string_value_for_id for a string in the query
-  inspect!(query.string_value_for_id(0), content=
-    #|Some("eq?")
+  inspect!(
+    query.string_value_for_id(0),
+    content=
+      #|Some("eq?")
+    ,
   )
 }
 
@@ -52,5 +55,7 @@ test "query" {
       captures[capture.name()] = capture.node().text()
     }
   }
-  @json.inspect!(captures, content={"forExpression":"for i = 0; i < 10; i = i + 1 {\n    println(\"Hello, world!\")\n  }"})
+  @json.inspect!(captures, content={
+    "forExpression": "for i = 0; i < 10; i = i + 1 {\n    println(\"Hello, world!\")\n  }",
+  })
 }

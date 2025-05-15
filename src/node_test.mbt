@@ -29,8 +29,11 @@ test "node basic operations" {
   // Test node text extraction through string method
   let name_value_node = name_pair.child(1).or_error!(Failure("No name value"))
   let name_value = name_value_node.string()
-  inspect!(name_value, content=
-    #|(":")
+  inspect!(
+    name_value,
+    content=
+      #|(":")
+    ,
   )
 }
 
@@ -53,8 +56,11 @@ test "node advanced operations" {
 
   // Test descendant_for_byte_range
   let name_value_node = object_node.descendant_for_byte_range(12, 18)
-  inspect!(name_value_node.map(Node::text(_)), content=
-    #|Some("\"name\": \"test\"")
+  inspect!(
+    name_value_node.map(Node::text(_)),
+    content=
+      #|Some("\"name\": \"test\"")
+    ,
   )
 
   // Test descendant_for_point_range
@@ -62,8 +68,11 @@ test "node advanced operations" {
     @tree_sitter.Point::new(0, 12),
     @tree_sitter.Point::new(0, 18),
   )
-  inspect!(point_node.map(Node::text(_)), content=
-    #|Some("\"name\": \"test\"")
+  inspect!(
+    point_node.map(Node::text(_)),
+    content=
+      #|Some("\"name\": \"test\"")
+    ,
   )
 
   // Test has_changes
@@ -96,49 +105,34 @@ test "node advanced operations" {
 }
 
 ///|
-test "node equality and hash" {
+test "Node::eq" {
   let parser = @tree_sitter.parser(@tree_sitter_json.language())
   let source =
     #|{"key": "value"}
   let tree = parser.parse_string!(source)
-
-  // Get same node in two different ways
-  let root = tree.root_node()
-  let same_root = tree.root_node()
-
-  // Test equality
-  inspect!(root == same_root, content="true")
-
-  // Test different nodes
-  let object_node = root.child(0).or_error!(Failure("No object node"))
-  inspect!(root == object_node, content="false")
-
-  // Another form of comparison
-  let is_eq = root.eq(same_root)
-  inspect!(is_eq, content="true")
+  let root_node = tree.root_node()
+  let same_root_node = tree.root_node()
+  assert_eq!(root_node, same_root_node)
+  assert_true!(root_node.eq(same_root_node))
+  let object_node = root_node.child(0).or_error!(Failure("No object node"))
+  assert_not_eq!(root_node, object_node)
 }
 
 ///|
-test "node iteration" {
+test "Node::children" {
   let parser = @tree_sitter.parser(@tree_sitter_json.language())
   let source =
     #|[1, 2, 3, 4, 5]
   let tree = parser.parse_string!(source)
   let root = tree.root_node()
   let array_node = root.child(0).or_error!(Failure("No array node"))
-
-  // Count children using iteration
   let children = []
   for child in array_node.children() {
     if child.is_named() {
       children.push(child.type_())
     }
   }
-
-  // Should have 5 named children (numbers)
-  inspect!(children.length(), content="5")
-
-  // Check that all named children are numbers
-  let all_numbers = children.iter().all(fn(type_) { type_ == "number" })
-  inspect!(all_numbers, content="true")
+  @json.inspect!(children, content=[
+    "number", "number", "number", "number", "number",
+  ])
 }
