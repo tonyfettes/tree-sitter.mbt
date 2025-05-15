@@ -21,6 +21,7 @@ test "tree_cursor" {
       #| (null))
     ,
   )
+  inspect!(tree_cursor.current_depth(), content="1")
   inspect!(tree_cursor.goto_next_sibling(), content="false")
   inspect!(tree_cursor.goto_first_child(), content="true")
   inspect!(
@@ -29,6 +30,8 @@ test "tree_cursor" {
       #|("[")
     ,
   )
+  let left_bracket_cursor = tree_cursor.copy()
+  inspect!(tree_cursor.current_depth(), content="2")
   inspect!(tree_cursor.goto_next_sibling(), content="true")
   inspect!(tree_cursor.current_node(), content="(number)")
   inspect!(tree_cursor.goto_next_sibling(), content="true")
@@ -44,6 +47,22 @@ test "tree_cursor" {
   )
   inspect!(
     tree_cursor.current_node(),
+    content=
+      #|(document
+      #| (array
+      #|  (number)
+      #|  (null)))
+    ,
+  )
+  inspect!(
+    left_bracket_cursor.current_node(),
+    content=
+      #|("[")
+    ,
+  )
+  left_bracket_cursor.reset(tree_cursor.current_node())
+  inspect!(
+    left_bracket_cursor.current_node(),
     content=
       #|(document
       #| (array

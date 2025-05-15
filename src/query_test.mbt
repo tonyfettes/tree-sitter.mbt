@@ -1,4 +1,36 @@
 ///|
+test "query with predicates" {
+  // Create a simple query with a single pattern
+  let language = @tree_sitter_moonbit.language()
+
+  // Create a query with a pattern that has multiple captures
+  let query_source =
+    #|((function_definition
+    #|  (function_identifier
+    #|   (lowercase_identifier) @func_name)
+    #|  (parameters) @params)
+    #| (#eq? @func_name "f"))
+  let query = @tree_sitter.Query::new!(language, query_source)
+
+  // Get the pattern count
+  inspect!(query.pattern_count(), content="1")
+
+  // Test the quantifier for a capture
+  let quantifier = query.capture_quantifier_for_id(0, 0)
+  inspect!(quantifier, content="One")
+
+  // Test predicates for a pattern
+  let predicates = query.predicates_for_pattern(0)
+  // This pattern doesn't have predicates
+  inspect!(predicates.length(), content="1")
+
+  // Test string_value_for_id for a string in the query
+  inspect!(query.string_value_for_id(0), content=
+    #|Some("eq?")
+  )
+}
+
+///|
 test "query" {
   let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
   let source =
@@ -14,78 +46,11 @@ test "query" {
   let query =
     #|(for_expression) @forExpression
   let query_cursor = source_tree.query!(query)
-  let captures = []
+  let captures = {}
   for matched in query_cursor.matches() {
     for capture in matched.captures() {
-      captures.push(capture)
+      captures[capture.name()] = capture.node().text()
     }
   }
-  @json.inspect!(captures.length(), content=1)
-  inspect!(captures[0].name(), content="forExpression")
-  inspect!(
-    captures[0].node(),
-    content=
-      #|(for_expression
-      #| (for_keyword)
-      #| (for_binder
-      #|  (lowercase_identifier)
-      #|  (expression
-      #|   (pipeline_expression
-      #|    (compound_expression
-      #|     (simple_expression
-      #|      (atomic_expression
-      #|       (literal
-      #|        (integer_literal))))))))
-      #| (semicolon)
-      #| (compound_expression
-      #|  (binary_expression
-      #|   (compound_expression
-      #|    (simple_expression
-      #|     (qualified_identifier
-      #|      (lowercase_identifier))))
-      #|   (compound_expression
-      #|    (simple_expression
-      #|     (atomic_expression
-      #|      (literal
-      #|       (integer_literal)))))))
-      #| (semicolon)
-      #| (for_binder
-      #|  (lowercase_identifier)
-      #|  (expression
-      #|   (pipeline_expression
-      #|    (compound_expression
-      #|     (binary_expression
-      #|      (compound_expression
-      #|       (simple_expression
-      #|        (qualified_identifier
-      #|         (lowercase_identifier))))
-      #|      (compound_expression
-      #|       (simple_expression
-      #|        (atomic_expression
-      #|         (literal
-      #|          (integer_literal))))))))))
-      #| (block_expression
-      #|  (statement_expression
-      #|   (expression
-      #|    (pipeline_expression
-      #|     (compound_expression
-      #|      (simple_expression
-      #|       (apply_expression
-      #|        (simple_expression
-      #|         (qualified_identifier
-      #|          (lowercase_identifier)))
-      #|        (argument
-      #|         (expression
-      #|          (pipeline_expression
-      #|           (compound_expression
-      #|            (simple_expression
-      #|             (atomic_expression
-      #|              (literal
-      #|               (string_literal
-      #|                (string_fragment
-      #|                 (unescaped_string_fragment))))))))))))))))
-      #|  (semicolon
-      #|   (automatic_semicolon))))
-    ,
-  )
+  @json.inspect!(captures, content={"forExpression":"for i = 0; i < 10; i = i + 1 {\n    println(\"Hello, world!\")\n  }"})
 }

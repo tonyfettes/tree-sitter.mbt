@@ -47,6 +47,52 @@ test "query cursor basics" {
 }
 
 ///|
+test "query cursor byte_range and point_range" {
+  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let source =
+    #|fn func1() -> Int {
+    #|  1
+    #|}
+    #|
+    #|fn func2() -> Int {
+    #|  2
+    #|}
+    #|
+    #|fn func3() -> Int {
+    #|  3
+    #|}
+  let tree = parser.parse_string!(source)
+
+  // Create a query to find all function definitions
+  let query_source =
+    #|(function_definition) @function
+
+  // Test with a byte range that only includes the first two functions
+  let cursor1 = tree.query!(query_source)
+
+  // Calculate end of first two functions (approximate)
+  let end_byte = 40 // This should cover the first two functions
+  cursor1.set_byte_range(0, end_byte)
+  let matches1 = []
+  for matched in cursor1.matches() {
+    matches1.push(matched)
+  }
+  inspect!(matches1.length(), content="2") // Should only find 2 functions
+
+  // Test with point range
+  let cursor2 = tree.query!(query_source)
+  cursor2.set_point_range(
+    @tree_sitter.Point::new(0, 0),
+    @tree_sitter.Point::new(1, 0), // First line only
+  )
+  let matches2 = []
+  for matched in cursor2.matches() {
+    matches2.push(matched)
+  }
+  inspect!(matches2.length(), content="1") // Should only find 1 function
+}
+
+///|
 test "query cursor with predicates" {
   let language = @tree_sitter_moonbit.language()
   let parser = @tree_sitter.parser(language)

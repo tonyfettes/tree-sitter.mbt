@@ -1,6 +1,16 @@
 ///|
-test "tree basic operations" {
-  let json = @tree_sitter_json.language()
+test "Tree::language" {
+  let json : @tree_sitter.Language = @tree_sitter_json.language()
+  let parser = @tree_sitter.parser(json)
+  let source =
+    #|{"name": "Test", "value": 123}
+  let tree = parser.parse_string!(source)
+  assert_true!(physical_equal(tree.language(), json))
+}
+
+///|
+test "Tree::copy" {
+  let json : @tree_sitter.Language = @tree_sitter_json.language()
   let parser = @tree_sitter.parser(json)
   let source =
     #|{"name": "Test", "value": 123}
@@ -22,10 +32,70 @@ test "tree basic operations" {
   let copy_root_child = copy_root.child(0).or_error!(Failure("No child found"))
   inspect!(root_child.type_(), content="object")
   inspect!(copy_root_child.type_(), content="object")
+}
 
-  // Check language
-  let tree_lang = tree.language()
-  inspect!(tree_lang.name(), content="None")
+///|
+test "tree included ranges" {
+  let json = @tree_sitter_json.language()
+  let parser = @tree_sitter.parser(json)
+
+  // Create a tree and check included ranges
+  let source =
+    #|{"name": "Test", "value": 123}
+  let tree = parser.parse_string!(source)
+  let included_ranges = tree.included_ranges()
+
+  // By default, the parser processes the entire document,
+  // so there should be a single range covering the whole document
+  inspect!(included_ranges.length(), content="1")
+
+  // Test with specific included ranges
+  let range = @tree_sitter.Range::new(
+    @tree_sitter.Point::new(0, 0), // Start at beginning
+    @tree_sitter.Point::new(0, 10), // End at character 10
+    0, // Start byte
+    10, // End byte
+  )
+
+  // Now set included ranges on the parser
+  ignore(parser.set_included_ranges([range]))
+  let partial_tree = parser.parse_string!(source)
+
+  // Get included ranges back from the tree
+  let tree_ranges = partial_tree.included_ranges()
+  inspect!(tree_ranges, content="[(0, 0) - (0, 10)]")
+}
+
+///|
+test "tree with offset" {
+  let json = @tree_sitter_json.language()
+  let parser = @tree_sitter.parser(json)
+  let source =
+    #|{"key": "value"}
+  let tree = parser.parse_string!(source)
+
+  // Test root_node_with_offset
+  let offset_bytes = 10
+  let offset_point = @tree_sitter.Point::new(1, 2)
+  let offset_root = tree.root_node_with_offset(offset_bytes, offset_point)
+  let normal_root = tree.root_node()
+
+  // The offset node should have its position shifted
+  let offset_start_point = offset_root.start_point()
+  let normal_start_point = normal_root.start_point()
+  inspect!(offset_start_point.row() > normal_start_point.row(), content="true")
+  inspect!(
+    offset_start_point.column() > normal_start_point.column(),
+    content="true",
+  )
+
+  // The content and structure should be the same
+  inspect!(offset_root.child_count(), content="1")
+  inspect!(normal_root.child_count(), content="1")
+  let offset_child = offset_root.child(0).or_error!(Failure("No child"))
+  let normal_child = normal_root.child(0).or_error!(Failure("No child"))
+  inspect!(offset_child.type_(), content="object")
+  inspect!(normal_child.type_(), content="object")
 }
 
 ///|
