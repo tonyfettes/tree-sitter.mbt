@@ -213,7 +213,7 @@ pub fn Query::predicates_for_pattern(
         predicate.push(QueryPredicateStep::Capture(name))
       }
       String => {
-        let value = Query::string_value_for_id(self, value)
+        let value = Query::string_value_for_id(self, value).unwrap()
         predicate.push(QueryPredicateStep::String(value))
       }
       Done => {
@@ -336,21 +336,20 @@ pub fn Query::capture_quantifier_for_id(
 }
 
 ///|
-#borrow(self, length)
+#borrow(self)
 extern "c" fn ts_query_string_value_for_id(
   self : Query,
-  string_id : UInt,
-  length : FixedArray[UInt]
-) -> @c.Pointer[Byte] = "moonbit_ts_query_string_value_for_id"
+  string_id : UInt
+) -> @c.Nullable[Bytes] = "moonbit_ts_query_string_value_for_id"
 
 ///|
 /// Get the value of one of the query's string literals. Each string is associated with a
 /// numeric id based on the order that it appeared in the query's source.
-pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String {
+pub fn Query::string_value_for_id(self : Query, string_id : Int) -> String? {
   let string_id = int_to_uint(string_id)
-  let length : FixedArray[UInt] = [0U]
-  let value = ts_query_string_value_for_id(self, string_id, length)
-  return decode_c_string(value, length=length[0].reinterpret_as_int()).unwrap()
+  let value = ts_query_string_value_for_id(self, string_id).to()
+  guard value is Some(value) else { return None }
+  Some(@encoding.decode_lossy(value, encoding=UTF8))
 }
 
 ///|

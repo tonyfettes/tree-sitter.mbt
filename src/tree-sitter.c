@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef DEBUG
 #include <stdio.h>
 #define moonbit_ts_trace(format, ...)                                          \
@@ -496,6 +497,7 @@ moonbit_ts_tree_root_node_with_offset(
   uint32_t offset_bytes,
   TSPoint *offset_extent
 ) {
+  moonbit_ts_trace("tree = %p\n", (void *)tree);
   TSNode node =
     ts_tree_root_node_with_offset(tree->tree, offset_bytes, *offset_extent);
   return moonbit_ts_node_new(node);
@@ -1113,6 +1115,8 @@ moonbit_ts_query_new(
   query->query = ts_query_new(
     language, (const char *)source, length, &error_offset, &error_type
   );
+  moonbit_ts_trace("error_offset = %d\n", error_offset);
+  moonbit_ts_trace("error_type = %d\n", error_type);
   error[0] = error_offset;
   error[1] = error_type;
   moonbit_ts_trace("query->query = %p\n", (void *)query->query);
@@ -1239,13 +1243,19 @@ moonbit_ts_query_capture_quantifier_for_id(
 }
 
 MOONBIT_FFI_EXPORT
-const char *
-moonbit_ts_query_string_value_for_id(
-  MoonBitTSQuery *self,
-  uint32_t index,
-  uint32_t *length
-) {
-  return ts_query_string_value_for_id(self->query, index, length);
+moonbit_bytes_t
+moonbit_ts_query_string_value_for_id(MoonBitTSQuery *self, uint32_t index) {
+  // The returned string value is copied into a newly allocated moonbit bytes.
+  // When this function is the last usage of the query, the query will be
+  // deleted immediately after this function returns. However, this will make
+  // the string value invalid. Therefore we cannot just pass the string value
+  // back to moonbit as copying there will cause a read-after-free.
+  uint32_t length = 0;
+  const char *string_value =
+    ts_query_string_value_for_id(self->query, index, &length);
+  moonbit_bytes_t bytes = moonbit_make_bytes_sz(length, 0);
+  memcpy(bytes, string_value, length);
+  return bytes;
 }
 
 MOONBIT_FFI_EXPORT
