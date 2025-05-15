@@ -388,3 +388,62 @@ test "match_id" {
   )
   @json.inspect!(matches, content=[{ "p": ["_"], "e": ["1"] }])
 }
+
+///|
+test "multiple_patterns" {
+  let query =
+    #|match a {
+    #|  $pat:p1 | $pat:p2 => $exp:e
+    #|}
+  let query = moonbit!().compile!(query)
+  let matches = query.search!(
+    #|fn main {
+    #|  match a {
+    #|    1 | 2 => "number"
+    #|  }
+    #|}
+    ,
+  )
+  @json.inspect!(matches, content=[
+    { "p1": ["1"], "p2": ["2"], "e": ["\"number\""] },
+  ])
+}
+
+///|
+test "guard_condition" {
+  let query =
+    #|match a {
+    #|  $pat:p if $exp:condition => $exp:e
+    #|}
+  let query = moonbit!().compile!(query)
+  let matches = query.search!(
+    #|fn main {
+    #|  match a {
+    #|    x if x > 0 => "positive"
+    #|  }
+    #|}
+    ,
+  )
+  @json.inspect!(matches, content=[
+    { "p": ["x"], "condition": ["x > 0"], "e": ["\"positive\""] },
+  ])
+}
+
+///|
+test "loop_expression" {
+  let query =
+    #|loop $id:var {
+    #|  $pat:p => $exp:e
+    #|}
+  let query = moonbit!().compile!(query)
+  let matches = query.search!(
+    #|fn main {
+    #|  loop state {
+    #|    Empty => 0
+    #|    Node(value, next) => value + next
+    #|  }
+    #|}
+    ,
+  )
+  @json.inspect!(matches, content=[])
+}
