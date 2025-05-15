@@ -52,7 +52,7 @@ def remove_pre_build(path: Path):
 def main():
     remove_pre_build(Path("src") / "sexp" / "moon.pkg.json")
     subprocess.run(["moon", "check", "--target", "native"], check=True)
-    test_path = Path("test")
+    test_path = Path("src")
     flags = None
     if platform.system() == "Linux":
         flags = linux_flags()
@@ -80,7 +80,8 @@ def main():
         env["MOON_AR"] = "/usr/bin/ar"
     if platform.system() != "Windows":
         env["ASAN_OPTIONS"] = "detect_leaks=1"
-        env["LSAN_OPTIONS"] = "suppressions=LSan.supp"
+        lsan_suppressions = Path(".lsan-suppressions").resolve()
+        env["LSAN_OPTIONS"] = f"suppressions={lsan_suppressions}"
     try:
         subprocess.run(
             ["moon", "test", "--target", "native", "-v"], check=True, cwd=test_path, env=env
