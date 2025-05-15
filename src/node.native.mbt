@@ -14,7 +14,7 @@ extern "c" fn ts_node_type(self : TSNode, tree : TSTree) -> @c.Pointer[Byte] = "
 
 ///|
 /// Get the node's type as a string.
-pub fn Node::type_(self : Node) -> @string.View {
+pub fn Node::type_(self : Node) -> String {
   return decode_c_string(ts_node_type(self.node, self.tree)).unwrap()
 }
 
@@ -47,7 +47,7 @@ extern "c" fn ts_node_grammar_type(
 
 ///|
 /// Get the node's type as it appears in the grammar ignoring aliases as a string.
-pub fn Node::grammar_type(self : Node) -> @string.View {
+pub fn Node::grammar_type(self : Node) -> String {
   return decode_c_string(ts_node_grammar_type(self.node, self.tree)).unwrap()
 }
 
@@ -119,7 +119,7 @@ pub fn Node::range(self : Node) -> Range {
 
 ///|
 /// Get an S-expression representing the node as a string.
-pub fn Node::string(self : Node) -> @string.View {
+pub fn Node::string(self : Node) -> String {
   return @encoding.decode_lossy(
     encoding=UTF8,
     ts_node_string(self.node, self.tree),
@@ -336,22 +336,14 @@ extern "c" fn ts_node_field_name_for_child(
 pub fn Node::field_name_for_child(
   self : Node,
   child_index : Int
-) -> @string.View? {
+) -> String? {
   let child_index = int_to_uint(child_index)
   let field_name = ts_node_field_name_for_child(
     self.node,
     self.tree,
     child_index,
   )
-  if field_name.is_null() {
-    return None
-  }
-  let buffer = @buffer.new()
-  for i = 0; field_name[i] != 0; i = i + 1 {
-    @buffer.write_byte(buffer, field_name[i])
-  }
-  let field_name = buffer.contents()
-  Some(@encoding.decode_lossy(encoding=UTF8, field_name))
+  decode_c_string(field_name)
 }
 
 ///|
@@ -368,22 +360,14 @@ extern "c" fn ts_node_field_name_for_named_child(
 pub fn Node::field_name_for_named_child(
   self : Node,
   child_index : Int
-) -> @string.View? {
+) -> String? {
   let child_index = int_to_uint(child_index)
   let field_name = ts_node_field_name_for_named_child(
     self.node,
     self.tree,
     child_index,
   )
-  if field_name.is_null() {
-    return None
-  }
-  let buffer = @buffer.new()
-  for i = 0; field_name[i] != 0; i = i + 1 {
-    @buffer.write_byte(buffer, field_name[i])
-  }
-  let field_name = buffer.contents()
-  Some(@encoding.decode_lossy(encoding=UTF8, field_name))
+  decode_c_string(field_name)
 }
 
 ///|
@@ -850,7 +834,7 @@ pub fn Node::next_symbols(self : Node) -> Iter[Symbol] {
 }
 
 ///|
-pub fn Node::next_symbol_names(self : Node) -> Iter[@string.View] {
+pub fn Node::next_symbol_names(self : Node) -> Iter[String] {
   let language = self.language()
   Iter::new(fn(yield_) {
     for symbol in self.next_symbols() {

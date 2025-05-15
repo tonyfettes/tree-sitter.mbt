@@ -87,13 +87,13 @@ extern "c" fn ts_language_field_name_for_id(
 pub fn Language::field_name_for_id(
   self : Language,
   id : FieldId
-) -> @string.View? {
+) -> String? {
   let name_bytes = ts_language_field_name_for_id(self, id)
   return decode_c_string(name_bytes)
 }
 
 ///|
-fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> @string.View? {
+fn decode_c_string(c_string : @c.Pointer[Byte], length? : Int) -> String? {
   if c_string.is_null() {
     return None
   }
@@ -155,7 +155,7 @@ extern "c" fn ts_language_symbol_name(
 
 ///|
 /// Get a node type string for the given numerical id.
-pub fn Language::symbol_name(self : Language, symbol : Symbol) -> @string.View? {
+pub fn Language::symbol_name(self : Language, symbol : Symbol) -> String? {
   let name_bytes = ts_language_symbol_name(self, symbol)
   return decode_c_string(name_bytes)
 }
@@ -294,7 +294,7 @@ extern "c" fn ts_language_name(self : Language) -> @c.Pointer[Byte] = "moonbit_t
 
 ///|
 /// Get the name of this language. This returns `None` in older parsers.
-pub fn Language::name(self : Language) -> @string.View? {
+pub fn Language::name(self : Language) -> String? {
   let name = ts_language_name(self._)
   return decode_c_string(name)
 }

@@ -238,7 +238,7 @@ pub fn QueryCapture::index(self : QueryCapture) -> Int {
 }
 
 ///|
-pub fn QueryCapture::name(self : QueryCapture) -> @string.View {
+pub fn QueryCapture::name(self : QueryCapture) -> String {
   self.query.capture_name_for_id(self.index)
 }
 

@@ -45,16 +45,16 @@ impl Language {
   delete(Self) -> Unit
   field_count(Self) -> Int
   field_id_for_name(Self, @string.StringView) -> Int
-  field_name_for_id(Self, FieldId) -> @string.StringView?
+  field_name_for_id(Self, FieldId) -> String?
   metadata(Self) -> LanguageMetadata
-  name(Self) -> @string.StringView?
+  name(Self) -> String?
   next_state(Self, StateId, Symbol) -> StateId
   state_count(Self) -> Int
   subtypes(Self) -> Array[Symbol]
   supertypes(Self) -> Array[Symbol]
   symbol_count(Self) -> Int
   symbol_for_name(Self, @string.StringView) -> Symbol?
-  symbol_name(Self, Symbol) -> @string.StringView?
+  symbol_name(Self, Symbol) -> String?
   symbol_type(Self, Symbol) -> SymbolType
   #deprecated
   version(Self) -> Int
@@ -77,7 +77,7 @@ type Logger
 type LookaheadIterator
 impl LookaheadIterator {
   current_symbol(Self) -> Symbol
-  current_symbol_name(Self) -> @string.StringView?
+  current_symbol_name(Self) -> String?
   language(Self) -> Language
   new(Language, StateId) -> Self?
   next(Self) -> Bool
@@ -100,12 +100,12 @@ impl Node {
   end_byte(Self) -> Int
   end_point(Self) -> Point
   eq(Self, Self) -> Bool
-  field_name_for_child(Self, Int) -> @string.StringView?
-  field_name_for_named_child(Self, Int) -> @string.StringView?
+  field_name_for_child(Self, Int) -> String?
+  field_name_for_named_child(Self, Int) -> String?
   first_child_for_byte(Self, Int) -> Self?
   first_named_child_for_byte(Self, Int) -> Self?
   grammar_symbol(Self) -> Symbol
-  grammar_type(Self) -> @string.StringView
+  grammar_type(Self) -> String
   has_changes(Self) -> Bool
   has_error(Self) -> Bool
   is_error(Self) -> Bool
@@ -122,7 +122,7 @@ impl Node {
   next_named_sibling(Self) -> Self?
   next_parse_state(Self) -> StateId
   next_sibling(Self) -> Self?
-  next_symbol_names(Self) -> Iter[@string.StringView]
+  next_symbol_names(Self) -> Iter[String]
   next_symbols(Self) -> Iter[Symbol]
   parent(Self) -> Self?
   parse_state(Self) -> StateId
@@ -132,11 +132,11 @@ impl Node {
   range(Self) -> Range
   start_byte(Self) -> Int
   start_point(Self) -> Point
-  string(Self) -> @string.StringView
+  string(Self) -> String
   symbol(Self) -> Symbol
   symbols(Self) -> Iter[Symbol]
   text(Self) -> @string.StringView
-  type_(Self) -> @string.StringView
+  type_(Self) -> String
   walk(Self) -> TreeCursor
 }
 impl Eq for Node
@@ -195,7 +195,7 @@ impl Show for Quantifier
 type Query
 impl Query {
   capture_count(Self) -> Int
-  capture_name_for_id(Self, Int) -> @string.StringView
+  capture_name_for_id(Self, Int) -> String
   capture_quantifier_for_id(Self, Int, Int) -> Quantifier
   captures(Self, Node) -> Iter[QueryCapture]
   disable_capture(Self, @string.StringView) -> Unit
@@ -210,13 +210,13 @@ impl Query {
   predicates_for_pattern(Self, Int) -> Array[Array[QueryPredicateStep]]
   start_byte_for_pattern(Self, Int) -> Int
   string_count(Self) -> Int
-  string_value_for_id(Self, Int) -> @string.StringView
+  string_value_for_id(Self, Int) -> String
 }
 
 type QueryCapture
 impl QueryCapture {
   index(Self) -> Int
-  name(Self) -> @string.StringView
+  name(Self) -> String
   node(Self) -> Node
 }
 impl Show for QueryCapture
@@ -261,8 +261,8 @@ impl QueryMatch {
 impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {
-  Capture(@string.StringView)
-  String(@string.StringView)
+  Capture(String)
+  String(String)
 }
 impl Show for QueryPredicateStep
 
@@ -301,7 +301,7 @@ impl TreeCursor {
   current_depth(Self) -> Int
   current_descendant_index(Self) -> Int
   current_field_id(Self) -> FieldId
-  current_field_name(Self) -> @string.StringView?
+  current_field_name(Self) -> String?
   current_node(Self) -> Node
   goto_descendant(Self, Int) -> Unit
   goto_first_child(Self) -> Bool

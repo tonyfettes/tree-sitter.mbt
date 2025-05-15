@@ -161,8 +161,8 @@ fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
 
 ///|
 pub enum QueryPredicateStep {
-  Capture(@string.View)
-  String(@string.View)
+  Capture(String)
+  String(String)
 } derive(Show)
 
 ///|
@@ -271,7 +271,7 @@ extern "c" fn ts_query_capture_name_for_id(
 pub fn Query::capture_name_for_id(
   self : Query,
   capture_id : Int
-) -> @string.View {
+) -> String {
   let capture_id = int_to_uint(capture_id)
   let length : FixedArray[UInt] = [0U]
   let name = ts_query_capture_name_for_id(self, capture_id, length)
@@ -336,7 +336,7 @@ extern "c" fn ts_query_string_value_for_id(
 pub fn Query::string_value_for_id(
   self : Query,
   string_id : Int
-) -> @string.View {
+) -> String {
   let string_id = int_to_uint(string_id)
   let length : FixedArray[UInt] = [0U]
   let value = ts_query_string_value_for_id(self, string_id, length)

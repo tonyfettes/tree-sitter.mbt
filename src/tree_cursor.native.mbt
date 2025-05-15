@@ -78,18 +78,9 @@ extern "c" fn ts_tree_cursor_current_field_name(
 ///
 /// This returns `None` if the current node doesn't have a field.
 /// See also `Node::child_by_field_name`.
-pub fn TreeCursor::current_field_name(self : TreeCursor) -> @string.View? {
+pub fn TreeCursor::current_field_name(self : TreeCursor) -> String? {
   let name = ts_tree_cursor_current_field_name(self.cursor)
-  if name.is_null() {
-    return None
-  }
-  let buffer = @buffer.new()
-  for i = 0; name[i] != 0; i = i + 1 {
-    buffer.write_byte(name[i])
-  }
-  let name = buffer.contents()
-  let name = @encoding.decode_lossy(encoding=UTF8, name)
-  Some(name)
+  decode_c_string(name)
 }
 
 ///|
