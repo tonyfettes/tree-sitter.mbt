@@ -691,7 +691,7 @@ fn Language::parse(
         )
       }
       match char {
-        'a'..<'z' | 'A'..<'Z' | '_' as char => {
+        'a'..='z' | 'A'..='Z' | '_' as char => {
           let start = query.length()
           query.write_string(entry.placeholder.to_string())
           buffer.write_char(char)
@@ -703,7 +703,7 @@ fn Language::parse(
     }
     Entry(state~, buffer~),
     offset,
-    ['a'..<'z' | 'A'..<'Z' | '_' as char, .. source] => {
+    ['a'..='z' | 'A'..='Z' | '_' | '0'..='9' as char, .. source] => {
       buffer.write_char(char)
       continue Entry(state~, buffer~), offset + 1, source
     }
@@ -712,7 +712,7 @@ fn Language::parse(
     Entry(..), offset, [] => raise MissingColon(Range::new(offset, offset + 1))
     Match(state~, entry~, start~, buffer~),
     offset,
-    ['a'..<'z' | 'A'..<'Z' | '_' as char, .. source] => {
+    ['a'..='z' | 'A'..='Z' | '_' | '0'..='9' as char, .. source] => {
       buffer.write_char(char)
       continue Match(state~, entry~, start~, buffer~), offset + 1, source
     }
