@@ -1,16 +1,13 @@
 ///|
-let moonbit_parser_value : Ref[@query_language.Parser?] = Ref::new(None)
+let moonbit_value : Ref[@pattern.Language?] = Ref::new(None)
 
 ///|
-let moonbit_language : @tree_sitter_language.Language = @tree_sitter_moonbit.language()
-
-///|
-fn moonbit_parser() -> @query_language.Parser!Async + Error {
-  if moonbit_parser_value.val is Some(parser) {
+fn moonbit() -> @pattern.Language!Async + Error {
+  if moonbit_value.val is Some(parser) {
     return parser
   }
-  let contexts : Map[String, @query_language.Context] = {
-    "exp": @query_language.Context::new!(
+  let contexts : Map[String, @pattern.Context] = {
+    "exp": @pattern.Context::new!(
       #|fn main {
       #|  $
       #|}
@@ -27,13 +24,13 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
         #|    "}"))))
       ,
     ),
-    "top": @query_language.Context::new!(
+    "top": @pattern.Context::new!(
       "$",
       selector=
         #|(structure_item) @top
       ,
     ),
-    "pat": @query_language.Context::new!(
+    "pat": @pattern.Context::new!(
       #|fn main {
       #|  match x {
       #|    $ => y
@@ -44,14 +41,14 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
         #|(pattern)
       ,
     ),
-    "ty": @query_language.Context::new!(
+    "ty": @pattern.Context::new!(
       #|let x : $ = 42
       ,
       selector=
         #|(type)
       ,
     ),
-    "case": @query_language.Context::new!(
+    "case": @pattern.Context::new!(
       #|fn main {
       #|  match x {
       #|    $
@@ -62,7 +59,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
         #|(case_clause) @case
       ,
     ),
-    "matrix": @query_language.Context::new!(
+    "matrix": @pattern.Context::new!(
       #|fn main {
       #|  loop a, b {
       #|    $
@@ -74,8 +71,8 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
       ,
     ),
   }
-  let entries : Map[String, @query_language.Entry] = {
-    "exp": @query_language.Entry::new(
+  let entries : Map[String, @pattern.Entry] = {
+    "exp": @pattern.Entry::new(
       matches=
         #|[
         #|  (expression)
@@ -90,7 +87,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
       ,
       placeholder="{ ... }",
     ),
-    "top": @query_language.Entry::new(
+    "top": @pattern.Entry::new(
       matches=
         #|[
         #|  (structure_item)
@@ -100,7 +97,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
         #|type! A Int
       ,
     ),
-    "pat": @query_language.Entry::new(
+    "pat": @pattern.Entry::new(
       matches=
         #|[
         #|  (pattern)
@@ -109,7 +106,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
       ,
       placeholder="_",
     ),
-    "id": @query_language.Entry::new(
+    "id": @pattern.Entry::new(
       matches=
         #|[
         #|  (identifier)
@@ -121,7 +118,7 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
       ,
       placeholder="id",
     ),
-    "ty": @query_language.Entry::new(
+    "ty": @pattern.Entry::new(
       matches=
         #|[
         #|  (type)
@@ -132,13 +129,9 @@ fn moonbit_parser() -> @query_language.Parser!Async + Error {
     ),
   }
   let extras = ["semicolon"]
-  let parser = @query_language.Parser::new(
-    moonbit_language,
-    contexts~,
-    entries~,
-    extras~,
-  )
-  moonbit_parser_value.val = Some(parser)
+  let language : @tree_sitter_language.Language = @tree_sitter_moonbit.language()
+  let parser = @pattern.Language::new(language, contexts~, entries~, extras~)
+  moonbit_value.val = Some(parser)
   return parser
 }
 
@@ -301,28 +294,28 @@ fn walk_directory(
 ///|
 fn search(
   path : String,
-  parser~ : @tree_sitter.Parser,
   content~ : String,
-  query~ : String,
+  query~ : @pattern.Query,
   on_found : (Location) -> Unit,
   on_error : (Error) -> Unit
 ) -> Unit {
   try {
-    let tree = parser.parse_string!(content)
-    let query_cursor = tree.query!(query)
-    for capture in query_cursor.captures() {
-      let name = capture.name()
-      let node = capture.node()
-      on_found(Location::{
-        name,
-        path,
-        start: node.start_point(),
-        end: node.end_point(),
-        text: content.view(
-          start_offset=node.start_byte(),
-          end_offset=node.end_byte(),
-        ),
-      })
+    let matches = query.search!(content)
+    for matched in matches {
+      for name, nodes in matched {
+        for node in nodes {
+          on_found(Location::{
+            name,
+            path,
+            start: node.start_point(),
+            end: node.end_point(),
+            text: content.view(
+              start_offset=node.start_byte(),
+              end_offset=node.end_byte(),
+            ),
+          })
+        }
+      }
     }
   } catch {
     e => on_error(e)
@@ -342,9 +335,8 @@ fn start(path~ : String, query~ : String) -> Unit! {
   let uv = @uv.Loop::new!()
   async_run(fn() {
     try {
-      let parser = moonbit_parser!()
-      let query = parser.parse!(query)
-      let parser = parser.parser()
+      let language = moonbit!()
+      let query = language.compile!(query)
       walk_directory(
         uv,
         path,
@@ -358,7 +350,6 @@ fn start(path~ : String, query~ : String) -> Unit! {
             fn(content) {
               search(
                 file,
-                parser~,
                 content~,
                 query~,
                 fn(location) { println(location.to_json().stringify()) },
