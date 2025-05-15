@@ -93,8 +93,5 @@ pub fn LookaheadIterator::current_symbol_name(
   self : LookaheadIterator
 ) -> @string.View? {
   let bytes = ts_lookahead_iterator_current_symbol_name(self)
-  if bytes.is_null() {
-    return None
-  }
   decode_c_string(bytes)
 }
