@@ -10,7 +10,70 @@ test "parse" {
       #|(ERROR (UNEXPECTED '`'))
       ,
     ),
-    content=[{"open":"(","close":")","list":[{"$tag":"Symbol","0":"structure"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"structure_item"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"function_definition"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"function_identifier"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"lowercase_identifier"}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"ERROR"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"UNEXPECTED"},{"$tag":"String","0":"`"}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}}],
+    content=[
+      {
+        "open": "(",
+        "close": ")",
+        "list": [
+          { "$tag": "Symbol", "0": "structure" },
+          { "$tag": "Newline" },
+          {
+            "open": "(",
+            "close": ")",
+            "list": [
+              { "$tag": "Symbol", "0": "structure_item" },
+              { "$tag": "Newline" },
+              {
+                "open": "(",
+                "close": ")",
+                "list": [
+                  { "$tag": "Symbol", "0": "function_definition" },
+                  { "$tag": "Newline" },
+                  {
+                    "open": "(",
+                    "close": ")",
+                    "list": [
+                      { "$tag": "Symbol", "0": "function_identifier" },
+                      { "$tag": "Newline" },
+                      {
+                        "open": "(",
+                        "close": ")",
+                        "list": [
+                          { "$tag": "Symbol", "0": "lowercase_identifier" },
+                        ],
+                        "quantifier": { "$tag": "One" },
+                      },
+                    ],
+                    "quantifier": { "$tag": "One" },
+                  },
+                ],
+                "quantifier": { "$tag": "One" },
+              },
+            ],
+            "quantifier": { "$tag": "One" },
+          },
+        ],
+        "quantifier": { "$tag": "One" },
+      },
+      { "$tag": "Newline" },
+      {
+        "open": "(",
+        "close": ")",
+        "list": [
+          { "$tag": "Symbol", "0": "ERROR" },
+          {
+            "open": "(",
+            "close": ")",
+            "list": [
+              { "$tag": "Symbol", "0": "UNEXPECTED" },
+              { "$tag": "String", "0": "`" },
+            ],
+            "quantifier": { "$tag": "One" },
+          },
+        ],
+        "quantifier": { "$tag": "One" },
+      },
+    ],
   )
 }
 
@@ -24,7 +87,30 @@ test "[]" {
       #|]
       ,
     ),
-    content=[{"open":"[","close":"]","list":[{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"expression"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"compound_expression"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}}],
+    content=[
+      {
+        "open": "[",
+        "close": "]",
+        "list": [
+          { "$tag": "Newline" },
+          {
+            "open": "(",
+            "close": ")",
+            "list": [{ "$tag": "Symbol", "0": "expression" }],
+            "quantifier": { "$tag": "One" },
+          },
+          { "$tag": "Newline" },
+          {
+            "open": "(",
+            "close": ")",
+            "list": [{ "$tag": "Symbol", "0": "compound_expression" }],
+            "quantifier": { "$tag": "One" },
+          },
+          { "$tag": "Newline" },
+        ],
+        "quantifier": { "$tag": "One" },
+      },
+    ],
   )
 }
 
@@ -35,7 +121,15 @@ test "capture" {
       #|(capture) @a
       ,
     ),
-    content=[{"open":"(","close":")","list":[{"$tag":"Symbol","0":"capture"}],"quantifier":{"$tag":"One"}},{"$tag":"Capture","0":"a"}],
+    content=[
+      {
+        "open": "(",
+        "close": ")",
+        "list": [{ "$tag": "Symbol", "0": "capture" }],
+        "quantifier": { "$tag": "One" },
+      },
+      { "$tag": "Capture", "0": "a" },
+    ],
   )
 }
 
@@ -57,7 +151,9 @@ test "unit" {
       #|()
       ,
     ),
-    content=[{"open":"(","close":")","list":[],"quantifier":{"$tag":"One"}}],
+    content=[
+      { "open": "(", "close": ")", "list": [], "quantifier": { "$tag": "One" } },
+    ],
   )
 }
 
@@ -68,7 +164,14 @@ test "pair" {
       #|(key: value)
       ,
     ),
-    content=[{"open":"(","close":")","list":[{"key":{"$tag":"Symbol","0":"value"}}],"quantifier":{"$tag":"One"}}],
+    content=[
+      {
+        "open": "(",
+        "close": ")",
+        "list": [{ "key": { "$tag": "Symbol", "0": "value" } }],
+        "quantifier": { "$tag": "One" },
+      },
+    ],
   )
 }
 
@@ -79,7 +182,17 @@ test "pair with multiple values" {
       #|(key: value1 value2)
       ,
     ),
-    content=[{"open":"(","close":")","list":[{"key":{"$tag":"Symbol","0":"value1"}},{"$tag":"Symbol","0":"value2"}],"quantifier":{"$tag":"One"}}],
+    content=[
+      {
+        "open": "(",
+        "close": ")",
+        "list": [
+          { "key": { "$tag": "Symbol", "0": "value1" } },
+          { "$tag": "Symbol", "0": "value2" },
+        ],
+        "quantifier": { "$tag": "One" },
+      },
+    ],
   )
 }
 
@@ -105,6 +218,20 @@ test "newline" {
       #|  b)
       ,
     ),
-    content=[{"$tag":"Newline"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"a"},{"$tag":"Newline"},{"$tag":"Newline"},{"$tag":"Symbol","0":"b"}],"quantifier":{"$tag":"One"}}],
+    content=[
+      { "$tag": "Newline" },
+      { "$tag": "Newline" },
+      {
+        "open": "(",
+        "close": ")",
+        "list": [
+          { "$tag": "Symbol", "0": "a" },
+          { "$tag": "Newline" },
+          { "$tag": "Newline" },
+          { "$tag": "Symbol", "0": "b" },
+        ],
+        "quantifier": { "$tag": "One" },
+      },
+    ],
   )
 }
