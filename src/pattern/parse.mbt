@@ -513,7 +513,7 @@ fn Query::new(
 pub fn Query::search(
   self : Query,
   source : @string.View
-) -> Array[Map[String, Array[String]]]! {
+) -> Array[Map[String, Array[@tree_sitter.Node]]]! {
   let node = self.parser.parse_string!(source).root_node()
   self.matches(node)
 }
@@ -522,16 +522,16 @@ pub fn Query::search(
 pub fn Query::matches(
   self : Query,
   node : @tree_sitter.Node
-) -> Array[Map[String, Array[String]]] {
+) -> Array[Map[String, Array[@tree_sitter.Node]]] {
   let matches = []
   matches~: for matched in self.query.matches(node) {
-    let captures : Map[String, Array[String]] = Map::new()
+    let captures : Map[String, Array[@tree_sitter.Node]] = Map::new()
     for capture in matched.captures() {
       let name = capture.name().to_string()
       let node = capture.node()
       match captures.get(name) {
-        Some(nodes) => nodes.push(node.text().to_string())
-        None => captures[name] = [node.text().to_string()]
+        Some(nodes) => nodes.push(node)
+        None => captures[name] = [node]
       }
     }
     for predicate in matched.predicates() {
@@ -540,9 +540,9 @@ pub fn Query::matches(
           fn read {
             @tree_sitter.String(string) => [string]
             Capture(name) =>
-              match captures.get(name.to_string()) {
+              match captures.get(name) {
                 None => []
-                Some(nodes) => nodes.map(fn(node) { node })
+                Some(nodes) => nodes.map(fn(node) { node.text().to_string() })
               }
           }
 
