@@ -265,6 +265,7 @@ pub enum QueryPredicateStep {
   String(String)
 }
 impl Show for QueryPredicateStep
+impl ToJson for QueryPredicateStep
 
 type Range
 impl Range {
