@@ -511,11 +511,12 @@ MOONBIT_FFI_EXPORT
 TSRange *
 moonbit_ts_tree_included_ranges(MoonBitTSTree *tree) {
   uint32_t count = 0;
-  const TSRange *ranges = ts_tree_included_ranges(tree->tree, &count);
+  TSRange *ranges = ts_tree_included_ranges(tree->tree, &count);
   TSRange *copy = (TSRange *)moonbit_make_int32_array(
     count * sizeof(TSRange) / sizeof(int32_t), 0
   );
   memcpy(copy, ranges, count * sizeof(TSRange));
+  free(ranges);
   return copy;
 }
 
@@ -538,6 +539,7 @@ moonbit_ts_tree_get_changed_ranges(
     count * sizeof(TSRange) / sizeof(int32_t), 0
   );
   memcpy(copy, ranges, count * sizeof(TSRange));
+  free(ranges);
   return copy;
 }
 
