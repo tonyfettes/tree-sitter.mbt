@@ -28,13 +28,13 @@ pub fn TreeCursor::new(node : Node) -> TreeCursor {
 
 ///|
 #borrow(self, node)
-extern "c" fn ts_tree_cursor_reset(self : TSTreeCursor, node : Node) = "moonbit_ts_tree_cursor_reset"
+extern "c" fn ts_tree_cursor_reset(self : TSTreeCursor, node : TSNode) = "moonbit_ts_tree_cursor_reset"
 
 ///|
 /// Re-initialize a tree cursor to start at the original node that the cursor was
 /// constructed with.
 pub fn TreeCursor::reset(self : TreeCursor, node : Node) -> Unit {
-  ts_tree_cursor_reset(self.cursor, node)
+  ts_tree_cursor_reset(self.cursor, node.node)
 }
 
 ///|

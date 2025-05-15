@@ -61,7 +61,7 @@ extern "c" fn ts_tree_root_node_with_offset(
   self : TSTree,
   offset_bytes : UInt,
   offset_extent : Point
-) -> Node = "moonbit_ts_tree_root_node_with_offset"
+) -> TSNode = "moonbit_ts_tree_root_node_with_offset"
 
 ///|
 /// Get the root node of the syntax tree, but with its position
@@ -71,11 +71,12 @@ pub fn Tree::root_node_with_offset(
   offset_bytes : Int,
   offset_extent : Point
 ) -> Node {
-  ts_tree_root_node_with_offset(
+  let node = ts_tree_root_node_with_offset(
     self.tree,
     int_to_uint(offset_bytes),
     offset_extent,
   )
+  { node, tree: self.tree, text: self.text }
 }
 
 ///|
