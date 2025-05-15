@@ -333,10 +333,7 @@ extern "c" fn ts_node_field_name_for_child(
 ///|
 /// Get the field name for node's child at the given index, where zero represents
 /// the first child. Returns `None`, if no field is found.
-pub fn Node::field_name_for_child(
-  self : Node,
-  child_index : Int
-) -> String? {
+pub fn Node::field_name_for_child(self : Node, child_index : Int) -> String? {
   let child_index = int_to_uint(child_index)
   let field_name = ts_node_field_name_for_child(
     self.node,

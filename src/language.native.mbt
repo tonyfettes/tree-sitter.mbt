@@ -84,10 +84,7 @@ extern "c" fn ts_language_field_name_for_id(
 
 ///|
 /// Get the field name string for the given numerical id.
-pub fn Language::field_name_for_id(
-  self : Language,
-  id : FieldId
-) -> String? {
+pub fn Language::field_name_for_id(self : Language, id : FieldId) -> String? {
   let name_bytes = ts_language_field_name_for_id(self, id)
   return decode_c_string(name_bytes)
 }
