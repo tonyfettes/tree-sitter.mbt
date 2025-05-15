@@ -15,24 +15,24 @@ extern "c" fn ts_query_cursor_new() -> TSQueryCursor = "moonbit_ts_query_cursor_
 ///|
 /// Create a new cursor for executing a given query.
 ///
-/// The cursor stores the state that is needed to iteratively search
-/// for matches. To use the query cursor, first call QueryCursor::exec
+/// The cursor stores the state that is needed to iteratively search for
+/// matches. To use the query cursor, first call `QueryCursor::exec`
 /// to start running a given query on a given syntax node. Then, there are
 /// two options for consuming the results of the query:
-/// 1. Repeatedly call QueryCursor::next_match to iterate over all of the
+/// 1. Repeatedly call `QueryCursor::next_match` to iterate over all of the
 ///    *matches* in the order that they were found. Each match contains the
 ///    index of the pattern that matched, and an array of captures. Because
 ///    multiple patterns can match the same set of nodes, one match may contain
 ///    captures that appear *before* some of the captures from a previous match.
-/// 2. Repeatedly call QueryCursor::next_capture to iterate over all of the
+/// 2. Repeatedly call `QueryCursor::next_capture` to iterate over all of the
 ///    individual *captures* in the order that they appear. This is useful if
 ///    don't care about which pattern matched, and just want a single ordered
 ///    sequence of captures.
 ///
 /// If you don't care about consuming all of the results, you can stop calling
-/// QueryCursor::next_match or QueryCursor::next_capture at any point.
+/// `QueryCursor::next_match` or `QueryCursor::next_capture` at any point.
 /// You can then start executing another query on another node by calling
-/// QueryCursor::exec again.
+/// `QueryCursor::exec` again.
 pub fn QueryCursor::new() -> QueryCursor {
   let cursor = ts_query_cursor_new()
   let cursor = QueryCursor::{
