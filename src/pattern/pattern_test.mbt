@@ -141,8 +141,50 @@ test "exp" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["1"], "b": ["2"] },
-    { "a": ["3"], "b": ["4"] },
+    {
+      "a": [
+        {
+          "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+          "text": "1",
+          "range": {
+            "start": { "row": 1, "column": 2 },
+            "end": { "row": 1, "column": 3 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+          "text": "2",
+          "range": {
+            "start": { "row": 1, "column": 7 },
+            "end": { "row": 1, "column": 8 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+          "text": "3",
+          "range": {
+            "start": { "row": 4, "column": 15 },
+            "end": { "row": 4, "column": 16 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+          "text": "4",
+          "range": {
+            "start": { "row": 4, "column": 20 },
+            "end": { "row": 4, "column": 21 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -163,7 +205,20 @@ test "top" {
     #|}
     ,
   )
-  @json.inspect!(matches, content=[{ "a": ["\"Hello, world!\""] }])
+  @json.inspect!(matches, content=[
+    {
+      "a": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))",
+          "text": "\"Hello, world!\"",
+          "range": {
+            "start": { "row": 1, "column": 10 },
+            "end": { "row": 1, "column": 25 },
+          },
+        },
+      ],
+    },
+  ])
 }
 
 ///|
@@ -187,9 +242,42 @@ test "fn_ambiguity" {
     #|}
   let matches = query.search!(source)
   @json.inspect!(matches, content=[
-    { "a": ["fx"] },
-    { "a": ["fa"] },
-    { "a": ["main"] },
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "fx",
+          "range": {
+            "start": { "row": 1, "column": 5 },
+            "end": { "row": 1, "column": 7 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "fa",
+          "range": {
+            "start": { "row": 6, "column": 5 },
+            "end": { "row": 6, "column": 7 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "main",
+          "range": {
+            "start": { "row": 10, "column": 3 },
+            "end": { "row": 10, "column": 7 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -213,7 +301,58 @@ test "concat" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["x"], "b": ["y"], "c": ["z"], "d": ["println(\"a\")"], "f": ["3"] },
+    {
+      "a": [
+        {
+          "node": "(compound_expression (simple_expression (qualified_identifier (lowercase_identifier))))",
+          "text": "x",
+          "range": {
+            "start": { "row": 1, "column": 8 },
+            "end": { "row": 1, "column": 9 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(pattern (simple_pattern (lowercase_identifier)))",
+          "text": "y",
+          "range": {
+            "start": { "row": 2, "column": 4 },
+            "end": { "row": 2, "column": 5 },
+          },
+        },
+      ],
+      "c": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))))))",
+          "text": "z",
+          "range": {
+            "start": { "row": 2, "column": 9 },
+            "end": { "row": 2, "column": 10 },
+          },
+        },
+      ],
+      "d": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"a\")",
+          "range": {
+            "start": { "row": 4, "column": 2 },
+            "end": { "row": 4, "column": 14 },
+          },
+        },
+      ],
+      "f": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "3",
+          "range": {
+            "start": { "row": 5, "column": 9 },
+            "end": { "row": 5, "column": 10 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -231,8 +370,70 @@ test "ty" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["a"], "b": ["Int"], "c": ["42"] },
-    { "a": ["b"], "b": ["Bool"], "c": ["true"] },
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "a",
+          "range": {
+            "start": { "row": 0, "column": 4 },
+            "end": { "row": 0, "column": 5 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(type (apply_type (qualified_type_identifier (identifier (uppercase_identifier)))))",
+          "text": "Int",
+          "range": {
+            "start": { "row": 0, "column": 8 },
+            "end": { "row": 0, "column": 11 },
+          },
+        },
+      ],
+      "c": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "42",
+          "range": {
+            "start": { "row": 0, "column": 14 },
+            "end": { "row": 0, "column": 16 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "b",
+          "range": {
+            "start": { "row": 3, "column": 6 },
+            "end": { "row": 3, "column": 7 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(type (apply_type (qualified_type_identifier (identifier (uppercase_identifier)))))",
+          "text": "Bool",
+          "range": {
+            "start": { "row": 3, "column": 10 },
+            "end": { "row": 3, "column": 14 },
+          },
+        },
+      ],
+      "c": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (boolean_literal)))))))",
+          "text": "true",
+          "range": {
+            "start": { "row": 3, "column": 17 },
+            "end": { "row": 3, "column": 21 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -254,7 +455,30 @@ test "id" {
     #|}
     ,
   )
-  @json.inspect!(matches, content=[{ "a": ["a"], "b": ["2"] }])
+  @json.inspect!(matches, content=[
+    {
+      "a": [
+        {
+          "node": "(lowercase_identifier)",
+          "text": "a",
+          "range": {
+            "start": { "row": 5, "column": 4 },
+            "end": { "row": 5, "column": 5 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
+          "text": "2",
+          "range": {
+            "start": { "row": 5, "column": 9 },
+            "end": { "row": 5, "column": 10 },
+          },
+        },
+      ],
+    },
+  ])
 }
 
 ///|
@@ -285,13 +509,129 @@ test "quantifier" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["a"], "b": ["None"], "d": ["3"] },
-    { "a": ["a"], "b": ["Some"], "c": ["println(\"a\")"], "d": ["4"] },
     {
-      "a": ["a"],
-      "b": ["Some"],
-      "c": ["println(\"a\")", "println(\"b\")"],
-      "d": ["5"],
+      "a": [
+        {
+          "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
+          "text": "a",
+          "range": {
+            "start": { "row": 1, "column": 8 },
+            "end": { "row": 1, "column": 9 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
+          "text": "None",
+          "range": {
+            "start": { "row": 1, "column": 13 },
+            "end": { "row": 1, "column": 17 },
+          },
+        },
+      ],
+      "d": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "3",
+          "range": {
+            "start": { "row": 2, "column": 11 },
+            "end": { "row": 2, "column": 12 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
+          "text": "a",
+          "range": {
+            "start": { "row": 4, "column": 8 },
+            "end": { "row": 4, "column": 9 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
+          "text": "Some",
+          "range": {
+            "start": { "row": 4, "column": 13 },
+            "end": { "row": 4, "column": 17 },
+          },
+        },
+      ],
+      "c": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"a\")",
+          "range": {
+            "start": { "row": 5, "column": 4 },
+            "end": { "row": 5, "column": 16 },
+          },
+        },
+      ],
+      "d": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "4",
+          "range": {
+            "start": { "row": 6, "column": 11 },
+            "end": { "row": 6, "column": 12 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
+          "text": "a",
+          "range": {
+            "start": { "row": 8, "column": 8 },
+            "end": { "row": 8, "column": 9 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
+          "text": "Some",
+          "range": {
+            "start": { "row": 8, "column": 13 },
+            "end": { "row": 8, "column": 17 },
+          },
+        },
+      ],
+      "c": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"a\")",
+          "range": {
+            "start": { "row": 9, "column": 4 },
+            "end": { "row": 9, "column": 16 },
+          },
+        },
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"b\")",
+          "range": {
+            "start": { "row": 10, "column": 4 },
+            "end": { "row": 10, "column": 16 },
+          },
+        },
+      ],
+      "d": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "5",
+          "range": {
+            "start": { "row": 11, "column": 11 },
+            "end": { "row": 11, "column": 12 },
+          },
+        },
+      ],
     },
   ])
 }
@@ -310,8 +650,54 @@ test "group" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "x": ["0", "1"] },
-    { "x": ["0", "1", "2"] },
+    {
+      "x": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "0",
+          "range": {
+            "start": { "row": 2, "column": 3 },
+            "end": { "row": 2, "column": 4 },
+          },
+        },
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "1",
+          "range": {
+            "start": { "row": 2, "column": 6 },
+            "end": { "row": 2, "column": 7 },
+          },
+        },
+      ],
+    },
+    {
+      "x": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "0",
+          "range": {
+            "start": { "row": 3, "column": 3 },
+            "end": { "row": 3, "column": 4 },
+          },
+        },
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "1",
+          "range": {
+            "start": { "row": 3, "column": 6 },
+            "end": { "row": 3, "column": 7 },
+          },
+        },
+        {
+          "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+          "text": "2",
+          "range": {
+            "start": { "row": 3, "column": 9 },
+            "end": { "row": 3, "column": 10 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -335,8 +721,58 @@ test "case" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["B"], "b": ["2"] },
-    { "a": ["C", "D"], "b": ["3"] },
+    {
+      "a": [
+        {
+          "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
+          "text": "B",
+          "range": {
+            "start": { "row": 5, "column": 4 },
+            "end": { "row": 5, "column": 5 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
+          "text": "2",
+          "range": {
+            "start": { "row": 5, "column": 9 },
+            "end": { "row": 5, "column": 10 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
+          "text": "C",
+          "range": {
+            "start": { "row": 8, "column": 4 },
+            "end": { "row": 8, "column": 5 },
+          },
+        },
+        {
+          "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
+          "text": "D",
+          "range": {
+            "start": { "row": 8, "column": 7 },
+            "end": { "row": 8, "column": 8 },
+          },
+        },
+      ],
+      "b": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
+          "text": "3",
+          "range": {
+            "start": { "row": 8, "column": 12 },
+            "end": { "row": 8, "column": 13 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -363,8 +799,38 @@ test "escape" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "a": ["println(\"Hello\")"] },
-    { "a": ["println(\"World\")", "println(\"!\")"] },
+    {
+      "a": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"Hello\")",
+          "range": {
+            "start": { "row": 1, "column": 2 },
+            "end": { "row": 1, "column": 18 },
+          },
+        },
+      ],
+    },
+    {
+      "a": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"World\")",
+          "range": {
+            "start": { "row": 5, "column": 2 },
+            "end": { "row": 5, "column": 18 },
+          },
+        },
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
+          "text": "println(\"!\")",
+          "range": {
+            "start": { "row": 6, "column": 2 },
+            "end": { "row": 6, "column": 14 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -386,7 +852,30 @@ test "match_id" {
     #|}
     ,
   )
-  @json.inspect!(matches, content=[{ "p": ["_"], "e": ["1"] }])
+  @json.inspect!(matches, content=[
+    {
+      "p": [
+        {
+          "node": "(pattern (simple_pattern))",
+          "text": "_",
+          "range": {
+            "start": { "row": 2, "column": 4 },
+            "end": { "row": 2, "column": 5 },
+          },
+        },
+      ],
+      "e": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
+          "text": "1",
+          "range": {
+            "start": { "row": 2, "column": 9 },
+            "end": { "row": 2, "column": 10 },
+          },
+        },
+      ],
+    },
+  ])
 }
 
 ///|
@@ -405,7 +894,38 @@ test "multiple_patterns" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "p1": ["1"], "p2": ["2"], "e": ["\"number\""] },
+    {
+      "p1": [
+        {
+          "node": "(pattern (simple_pattern (literal (integer_literal))))",
+          "text": "1",
+          "range": {
+            "start": { "row": 2, "column": 4 },
+            "end": { "row": 2, "column": 5 },
+          },
+        },
+      ],
+      "p2": [
+        {
+          "node": "(pattern (simple_pattern (literal (integer_literal))))",
+          "text": "2",
+          "range": {
+            "start": { "row": 2, "column": 8 },
+            "end": { "row": 2, "column": 9 },
+          },
+        },
+      ],
+      "e": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))",
+          "text": "\"number\"",
+          "range": {
+            "start": { "row": 2, "column": 13 },
+            "end": { "row": 2, "column": 21 },
+          },
+        },
+      ],
+    },
   ])
 }
 
@@ -425,7 +945,38 @@ test "guard_condition" {
     ,
   )
   @json.inspect!(matches, content=[
-    { "p": ["x"], "condition": ["x > 0"], "e": ["\"positive\""] },
+    {
+      "p": [
+        {
+          "node": "(pattern (simple_pattern (lowercase_identifier)))",
+          "text": "x",
+          "range": {
+            "start": { "row": 2, "column": 4 },
+            "end": { "row": 2, "column": 5 },
+          },
+        },
+      ],
+      "condition": [
+        {
+          "node": "(expression (pipeline_expression (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))))",
+          "text": "x > 0",
+          "range": {
+            "start": { "row": 2, "column": 9 },
+            "end": { "row": 2, "column": 14 },
+          },
+        },
+      ],
+      "e": [
+        {
+          "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))",
+          "text": "\"positive\"",
+          "range": {
+            "start": { "row": 2, "column": 18 },
+            "end": { "row": 2, "column": 28 },
+          },
+        },
+      ],
+    },
   ])
 }
 
