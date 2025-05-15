@@ -323,11 +323,16 @@ pub fn Query::disable_pattern(self : Query, pattern_index : Int) -> Unit {
   ts_query_disable_pattern(self, int_to_uint(pattern_index))
 }
 
-pub extern "js" fn Query::matches(self : Query, node : Node) -> Array[QueryMatch] =
+///|
+pub extern "js" fn Query::matches(
+  self : Query,
+  node : Node
+) -> Array[QueryMatch] =
   #|(query, node) => {
   #|  return query.matches(node);
   #|}
 
+///|
 pub extern "js" fn Query::captures(
   self : Query,
   node : Node
