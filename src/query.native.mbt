@@ -2,7 +2,7 @@
 type Query
 
 ///|
-extern "c" fn Query::null() -> Query = "moonbit_c_null"
+extern "c" fn ts_query_null() -> Query = "moonbit_c_null"
 
 ///|
 type! QueryError {

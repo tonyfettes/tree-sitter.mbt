@@ -37,7 +37,7 @@ pub fn QueryCursor::new() -> QueryCursor {
   let cursor = ts_query_cursor_new()
   let cursor = QueryCursor::{
     cursor,
-    query: Query::null(),
+    query: ts_query_null(),
     tree: ts_tree_null(),
     text: "",
   }
