@@ -145,12 +145,11 @@ test "print" {
     buffer,
     content=
       #|(a "b" c: (d "e"))
-
     ,
   )
 }
 
 ///|
 pub fn prettify(source : @string.View) -> @string.View!SexpError {
-  source |> parse!() |> pretty() |> print()
+  parse!(source) |> pretty() |> print()
 }
