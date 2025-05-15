@@ -256,8 +256,8 @@ impl QueryMatch {
   captures(Self) -> Iter[QueryCapture]
   id(Self) -> Int
   pattern_index(Self) -> Int
+  predicates(Self) -> Array[Array[QueryPredicateStep]]
 }
-impl Show for QueryMatch
 impl ToJson for QueryMatch
 
 pub enum QueryPredicateStep {

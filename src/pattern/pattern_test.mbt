@@ -1,8 +1,8 @@
 ///|
-fn moonbit() -> @ql.Language! {
+fn moonbit() -> @pattern.Language! {
   let language = @tree_sitter_moonbit.language()
-  let contexts : Map[String, @ql.Context] = {
-    "exp": @ql.Context::new!(
+  let contexts : Map[String, @pattern.Context] = {
+    "exp": @pattern.Context::new!(
       #|fn main {
       #|  $
       #|}
@@ -19,13 +19,13 @@ fn moonbit() -> @ql.Language! {
         #|    "}"))))
       ,
     ),
-    "top": @ql.Context::new!(
+    "top": @pattern.Context::new!(
       "$",
       selector=
         #|(structure_item) @top
       ,
     ),
-    "pat": @ql.Context::new!(
+    "pat": @pattern.Context::new!(
       #|fn main {
       #|  match x {
       #|    $ => y
@@ -36,14 +36,14 @@ fn moonbit() -> @ql.Language! {
         #|(pattern) @pat
       ,
     ),
-    "ty": @ql.Context::new!(
+    "ty": @pattern.Context::new!(
       #|let x : $ = 42
       ,
       selector=
         #|(type) @ty
       ,
     ),
-    "case": @ql.Context::new!(
+    "case": @pattern.Context::new!(
       #|fn main {
       #|  match x {
       #|    $
@@ -54,7 +54,7 @@ fn moonbit() -> @ql.Language! {
         #|(case_clause) @case
       ,
     ),
-    "matrix": @ql.Context::new!(
+    "matrix": @pattern.Context::new!(
       #|fn main {
       #|  loop a, b {
       #|    $
@@ -66,8 +66,8 @@ fn moonbit() -> @ql.Language! {
       ,
     ),
   }
-  let entries : Map[String, @ql.Entry] = {
-    "exp": @ql.Entry::new(
+  let entries : Map[String, @pattern.Entry] = {
+    "exp": @pattern.Entry::new(
       matches=
         #|[
         #|  (expression)
@@ -82,7 +82,7 @@ fn moonbit() -> @ql.Language! {
       ,
       placeholder="{...}",
     ),
-    "top": @ql.Entry::new(
+    "top": @pattern.Entry::new(
       matches=
         #|[
         #|  (structure_item)
@@ -92,7 +92,7 @@ fn moonbit() -> @ql.Language! {
         #|type! A Int
       ,
     ),
-    "pat": @ql.Entry::new(
+    "pat": @pattern.Entry::new(
       matches=
         #|[
         #|  (pattern)
@@ -101,7 +101,7 @@ fn moonbit() -> @ql.Language! {
       ,
       placeholder="_",
     ),
-    "id": @ql.Entry::new(
+    "id": @pattern.Entry::new(
       matches=
         #|[
         #|  (identifier)
@@ -113,7 +113,7 @@ fn moonbit() -> @ql.Language! {
       ,
       placeholder="id",
     ),
-    "ty": @ql.Entry::new(
+    "ty": @pattern.Entry::new(
       matches=
         #|[
         #|  (type)
@@ -124,7 +124,7 @@ fn moonbit() -> @ql.Language! {
     ),
   }
   let extras = ["semicolon"]
-  @ql.Language::new(language, contexts~, entries~, extras~)
+  @pattern.Language::new(language, contexts~, entries~, extras~)
 }
 
 ///|

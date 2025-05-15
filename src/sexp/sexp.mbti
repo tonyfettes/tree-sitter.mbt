@@ -21,11 +21,12 @@ fn print_to(Array[Sexp], &Logger, indent~ : Int = ..) -> Unit
 pub enum Atom {
   Symbol(String)
   String(String)
-  Concat
+  Anchor
   Capture(String)
-  Command(String)
   Comment(String)
   Newline
+  Predicate(String)
+  Directive(String)
 }
 impl Eq for Atom
 impl Show for Atom
@@ -75,6 +76,7 @@ pub type! SexpError {
   ExtraContent(ArrayView[Sexp])
   InvalidPairKey(@string.StringView)
   InvalidQuantifier(Char)
+  InvalidCommand(@string.StringView)
 }
 impl Show for SexpError
 

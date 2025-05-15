@@ -1,7 +1,6 @@
 {
   "import": ["tonyfettes/tree_sitter"],
   "test-import": [
-    "tonyfettes/tree_sitter/sexp",
     "tonyfettes/tree_sitter_moonbit"
   ]
 }
