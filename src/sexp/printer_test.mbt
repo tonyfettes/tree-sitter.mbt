@@ -50,41 +50,7 @@ test "comment" {
     #|   c ; comment
     #|   d e f)
   let sexp = @sexp.parse!(sexp)
-  @json.inspect!(sexp, content=[
-    { "$tag": "Comment", "0": " comment a" },
-    { "$tag": "Newline" },
-    { "$tag": "Symbol", "0": "a" },
-    { "$tag": "Symbol", "0": "b" },
-    { "$tag": "Symbol", "0": "c" },
-    { "d": [{ "$tag": "Symbol", "0": "f" }, { "$tag": "Symbol", "0": "g" }] },
-    { "$tag": "Comment", "0": " comment b" },
-    { "$tag": "Newline" },
-    { "$tag": "Comment", "0": " comment c" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "h" },
-      [{ "$tag": "Symbol", "0": "j" }],
-      { "$tag": "Comment", "0": " command d" },
-      { "$tag": "Newline" },
-      [{ "$tag": "Symbol", "0": "k" }, [{ "$tag": "Symbol", "0": "l" }]],
-      { "$tag": "Comment", "0": " comment e" },
-      { "$tag": "Newline" },
-    ],
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "a" },
-      { "$tag": "Symbol", "0": "b" },
-      { "$tag": "Comment", "0": " comment" },
-      { "$tag": "Newline" },
-      { "$tag": "Symbol", "0": "c" },
-      { "$tag": "Comment", "0": " comment" },
-      { "$tag": "Newline" },
-      { "$tag": "Symbol", "0": "d" },
-      { "$tag": "Symbol", "0": "e" },
-      { "$tag": "Symbol", "0": "f" },
-    ],
-  ])
+  @json.inspect!(sexp, content=[{"$tag":"Comment","0":" comment a"},{"$tag":"Newline"},{"$tag":"Symbol","0":"a"},{"$tag":"Symbol","0":"b"},{"$tag":"Symbol","0":"c"},{"d":{"open":"(","close":")","list":[{"$tag":"Symbol","0":"f"},{"$tag":"Symbol","0":"g"}],"quantifier":{"$tag":"One"}}},{"$tag":"Comment","0":" comment b"},{"$tag":"Newline"},{"$tag":"Comment","0":" comment c"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"h"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"j"}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" command d"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"k"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"l"}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" comment e"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"a"},{"$tag":"Symbol","0":"b"},{"$tag":"Comment","0":" comment"},{"$tag":"Newline"},{"$tag":"Symbol","0":"c"},{"$tag":"Comment","0":" comment"},{"$tag":"Newline"},{"$tag":"Symbol","0":"d"},{"$tag":"Symbol","0":"e"},{"$tag":"Symbol","0":"f"}],"quantifier":{"$tag":"One"}}])
   inspect!(
     @sexp.print(sexp),
     content=
@@ -111,17 +77,7 @@ test "newline" {
     #|
     #|  c)
   let sexp = @sexp.parse!(sexp)
-  @json.inspect!(sexp, content=[
-    { "$tag": "Symbol", "0": "a" },
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "b" },
-      { "$tag": "Newline" },
-      { "$tag": "Newline" },
-      { "$tag": "Symbol", "0": "c" },
-    ],
-  ])
+  @json.inspect!(sexp, content=[{"$tag":"Symbol","0":"a"},{"$tag":"Newline"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"b"},{"$tag":"Newline"},{"$tag":"Newline"},{"$tag":"Symbol","0":"c"}],"quantifier":{"$tag":"One"}}])
   inspect!(
     @sexp.print(sexp),
     content=
@@ -158,95 +114,10 @@ test "pretty" {
     #|
     #|; last comment
   let sexp = @sexp.parse!(sexp)
-  @json.inspect!(sexp, content=[
-    { "$tag": "Symbol", "0": "a" },
-    { "$tag": "Comment", "0": " comment after a" },
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    { "$tag": "Comment", "0": " comment before (b" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "b" },
-      { "$tag": "Comment", "0": " comment after (b" },
-      { "$tag": "Newline" },
-      { "$tag": "Newline" },
-      { "$tag": "Comment", "0": " comment before c" },
-      { "$tag": "Newline" },
-      { "$tag": "Symbol", "0": "c" },
-    ],
-    { "$tag": "Comment", "0": " comment after c)" },
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "a" },
-      { "$tag": "Newline" },
-      [
-        { "$tag": "Symbol", "0": "b" },
-        { "$tag": "Newline" },
-        [{ "$tag": "Symbol", "0": "c" }],
-        { "$tag": "Comment", "0": " comment after c" },
-        { "$tag": "Newline" },
-      ],
-      { "$tag": "Newline" },
-    ],
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Comment", "0": " first comment in list" },
-      { "$tag": "Newline" },
-    ],
-    [
-      { "$tag": "Newline" },
-      { "$tag": "Comment", "0": " first comment in list with break" },
-      { "$tag": "Newline" },
-    ],
-    { "$tag": "Newline" },
-    { "$tag": "Newline" },
-    { "$tag": "Comment", "0": " last comment" },
-  ])
+  @json.inspect!(sexp, content=[{"$tag":"Symbol","0":"a"},{"$tag":"Comment","0":" comment after a"},{"$tag":"Newline"},{"$tag":"Newline"},{"$tag":"Comment","0":" comment before (b"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"b"},{"$tag":"Comment","0":" comment after (b"},{"$tag":"Newline"},{"$tag":"Newline"},{"$tag":"Comment","0":" comment before c"},{"$tag":"Newline"},{"$tag":"Symbol","0":"c"}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" comment after c)"},{"$tag":"Newline"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"a"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"b"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"c"}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" comment after c"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Comment","0":" first comment in list"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"open":"(","close":")","list":[{"$tag":"Newline"},{"$tag":"Comment","0":" first comment in list with break"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"$tag":"Newline"},{"$tag":"Comment","0":" last comment"}])
   let result = []
   @sexp.pretty_to(sexp, result)
-  @json.inspect!(result, content=[
-    { "$tag": "Symbol", "0": "a" },
-    { "$tag": "Comment", "0": " comment after a" },
-    { "$tag": "Newline" },
-    { "$tag": "Comment", "0": " comment before (b" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "b" },
-      { "$tag": "Comment", "0": " comment after (b" },
-      { "$tag": "Newline" },
-      { "$tag": "Comment", "0": " comment before c" },
-      { "$tag": "Newline" },
-      { "$tag": "Symbol", "0": "c" },
-    ],
-    { "$tag": "Comment", "0": " comment after c)" },
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Symbol", "0": "a" },
-      { "$tag": "Newline" },
-      [
-        { "$tag": "Symbol", "0": "b" },
-        { "$tag": "Newline" },
-        [{ "$tag": "Symbol", "0": "c" }],
-        { "$tag": "Comment", "0": " comment after c" },
-        { "$tag": "Newline" },
-      ],
-    ],
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Comment", "0": " first comment in list" },
-      { "$tag": "Newline" },
-    ],
-    { "$tag": "Newline" },
-    [
-      { "$tag": "Comment", "0": " first comment in list with break" },
-      { "$tag": "Newline" },
-    ],
-    { "$tag": "Newline" },
-    { "$tag": "Comment", "0": " last comment" },
-    { "$tag": "Newline" },
-  ])
+  @json.inspect!(result, content=[{"$tag":"Symbol","0":"a"},{"$tag":"Comment","0":" comment after a"},{"$tag":"Newline"},{"$tag":"Comment","0":" comment before (b"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"b"},{"$tag":"Comment","0":" comment after (b"},{"$tag":"Newline"},{"$tag":"Comment","0":" comment before c"},{"$tag":"Newline"},{"$tag":"Symbol","0":"c"}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" comment after c)"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"a"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"b"},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Symbol","0":"c"}],"quantifier":{"$tag":"One"}},{"$tag":"Comment","0":" comment after c"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Comment","0":" first comment in list"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"open":"(","close":")","list":[{"$tag":"Comment","0":" first comment in list with break"},{"$tag":"Newline"}],"quantifier":{"$tag":"One"}},{"$tag":"Newline"},{"$tag":"Comment","0":" last comment"},{"$tag":"Newline"}])
   inspect!(
     @sexp.print(result),
     content=

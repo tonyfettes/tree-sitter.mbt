@@ -37,17 +37,17 @@ fn parse_rules(source : Bytes) -> Array[Edit]! {
       captures_nodes[capture.name().to_string()] = node
       captures_texts[capture.name().to_string()] = text
     }
-    guard captures_texts["name"] is Some(name) else {
+    guard captures_texts.get("name") is Some(name) else {
       fail!("Error: missing name")
     }
-    guard captures_texts["search"] is Some(search) else {
+    guard captures_texts.get("search") is Some(search) else {
       fail!("Error: missing search")
     }
     let search = match search.trim_space() {
       ['|', '\n', .. search] => search
       search => search
     }
-    guard captures_texts["replace"] is Some(replace) else {
+    guard captures_texts.get("replace") is Some(replace) else {
       fail!("Error: missing replace")
     }
     let replace = match replace.trim_space() {

@@ -2,7 +2,7 @@
 type Range (Int, Int) derive(Eq, Hash, ToJson)
 
 ///|
-impl Show for Range with output(self : Range, logger : &Logger) -> Unit {
+impl Show for Range with output(self : Range, logger : &@builtin.Logger) -> Unit {
   logger.write_object(self._)
 }
 
