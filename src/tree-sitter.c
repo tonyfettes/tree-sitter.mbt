@@ -1018,6 +1018,12 @@ moonbit_ts_tree_cursor_goto_next_sibling(MoonBitTSTreeCursor *self) {
 
 MOONBIT_FFI_EXPORT
 int32_t
+moonbit_ts_tree_cursor_goto_previous_sibling(MoonBitTSTreeCursor *self) {
+  return ts_tree_cursor_goto_previous_sibling(&self->cursor);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t
 moonbit_ts_tree_cursor_goto_first_child(MoonBitTSTreeCursor *self) {
   return ts_tree_cursor_goto_first_child(&self->cursor);
 }
@@ -1104,8 +1110,9 @@ moonbit_ts_query_new(
   moonbit_ts_trace("query = %p\n", (void *)query);
   uint32_t error_offset = 0;
   TSQueryError error_type = TSQueryErrorNone;
-  query->query =
-    ts_query_new(language, (const char *)source, length, &error_offset, &error_type);
+  query->query = ts_query_new(
+    language, (const char *)source, length, &error_offset, &error_type
+  );
   error[0] = error_offset;
   error[1] = error_type;
   moonbit_ts_trace("query->query = %p\n", (void *)query->query);
