@@ -151,9 +151,50 @@ pub fn Context::new!(
 }
 
 ///|
+pub impl @json.FromJson for Context with from_json(
+  json : Json,
+  path : @json.JsonPath
+) {
+  guard json is Object(dict) else {
+    raise @json.JsonDecodeError((path, "Expected object"))
+  }
+  guard dict.get("context") is Some(String(context)) else {
+    raise @json.JsonDecodeError((path, "Expect \"context\": string"))
+  }
+  guard dict.get("selector") is Some(String(selector)) else {
+    raise @json.JsonDecodeError((path, "Expect \"selector\": string"))
+  }
+  guard dict.get("strip") is Some(strip) && strip.as_bool() is Some(strip) else {
+    raise @json.JsonDecodeError((path, "Expect \"strip\": bool"))
+  }
+  try {
+    Context::new!(context, strip~, selector~)
+  } catch {
+    error => raise @json.JsonDecodeError((path, "Invalid context: \{error}"))
+  }
+}
+
+///|
 struct Entry {
   query : @string.View
   placeholder : @string.View
+}
+
+///|
+pub impl @json.FromJson for Entry with from_json(
+  json : Json,
+  path : @json.JsonPath
+) {
+  guard json is Object(dict) else {
+    raise @json.JsonDecodeError((path, "Expected object"))
+  }
+  guard dict.get("matches") is Some(String(matches)) else {
+    raise @json.JsonDecodeError((path, "Expect \"matches\": string"))
+  }
+  guard dict.get("placeholder") is Some(String(placeholder)) else {
+    raise @json.JsonDecodeError((path, "Expect \"placeholder\": string"))
+  }
+  Entry::new(matches~, placeholder~)
 }
 
 ///|
@@ -182,7 +223,7 @@ pub fn Language::language(self : Language) -> @tree_sitter.Language {
 ///|
 type! ContextError {
   MissingInterpolator
-}
+} derive(Show)
 
 ///|
 pub fn Language::new(
