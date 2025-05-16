@@ -20,21 +20,42 @@ pub extern "js" fn QueryCapture::node(self : QueryCapture) -> Node =
   #|}
 
 ///|
-type QueryMatch
+priv type TSQueryMatch
 
 ///|
-pub extern "js" fn QueryMatch::captures(
-  self : QueryMatch
+extern "js" fn TSQueryMatch::captures(
+  self : TSQueryMatch
 ) -> Array[QueryCapture] =
   #|(self) => {
   #|  return self.captures;
   #|}
 
 ///|
-pub extern "js" fn QueryMatch::pattern_index(self : QueryMatch) -> Int =
+extern "js" fn TSQueryMatch::pattern_index(self : TSQueryMatch) -> Int =
   #|(self) => {
   #|  return self.patternIndex;
   #|}
+
+///|
+struct QueryMatch {
+  query : Query
+  query_match : TSQueryMatch
+}
+
+///|
+pub fn QueryMatch::captures(self : QueryMatch) -> Array[QueryCapture] {
+  self.query_match.captures()
+}
+
+///|
+pub fn QueryMatch::pattern_index(self : QueryMatch) -> Int {
+  self.query_match.pattern_index()
+}
+
+///|
+pub fn QueryMatch::predicates(self : QueryMatch) -> Array[QueryPredicate] {
+  self.query.predicates_for_pattern(self.pattern_index())
+}
 
 ///|
 struct QueryCursor {

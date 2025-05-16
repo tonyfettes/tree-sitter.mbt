@@ -157,19 +157,117 @@ pub fn Query::end_byte_for_pattern(self : Query, pattern_index : Int) -> Int {
 
 ///|
 priv enum QueryPredicateStepType {
-  Done
   Capture
   String
 } derive(Show)
 
 ///|
-fn QueryPredicateStepType::of_uint(value : UInt) -> QueryPredicateStepType {
+fn QueryPredicateStepType::of_string(value : String) -> QueryPredicateStepType {
   match value {
-    0 => QueryPredicateStepType::Done
-    1 => QueryPredicateStepType::Capture
-    2 => QueryPredicateStepType::String
+    "capture" => QueryPredicateStepType::Capture
+    "string" => QueryPredicateStepType::String
     value => abort("Invalid QueryPredicateStepType: \{value}")
   }
+}
+
+///|
+priv type TSQueryPredicateStep
+
+///|
+extern "js" fn TSQueryPredicateStep::type_(
+  self : TSQueryPredicateStep
+) -> String =
+  #|(self) => {
+  #|  return self.type;
+  #|}
+
+///|
+extern "js" fn TSQueryPredicateStep::value(
+  self : TSQueryPredicateStep
+) -> String =
+  #|(self) => {
+  #|  if (self.type == "capture") {
+  #|    return self.name;
+  #|  } else if (self.type == "string") {
+  #|    return self.value;
+  #|  }
+  #|}
+
+///|
+pub enum QueryPredicateStep {
+  Capture(String)
+  String(String)
+}
+
+///|
+pub impl Show for QueryPredicateStep with output(
+  self,
+  logger : &@builtin.Logger
+) -> Unit {
+  match self {
+    Capture(name) => logger.write_string("@\{name}")
+    String(value) => logger.write_string(value.escape())
+  }
+}
+
+///|
+pub impl ToJson for QueryPredicateStep with to_json(self) -> Json {
+  self.to_string().to_json()
+}
+
+///|
+priv type TSQueryPredicate
+
+///|
+extern "js" fn TSQueryPredicate::operator(self : TSQueryPredicate) -> String =
+  #|(self) => {
+  #|  return self.operator;
+  #|}
+
+///|
+extern "js" fn TSQueryPredicate::operands(
+  self : TSQueryPredicate
+) -> Array[TSQueryPredicateStep] =
+  #|(self) => {
+  #|  return self.operands;
+  #|}
+
+///|
+extern "js" fn ts_query_predicates_for_pattern(
+  self : Query,
+  pattern_index : Int
+) -> Array[TSQueryPredicate] =
+  #|(self, patternIndex) => {
+  #|  return self.predicates[patternIndex];
+  #|}
+
+///|
+typealias QueryPredicate = Array[QueryPredicateStep]
+
+///|
+pub fn Query::predicates_for_pattern(
+  self : Query,
+  pattern_index : Int
+) -> Array[QueryPredicate] {
+  let ts_predicates = ts_query_predicates_for_pattern(self, pattern_index)
+  let predicates = []
+  for ts_predicate in ts_predicates {
+    let operator = ts_predicate.operator()
+    let operands = ts_predicate.operands()
+    let predicate = [QueryPredicateStep::String(operator)]
+    for operand in operands {
+      let type_ = QueryPredicateStepType::of_string(operand.type_())
+      let value = operand.value()
+      match type_ {
+        QueryPredicateStepType::Capture =>
+          predicate.push(QueryPredicateStep::Capture(value))
+        QueryPredicateStepType::String =>
+          predicate.push(QueryPredicateStep::String(value))
+      }
+    }
+    predicates.push(predicate)
+  }
+  predicates
 }
 
 ///|
@@ -324,13 +422,24 @@ pub fn Query::disable_pattern(self : Query, pattern_index : Int) -> Unit {
 }
 
 ///|
-pub extern "js" fn Query::matches(
+extern "js" fn ts_query_matches(
   self : Query,
   node : Node
-) -> Array[QueryMatch] =
+) -> Array[TSQueryMatch] =
   #|(query, node) => {
   #|  return query.matches(node);
   #|}
+
+///|
+pub fn Query::matches(self : Query, node : Node) -> Array[QueryMatch] {
+  let ts_matches = ts_query_matches(self, node)
+  let matches = []
+  for ts_match in ts_matches {
+    let query_match = QueryMatch::{ query: self, query_match: ts_match }
+    matches.push(query_match)
+  }
+  matches
+}
 
 ///|
 pub extern "js" fn Query::captures(
