@@ -2,5 +2,8 @@
   "import": ["tonyfettes/tree_sitter"],
   "test-import": [
     "tonyfettes/tree_sitter_moonbit"
-  ]
+  ],
+  "targets": {
+    "pattern_test.mbt": ["native"]
+  }
 }
