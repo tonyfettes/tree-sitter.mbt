@@ -11,6 +11,11 @@ pub impl Show for Point with output(self : Point, logger : &@builtin.Logger) -> 
 }
 
 ///|
+impl ToJson for Point with to_json(self : Point) -> Json {
+  { "row": self.row().to_json(), "column": self.column().to_json() }
+}
+
+///|
 extern "js" fn ts_point_new(row : UInt, column : UInt) -> Point =
   #|(row, column) => {
   #|  return { row: row, column: column };
