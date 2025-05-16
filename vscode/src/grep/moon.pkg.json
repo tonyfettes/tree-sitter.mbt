@@ -14,5 +14,10 @@
       "exports": ["setup", "compile", "search"]
     }
   },
-  "supported-targets": ["native"]
+  "supported-targets": [
+    "native"
+  ],
+  "test-import": [
+    "tonyfettes/uv/async"
+  ]
 }

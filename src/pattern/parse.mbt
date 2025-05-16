@@ -316,6 +316,7 @@ fn generate_query_for_children(
   children : Array[@tree_sitter.Node],
   quotes~ : Array[Quote],
   captures~ : Map[@tree_sitter.Node, Array[String]],
+  annotate? : String,
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
@@ -414,6 +415,9 @@ fn generate_query_for_children(
         offset~,
         buffer~,
       )
+    }
+    if annotate is Some(annotate) {
+      buffer.write_string("@\{annotate}")
     }
     let last = i == children.length() - 1
     for group in opened_groups {
@@ -554,22 +558,46 @@ fn Query::new(
 pub fn Query::search(
   self : Query,
   source : @string.View
-) -> Iter[Map[String, Array[@tree_sitter.Node]]]! {
+) -> Iter[Match]!@tree_sitter.ParseError {
   let node = self.parser.parse_string!(source).root_node()
   self.matches(node)
 }
 
 ///|
-pub fn Query::matches(
-  self : Query,
-  node : @tree_sitter.Node
-) -> Iter[Map[String, Array[@tree_sitter.Node]]] {
+struct Match {
+  range : @tree_sitter.Range
+  captures : Map[String, Array[@tree_sitter.Node]]
+}
+
+///|
+pub impl ToJson for Match with to_json(self : Match) -> Json {
+  {
+    "range": {
+      "start": {
+        "row": self.range.start_point().row().to_json(),
+        "column": self.range.start_point().column().to_json(),
+      },
+      "end": {
+        "row": self.range.end_point().row().to_json(),
+        "column": self.range.end_point().column().to_json(),
+      },
+    },
+    "captures": self.captures.to_json(),
+  }
+}
+
+///|
+pub fn Query::matches(self : Query, node : @tree_sitter.Node) -> Iter[Match] {
   Iter::new(fn(yield_) {
     matches~: for matched in self.query.matches(node) {
+      let query_nodes = []
       let captures : Map[String, Array[@tree_sitter.Node]] = Map::new()
       for capture in matched.captures() {
         let name = capture.name().to_string()
         let node = capture.node()
+        if name.has_prefix("_query") {
+          query_nodes.push(node)
+        }
         match captures.get(name) {
           Some(nodes) => nodes.push(node)
           None => captures[name] = [node]
@@ -596,11 +624,18 @@ pub fn Query::matches(
           _ => ()
         }
       }
+      query_nodes.sort_by(fn(a, b) { a.start_byte() - b.start_byte() })
+      let query_range = @tree_sitter.Range::new(
+        query_nodes[0].start_point(),
+        query_nodes[query_nodes.length() - 1].end_point(),
+        query_nodes[0].start_byte(),
+        query_nodes[query_nodes.length() - 1].end_byte(),
+      )
       let captures = captures
         .iter()
-        .filter(fn { (key, _) => not(key.char_at(0) == '_') })
+        .filter(fn { (name, _) => not(name.has_prefix("_")) })
         |> Map::from_iter()
-      match yield_(captures) {
+      match yield_({ range: query_range, captures }) {
         IterEnd => break matches~ IterEnd
         IterContinue => continue matches~
       }
@@ -655,6 +690,7 @@ fn Language::compile_quotes(
         captures=Map::new(),
         offset=context.prefix.length(),
         buffer=query,
+        annotate="_query",
       )
     } else if nodes is [node] {
       let node = if context.strip { strip_colocated_nodes(node) } else { node }
@@ -664,6 +700,7 @@ fn Language::compile_quotes(
         captures=Map::new(),
         offset=context.prefix.length(),
         buffer=query,
+        annotate="_query",
       )
     } else {
       let ancestor = lowest_common_ancestor(tree.root_node(), nodes)
@@ -689,6 +726,7 @@ fn Language::compile_quotes(
         captures=Map::new(),
         offset=context.prefix.length(),
         buffer=query,
+        annotate="_query",
       )
       query.write_char(')')
     }

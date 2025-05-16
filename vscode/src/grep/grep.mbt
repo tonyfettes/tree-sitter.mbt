@@ -152,7 +152,7 @@ pub fn search(
   language : @pattern.Language,
   query : String,
   content : String
-) -> Iter[Map[String, Array[@tree_sitter.Node]]]!Error {
+) -> Iter[@pattern.Match]!Error {
   let query = language.compile!(query)
   query.search!(content)
 }

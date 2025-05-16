@@ -4,6 +4,12 @@ import * as Wasm from "@vscode/wasm-wasi/v1";
 export interface Result {
   uri: vscode.Uri;
   range: vscode.Range;
+  captures: Record<
+    string,
+    {
+      range: vscode.Range;
+    }[]
+  >;
   context: string[];
 }
 
@@ -73,21 +79,18 @@ export class Service {
           console.error('Missing "result" in JSON:', json);
           continue;
         }
-        for (const [name, nodes] of Object.entries(json.result)) {
-          for (const node of nodes as any[]) {
-            const startLine = node.range.start.row;
-            const endLine = node.range.end.row;
-            const start = new vscode.Position(startLine, node.range.start.column);
-            const end = new vscode.Position(endLine, node.range.end.column);
-            const range = new vscode.Range(start, end);
-            this.results.push({
-              uri: uri,
-              range: range,
-              context: contentLines.slice(startLine, endLine + 1),
-            });
-            this.onResult.fire(this.results);
-          }
-        }
+        const startLine = json.result.range.start.row;
+        const endLine = json.result.range.end.row;
+        const start = new vscode.Position(startLine, json.result.range.start.column);
+        const end = new vscode.Position(endLine, json.result.range.end.column);
+        const range = new vscode.Range(start, end);
+        this.results.push({
+          uri: uri,
+          range: range,
+          context: contentLines.slice(startLine, endLine + 1),
+          captures: {},
+        });
+        this.onResult.fire(this.results);
       }
     });
     const status = await child.run();
