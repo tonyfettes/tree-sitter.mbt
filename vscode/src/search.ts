@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
-import type * as Grep from "./grep.worker";
-import GrepPath from "./grep.worker.ts?path";
-import { Worker } from "worker_threads";
+import * as Wasm from "@vscode/wasm-wasi/v1";
 
 export interface Result {
   uri: vscode.Uri;
@@ -19,75 +17,83 @@ export interface Options {
 export class Service {
   private results: Result[];
   private readonly extensionUri: vscode.Uri;
-  private worker: Worker | undefined;
-  private messageId = 0;
-  private textDecoder = new TextDecoder();
+  private readonly textDecoder = new TextDecoder();
   public readonly onResult: vscode.EventEmitter<Result[]>;
-
   constructor(extensionUri: vscode.Uri) {
     this.extensionUri = extensionUri;
     this.results = [];
     this.onResult = new vscode.EventEmitter();
   }
-  private async getWorker(): Promise<Worker> {
-    if (this.worker) {
-      return this.worker;
-    }
-    const workerUri = vscode.Uri.joinPath(this.extensionUri, GrepPath);
-    const worker = new Worker(workerUri.fsPath);
-    await new Promise<void>((resolve) => {
-      const onMessage = (event: Grep.Response) => {
-        if (event.type === "ready") {
-          worker.removeListener("message", onMessage);
-          resolve();
-        }
-      };
-      worker.addListener("message", onMessage);
-    });
-    this.worker = worker;
-    return this.worker;
-  }
-  private async searchText(uri: vscode.Uri, content: string): Promise<void> {
-    const worker = await this.getWorker();
-    const id = this.messageId++;
-    const lines = content.split("\n");
-    await new Promise<void>((resolve, reject) => {
-      const onMessage = (event: Grep.Response) => {
-        if (!("id" in event) || event.id !== id) {
-          return;
-        }
-        if (event.type === "found") {
-          const captures = event.captures;
-          for (const [_, nodes] of Object.entries(captures)) {
-            for (const node of nodes) {
-              const startLine = node.range.start.row;
-              const endLine = node.range.end.row;
-              const startPosition = new vscode.Position(startLine, node.range.start.column);
-              const endPosition = new vscode.Position(endLine, node.range.end.column);
-              const range = new vscode.Range(startPosition, endPosition);
-              this.results.push({
-                uri: uri,
-                range: range,
-                context: lines.slice(startLine, endLine + 1),
-              });
-            }
-          }
-          this.onResult.fire(this.results);
-        } else if (event.type === "finish") {
-          worker.removeListener("message", onMessage);
-          resolve();
-        } else if (event.type === "error") {
-          worker.removeListener("message", onMessage);
-          reject(new Error(event.error));
-        }
-      };
-      worker.addListener("message", onMessage);
-      worker.postMessage({
-        type: "search",
-        id: id,
+  public async searchText(uri: vscode.Uri, options: Options, content: string): Promise<void> {
+    const wasm: Wasm.Wasm = await Wasm.Wasm.load();
+    const contentLines = content.split("\n");
+    const request = {
+      id: crypto.randomUUID(),
+      method: "search",
+      params: {
+        query: options.query,
         content: content,
-      });
+      },
+    };
+    const grepUri = vscode.Uri.joinPath(this.extensionUri, "grep.wasm");
+    const grepBytes = await vscode.workspace.fs.readFile(grepUri);
+    const grepWasm = await WebAssembly.compile(grepBytes);
+    const child = await wasm.createProcess("moon-grep", grepWasm, {
+      stdio: {
+        in: { kind: "pipeIn" },
+        out: { kind: "pipeOut" },
+        err: { kind: "pipeOut" },
+      },
     });
+    if (!child.stdin) {
+      throw new Error("Child process stdin is not available");
+    }
+    await child.stdin.write(JSON.stringify(request) + "\n");
+    if (!child.stdout) {
+      throw new Error("Child process stdout is not available");
+    }
+    let buffer = "";
+    child.stdout.onData(async (data) => {
+      buffer += this.textDecoder.decode(data);
+      const stdoutLines = buffer.split("\n");
+      if (stdoutLines.length < 2) {
+        return;
+      }
+      const lastIndex = stdoutLines.length - 1;
+      buffer = stdoutLines[lastIndex];
+      for (const line of stdoutLines.slice(0, lastIndex)) {
+        let json: any;
+        try {
+          json = JSON.parse(line);
+        } catch (e) {
+          console.error("Failed to parse JSON:", line);
+          continue;
+        }
+        if (!("result" in json)) {
+          console.error('Missing "result" in JSON:', json);
+          continue;
+        }
+        for (const [name, nodes] of Object.entries(json.result)) {
+          for (const node of nodes as any[]) {
+            const startLine = node.range.start.row;
+            const endLine = node.range.end.row;
+            const start = new vscode.Position(startLine, node.range.start.column);
+            const end = new vscode.Position(endLine, node.range.end.column);
+            const range = new vscode.Range(start, end);
+            this.results.push({
+              uri: uri,
+              range: range,
+              context: contentLines.slice(startLine, endLine + 1),
+            });
+            this.onResult.fire(this.results);
+          }
+        }
+      }
+    });
+    const status = await child.run();
+    if (status !== 0) {
+      throw new Error(`Child process exited with status ${status}`);
+    }
   }
   private async searchFile(uri: vscode.Uri, options: Options): Promise<void> {
     const bytes = await vscode.workspace.fs.readFile(uri);
@@ -98,7 +104,7 @@ export class Service {
     if (options.excludePattern && uri.fsPath.match(options.excludePattern)) {
       return;
     }
-    await this.searchText(uri, text);
+    await this.searchText(uri, options, text);
   }
   private async searchDirectory(uri: vscode.Uri, options: Options): Promise<void> {
     const files = await vscode.workspace.fs.readDirectory(uri);
@@ -111,29 +117,8 @@ export class Service {
       }
     }
   }
-  private async compileQuery(query: string): Promise<void> {
-    const worker = await this.getWorker();
-    return new Promise<void>((resolve, reject) => {
-      const onMessage = (event: Grep.Response) => {
-        if (event.type === "finish") {
-          worker.removeListener("message", onMessage);
-          resolve();
-        } else if (event.type === "error") {
-          worker.removeListener("message", onMessage);
-          reject(new Error(event.error));
-        }
-      };
-      worker.addListener("message", onMessage);
-      worker.postMessage({
-        type: "compile",
-        id: this.messageId++,
-        query: query,
-      });
-    });
-  }
   public async search(uri: vscode.Uri, options: Options): Promise<void> {
     this.clear();
-    await this.compileQuery(options.query);
     const stat = await vscode.workspace.fs.stat(uri);
     switch (stat.type) {
       case vscode.FileType.Directory:

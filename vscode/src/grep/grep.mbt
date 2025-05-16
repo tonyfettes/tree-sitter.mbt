@@ -1,5 +1,5 @@
 ///|
-fn moonbit(language : @tree_sitter.Language) -> @pattern.Language!Error {
+fn moonbit() -> @pattern.Language!Error {
   let contexts : Map[String, @pattern.Context] = {
     "exp": @pattern.Context::new!(
       #|fn main {
@@ -123,36 +123,83 @@ fn moonbit(language : @tree_sitter.Language) -> @pattern.Language!Error {
     ),
   }
   let extras = ["semicolon"]
+  let language = @tree_sitter_moonbit.language()
   @pattern.Language::new!(language, contexts~, entries~, extras~)
 }
 
 ///|
-let language_ref : Ref[@pattern.Language?] = Ref::new(None)
-
-///|
-pub fn setup(language : @tree_sitter.Language) -> Unit! {
-  language_ref.val = Some(moonbit!(language))
+fn jsonrpc_result[Result : ToJson](id~ : Json, result : Result) -> Unit {
+  let response : Json = {
+    "jsonrpc": "2.0",
+    "result": result.to_json(),
+    "id": id,
+  }
+  println(response.stringify())
 }
 
 ///|
-let query_ref : Ref[@pattern.Query?] = Ref::new(None)
-
-///|
-pub fn compile(query : String) -> Unit! {
-  guard language_ref.val is Some(language)
-  query_ref.val = Some(language.compile!(query))
+fn jsonrpc_error(id~ : Json, error : String) -> Unit {
+  let response : Json = {
+    "jsonrpc": "2.0",
+    "error": { "code": -32603, "message": error.to_json() },
+    "id": id,
+  }
+  println(response.stringify())
 }
 
 ///|
 pub fn search(
-  content : String,
-  found : (String) -> Unit,
-  finish : () -> Unit
-) -> Unit! {
-  guard query_ref.val is Some(query)
-  let matches = query.search!(content)
-  for captures in matches {
-    found(captures.to_json().stringify())
+  language : @pattern.Language,
+  query : String,
+  content : String
+) -> Iter[Map[String, Array[@tree_sitter.Node]]]!Error {
+  let query = language.compile!(query)
+  query.search!(content)
+}
+
+///|
+extern "c" fn getchar() -> Int = "getchar"
+
+///|
+fn main {
+  let buffer = @buffer.new()
+  try {
+    let language = moonbit!()
+    fn on_submit!() {
+      let content = @encoding.decode!(buffer.contents(), encoding=UTF8)
+      let json = @json.parse!(content)
+      match json {
+        {
+          "id": id,
+          "method": "search",
+          "params": { "content": String(content), "query": String(query), .. },
+          ..
+        } =>
+          for result in search!(language, query, content) {
+            jsonrpc_result(id~, result)
+          }
+        { "id": id, .. } => jsonrpc_error(id~, "Invalid request")
+        _ => jsonrpc_error(id=Json::null(), "Invalid request")
+      }
+      buffer.reset()
+    }
+
+    loop getchar() {
+      '\n' => {
+        try {
+          on_submit!()
+        } catch {
+          error => jsonrpc_error(id=Json::null(), error.to_string())
+        }
+        continue getchar()
+      }
+      0..<_ as byte => {
+        buffer.write_byte(byte.to_byte())
+        continue getchar()
+      }
+      _..<0 => on_submit!()
+    }
+  } catch {
+    error => jsonrpc_error(id=Json::null(), error.to_string())
   }
-  finish()
 }

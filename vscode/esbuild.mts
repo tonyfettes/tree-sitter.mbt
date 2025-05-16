@@ -151,7 +151,7 @@ async function main() {
   const extensionCtx = await ESBuild.context({
     entryPoints: ["src/extension.ts"],
     bundle: true,
-    format: "esm",
+    format: "cjs",
     minify: production,
     sourcemap: !production,
     sourcesContent: false,
