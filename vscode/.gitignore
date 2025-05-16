@@ -7,3 +7,5 @@ node_modules
 *.tsbuildinfo
 target/
 .mooncakes/
+/wasi-sdk/
+/build/

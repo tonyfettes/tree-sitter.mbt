@@ -2,6 +2,7 @@ import ESBuild from "esbuild";
 import * as Fs from "node:fs";
 import * as Path from "path";
 import * as Module from "node:module";
+import * as ChildProcess from "node:child_process";
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
@@ -127,6 +128,36 @@ const vscodePlugin: ESBuild.Plugin = {
   },
 };
 
+const cmakePlugin: ESBuild.Plugin = {
+  name: "cmake-plugin",
+  setup(build) {
+    build.onEnd(async () => {
+      await new Promise<void>((resolve, reject) => {
+        const process = ChildProcess.spawn("cmake", ["--build", "build"]);
+        process.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`CMake build failed with code ${code}`));
+          }
+        });
+        process.on("error", (error) => {
+          reject(new Error(`CMake build failed with error: ${error.message}`));
+        });
+      });
+      const grepPath = Path.join("build", "grep");
+      if (!Fs.existsSync(grepPath)) {
+        throw new Error(`Could not find grep executable`);
+      }
+      const outdir = findOutdir(build.initialOptions);
+      if (!outdir) {
+        throw new Error(`Could not find outdir for executable`);
+      }
+      await Fs.promises.copyFile(grepPath, Path.join(outdir, "grep.wasm"));
+    });
+  },
+};
+
 async function webviewCtx(path: string): Promise<ESBuild.BuildContext> {
   return await ESBuild.context({
     entryPoints: [`src/${path}/index.tsx`],
@@ -159,7 +190,7 @@ async function main() {
     outfile: "dist/extension.js",
     external: ["vscode"],
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin, workerPlugin, vscodePlugin, treeSitterPlugin],
+    plugins: [esbuildProblemMatcherPlugin, cmakePlugin, vscodePlugin],
     loader: {
       ".html": "text",
       ".wasm": "binary",
