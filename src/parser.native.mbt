@@ -15,9 +15,9 @@ pub fn Parser::new() -> Parser {
 }
 
 ///|
-pub fn parser(language : Language) -> Parser {
+pub fn parser(language : Language) -> Parser!LanguageError {
   let parser = Parser::new()
-  parser.set_language(language)
+  parser.set_language!(language)
   return parser
 }
 
@@ -33,7 +33,35 @@ pub fn Parser::language(self : Parser) -> Language? {
 
 ///|
 #borrow(self)
-extern "c" fn ts_parser_set_language(self : Parser, language : Language) = "moonbit_ts_parser_set_language"
+extern "c" fn ts_parser_set_language(
+  self : Parser,
+  language : Language
+) -> Bool = "moonbit_ts_parser_set_language"
+
+///|
+type! LanguageError {
+  VersionMismatch(
+    language_abi_version~ : Int,
+    library_version~ : Int,
+    min_compatible_version~ : Int
+  )
+}
+
+///|
+impl ToJson for LanguageError with to_json(self) -> Json {
+  match self {
+    VersionMismatch(
+      language_abi_version~,
+      library_version~,
+      min_compatible_version~
+    ) =>
+      {
+        "language_abi_version": language_abi_version.to_json(),
+        "library_version": library_version.to_json(),
+        "min_compatible_version": min_compatible_version.to_json(),
+      }
+  }
+}
 
 ///|
 /// Set the language that the parser should use for parsing.
@@ -41,11 +69,21 @@ extern "c" fn ts_parser_set_language(self : Parser, language : Language) = "moon
 /// Returns a boolean indicating whether or not the language was successfully
 /// assigned. True means assignment succeeded. False means there was a version
 /// mismatch: the language was generated with an incompatible version of the
-/// Tree-sitter CLI. Check the language's ABI version using Language::abi_version
-/// and compare it to this library's `LANGUAGE_VERSION` and
-/// `MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
-pub fn Parser::set_language(self : Parser, language : Language) -> Unit {
-  ts_parser_set_language(self, language)
+/// Tree-sitter CLI. Check the language's ABI version using
+/// `Language::abi_version` and compare it to this library's `LANGUAGE_VERSION`
+/// and `MIN_COMPATIBLE_LANGUAGE_VERSION` constants.
+pub fn Parser::set_language(
+  self : Parser,
+  language : Language
+) -> Unit!LanguageError {
+  let succeed = ts_parser_set_language(self, language)
+  if not(succeed) {
+    raise VersionMismatch(
+      language_abi_version=language.abi_version(),
+      library_version=LANGUAGE_VERSION,
+      min_compatible_version=MIN_COMPATIBLE_LANGUAGE_VERSION,
+    )
+  }
 }
 
 ///|

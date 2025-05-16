@@ -124,7 +124,7 @@ fn moonbit() -> @pattern.Language! {
     ),
   }
   let extras = ["semicolon"]
-  @pattern.Language::new(language, contexts~, entries~, extras~)
+  @pattern.Language::new!(language, contexts~, entries~, extras~)
 }
 
 ///|

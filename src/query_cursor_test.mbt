@@ -1,6 +1,6 @@
 ///|
 test "query cursor basics" {
-  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_moonbit.language())
   let source =
     #|fn main {
     #|  let x = 10
@@ -48,7 +48,7 @@ test "query cursor basics" {
 
 ///|
 test "query cursor byte_range and point_range" {
-  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_moonbit.language())
   let source =
     #|fn func1() -> Int {
     #|  1
@@ -95,7 +95,7 @@ test "query cursor byte_range and point_range" {
 ///|
 test "query cursor with predicates" {
   let language = @tree_sitter_moonbit.language()
-  let parser = @tree_sitter.parser(language)
+  let parser = @tree_sitter.parser!(language)
   let source =
     #|fn main {
     #|  let x = 5

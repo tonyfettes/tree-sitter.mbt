@@ -1,7 +1,7 @@
 ///|
 test "Tree::language" {
   let json : @tree_sitter.Language = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
   let source =
     #|{"name": "Test", "value": 123}
   let tree = parser.parse_string!(source)
@@ -11,7 +11,7 @@ test "Tree::language" {
 ///|
 test "Tree::copy" {
   let json : @tree_sitter.Language = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
   let source =
     #|{"name": "Test", "value": 123}
 
@@ -37,7 +37,7 @@ test "Tree::copy" {
 ///|
 test "tree included ranges" {
   let json = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
 
   // Create a tree and check included ranges
   let source =
@@ -69,7 +69,7 @@ test "tree included ranges" {
 ///|
 test "tree with offset" {
   let json = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
   let source =
     #|{"key": "value"}
   let tree = parser.parse_string!(source)
@@ -101,7 +101,7 @@ test "tree with offset" {
 ///|
 test "tree edit operations" {
   let json = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
 
   // Create an initial tree
   let source =

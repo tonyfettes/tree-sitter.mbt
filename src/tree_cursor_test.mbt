@@ -1,6 +1,6 @@
 ///|
 test "tree_cursor" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let tree_cursor = parser.parse_string!("[1, null]").walk()
   inspect!(tree_cursor.goto_parent(), content="false")
   inspect!(

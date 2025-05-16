@@ -190,13 +190,13 @@ pub fn Language::new(
   contexts~ : Map[String, Context],
   entries~ : Map[String, Entry],
   extras~ : Array[String] = []
-) -> Language {
+) -> Language! {
   let parsed_contexts = Map::new(capacity=contexts.size())
   for name, context in contexts {
     parsed_contexts.set(name, context)
   }
   let parser = @tree_sitter.Parser::new()
-  parser.set_language(language)
+  parser.set_language!(language)
   Language::{
     language,
     parser,

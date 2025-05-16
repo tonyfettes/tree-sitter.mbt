@@ -35,7 +35,7 @@ test "query with predicates" {
 
 ///|
 test "query" {
-  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_moonbit.language())
   let source =
     #|fn main {
     #|  if 1 == 1 {

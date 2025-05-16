@@ -8,7 +8,7 @@ struct Edit {
 ///|
 fn parse_rules(source : Bytes) -> Array[Edit]! {
   let yaml = @tree_sitter_yaml.language()
-  let parser = @tree_sitter.parser(yaml)
+  let parser = @tree_sitter.parser!(yaml)
   let source_tree = parser.parse_bytes!(source, encoding=@encoding.UTF8)
   let source_root = source_tree.root_node()
   let query_source =

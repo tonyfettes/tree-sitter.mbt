@@ -1,6 +1,6 @@
 ///|
 test "node basic operations" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|{"name": "test", "value": 123}
   let tree = parser.parse_string!(source)
@@ -39,7 +39,7 @@ test "node basic operations" {
 
 ///|
 test "node advanced operations" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|{"id": 1, "name": "test", "values": [true, false, null]}
   let tree = parser.parse_string!(source)
@@ -106,7 +106,7 @@ test "node advanced operations" {
 
 ///|
 test "Node::eq" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|{"key": "value"}
   let tree = parser.parse_string!(source)
@@ -120,7 +120,7 @@ test "Node::eq" {
 
 ///|
 test "Node::children" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|[1, 2, 3, 4, 5]
   let tree = parser.parse_string!(source)

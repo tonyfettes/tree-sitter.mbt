@@ -1,7 +1,7 @@
 ///|
 test "parser creation and basic parsing" {
   // Create a parser for JSON
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
 
   // Parse a simple JSON string
   let source =
@@ -23,7 +23,7 @@ test "parser creation and basic parsing" {
 
 ///|
 test "parser with included ranges" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
 
   // Create a source that has JSON only in certain ranges
   let source =

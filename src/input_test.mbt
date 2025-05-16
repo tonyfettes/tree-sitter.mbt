@@ -1,6 +1,6 @@
 ///|
 test "input creation and usage" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|{"key": "value"}
 

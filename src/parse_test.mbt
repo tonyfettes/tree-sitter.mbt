@@ -1,7 +1,7 @@
 ///|
 test "json" {
   let json = @tree_sitter_json.language()
-  let parser = @tree_sitter.parser(json)
+  let parser = @tree_sitter.parser!(json)
   let source =
     #|{
     #|  "name": "John Doe",
@@ -46,7 +46,7 @@ test "json" {
 ///|
 test "moonbit" {
   let moonbit = @tree_sitter_moonbit.language()
-  let parser = @tree_sitter.parser(moonbit)
+  let parser = @tree_sitter.parser!(moonbit)
   let source =
     #|fn main {
     #|  println("Hello, World!")
@@ -91,7 +91,7 @@ test "moonbit" {
       #|Paragraph with *italic* and **bold** text.
     ,
   )
-  parser.set_language(@tree_sitter_markdown.language())
+  parser.set_language!(@tree_sitter_markdown.language())
   let markdown_tree = parser.parse_string!(comment_document.to_string())
   let markdown_root_node = markdown_tree.root_node()
   inspect!(
@@ -112,7 +112,7 @@ test "moonbit" {
 test "markdown" {
   let moonbit = @tree_sitter_moonbit.language()
   let markdown = @tree_sitter_markdown.language()
-  let parser = @tree_sitter.parser(markdown)
+  let parser = @tree_sitter.parser!(markdown)
   let source =
     #|# Heading
     #|
@@ -142,7 +142,7 @@ test "markdown" {
     }
   }
   guard not(moonbit_ranges.is_empty())
-  parser.set_language(moonbit)
+  parser.set_language!(moonbit)
   parser.set_included_ranges(moonbit_ranges) |> ignore()
 }
 
@@ -166,7 +166,7 @@ impl @tree_sitter.DecodeFunction for UTF32BE with decode(bytes : @bytes.View) ->
 
 ///|
 test "custom-encoding" {
-  let parser = @tree_sitter.parser(@tree_sitter_json.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_json.language())
   let source =
     #|{
     #|  "name": "John Doe",

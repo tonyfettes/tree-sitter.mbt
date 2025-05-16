@@ -244,7 +244,7 @@ test "pattern" {
     #|    println("Hello, world!")
     #|  }
     #|}
-  let parser = @tree_sitter.parser(@tree_sitter_moonbit.language())
+  let parser = @tree_sitter.parser!(@tree_sitter_moonbit.language())
   let source_tree = parser.parse_string!(source)
   let pattern_query = pattern_query!(parser, env, pattern)
   inspect!(
