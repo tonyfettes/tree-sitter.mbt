@@ -1301,8 +1301,10 @@ void
 moonbit_ts_query_cursor_exec(
   MoonBitTSQueryCursor *self,
   MoonBitTSQuery *query,
-  MoonBitTSNode *node
+  MoonBitTSNode *node,
+  MoonBitTSTree *tree
 ) {
+  moonbit_ts_ignore(tree);
   ts_query_cursor_exec(self->cursor, query->query, node->node);
   moonbit_ts_trace("self = %p\n", (void *)self);
   moonbit_ts_trace("self->cursor = %p\n", (void *)self->cursor);
@@ -1328,8 +1330,10 @@ moonbit_ts_query_cursor_exec_with_options(
   MoonBitTSQueryCursor *self,
   MoonBitTSQuery *query,
   MoonBitTSNode *node,
+  MoonBitTSTree *tree,
   MoonBitTSQueryCursorProgressCallback *callback
 ) {
+  moonbit_ts_ignore(tree);
   TSQueryCursorOptions options = {
     .payload = callback,
     .progress_callback = moonbit_ts_query_cursor_progress_callback
