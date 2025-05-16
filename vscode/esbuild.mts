@@ -36,33 +36,69 @@ function findOutdir(buildOptions: ESBuild.BuildOptions): string | undefined {
   return undefined;
 }
 
-const executablePlugin: ESBuild.Plugin = {
-  name: "executable-plugin",
+function findTreeSitterWasm(path: string, name?: string): string | undefined {
+  const wasmName = name || path;
+  const packageJSON = Module.findPackageJSON(path, import.meta.url);
+  if (!packageJSON) {
+    return undefined;
+  }
+  const packageDir = Path.dirname(packageJSON);
+  const wasmPath = Path.join(packageDir, `${wasmName}.wasm`);
+  if (Fs.existsSync(wasmPath)) {
+    return wasmPath;
+  }
+  return undefined;
+}
+
+const treeSitterPlugin: ESBuild.Plugin = {
+  name: "tree-sitter-plugin",
   setup(build) {
-    build.onResolve({ filter: /\.exe$/ }, (args): ESBuild.OnResolveResult => {
-      return {
-        path: Path.join(args.resolveDir, args.path),
-        namespace: "exe",
-      };
+    build.onEnd(async () => {
+      const wasmPath = findTreeSitterWasm("web-tree-sitter", "tree-sitter");
+      if (!wasmPath) {
+        throw new Error(`Could not find tree-sitter-wasm for web-tree-sitter`);
+      }
+      const outdir = findOutdir(build.initialOptions);
+      if (!outdir) {
+        throw new Error(`Could not find outdir for executable`);
+      }
+      await Fs.promises.copyFile(wasmPath, Path.join(outdir, "tree-sitter.wasm"));
     });
+  },
+};
+
+const workerPlugin: ESBuild.Plugin = {
+  name: "worker-plugin",
+  setup(build) {
     build.onLoad(
-      { filter: /\.exe$/, namespace: "exe" },
-      async (args): Promise<ESBuild.OnLoadResult> => {
-        const outdir = findOutdir(build.initialOptions);
-        if (!outdir) {
-          throw new Error(`Could not find outdir for executable`);
+      { filter: /\.worker\.ts$/ },
+      async (args: ESBuild.OnLoadArgs): Promise<ESBuild.OnLoadResult> => {
+        if (args.suffix === "?path") {
+          const outdir = findOutdir(build.initialOptions);
+          if (!outdir) {
+            throw new Error(`Could not find outdir for executable`);
+          }
+          if (!Fs.existsSync(outdir)) {
+            await Fs.promises.mkdir(outdir, { recursive: true });
+          }
+          const sourcePath = Path.resolve(args.path);
+          const destFile = Path.basename(args.path).replace(/\.ts$/, ".js");
+          const destPath = Path.join(outdir, destFile);
+          await ESBuild.build({
+            ...build.initialOptions,
+            entryPoints: [sourcePath],
+            outfile: destPath,
+          });
+          return {
+            contents: `export default "${destFile}";`,
+            loader: "js",
+          };
+        } else {
+          return {
+            contents: await Fs.promises.readFile(args.path, "utf-8"),
+            loader: "ts",
+          };
         }
-        if (!Fs.existsSync(outdir)) {
-          await Fs.promises.mkdir(outdir, { recursive: true });
-        }
-        const sourcePath = Path.resolve(args.path);
-        const destFile = Path.basename(args.path);
-        const destPath = Path.join(outdir, destFile);
-        await Fs.promises.copyFile(sourcePath, destPath);
-        return {
-          contents: `export default "${destFile}";`,
-          loader: "js",
-        };
       }
     );
   },
@@ -123,10 +159,11 @@ async function main() {
     outfile: "dist/extension.js",
     external: ["vscode"],
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin, executablePlugin, vscodePlugin],
+    plugins: [esbuildProblemMatcherPlugin, workerPlugin, vscodePlugin, treeSitterPlugin],
     loader: {
       ".html": "text",
-      ".wasm": "file",
+      ".wasm": "binary",
+      ".worker": "file",
     },
   });
   const sidebarCtx = await webviewCtx("sidebar");

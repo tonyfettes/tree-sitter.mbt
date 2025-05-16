@@ -1,0 +1,13 @@
+{
+  "import": [
+    "tonyfettes/tree_sitter",
+    "tonyfettes/tree_sitter/pattern",
+    "tonyfettes/tree_sitter_moonbit"
+  ],
+  "link": {
+    "js": {
+      "exports": ["setup", "compile", "search"]
+    }
+  },
+  "supported-targets": ["native"]
+}

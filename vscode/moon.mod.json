@@ -1,0 +1,15 @@
+{
+  "name": "tonyfettes/tree_sitter/vscode",
+  "version": "0.1.0",
+  "deps": {
+    "tonyfettes/tree_sitter": {
+      "path": ".."
+    }
+  },
+  "readme": "README.md",
+  "repository": "",
+  "license": "Apache-2.0",
+  "keywords": [],
+  "description": "",
+  "source": "src"
+}

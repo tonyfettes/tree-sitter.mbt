@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import * as ChildProcess from "child_process";
-import grepPath from "../../bin/target/native/release/build/grep/grep.exe";
+import type * as Grep from "./grep.worker";
+import GrepPath from "./grep.worker.ts?path";
+import { Worker } from "worker_threads";
 
 export interface Result {
   uri: vscode.Uri;
@@ -18,79 +19,130 @@ export interface Options {
 export class Service {
   private results: Result[];
   private readonly extensionUri: vscode.Uri;
+  private worker: Worker | undefined;
+  private messageId = 0;
+  private textDecoder = new TextDecoder();
   public readonly onResult: vscode.EventEmitter<Result[]>;
+
   constructor(extensionUri: vscode.Uri) {
     this.extensionUri = extensionUri;
     this.results = [];
     this.onResult = new vscode.EventEmitter();
   }
-  public async search(uri: vscode.Uri, options: Options): Promise<void> {
-    this.clear();
-    const args = [options.query, uri.fsPath];
-    const grepUri = vscode.Uri.joinPath(this.extensionUri, grepPath);
-    const child = ChildProcess.spawn(grepUri.fsPath, args);
-    const fileSet: Map<vscode.Uri, string[]> = new Map();
-    const textDecoder = new TextDecoder();
-    let buffer = "";
-    child.stdout.on("data", async (data) => {
-      buffer += data;
-      const lines = buffer.split("\n");
-      if (lines.length < 2) {
-        return;
-      }
-      const lastIndex = lines.length - 1;
-      buffer = lines[lastIndex];
-      for (const line of lines.slice(0, lastIndex)) {
-        const json = JSON.parse(line);
-        if (json.error) {
-          vscode.window.showErrorMessage(json.error);
-          continue;
-        }
-        if (json.path === undefined) {
-          continue;
-        }
-        const uri = vscode.Uri.parse(`file://${json.path}`);
-        let lines = fileSet.get(uri);
-        if (lines === undefined) {
-          const fileBytes = await vscode.workspace.fs.readFile(uri);
-          const fileText = textDecoder.decode(fileBytes);
-          lines = fileText.split("\n");
-          fileSet.set(uri, lines);
-        }
-        const startLine = json.start.row;
-        const endLine = json.end.row;
-        const start = new vscode.Position(startLine, json.start.column);
-        const end = new vscode.Position(endLine, json.end.column);
-        const range = new vscode.Range(start, end);
-        this.results.push({
-          uri: uri,
-          range: range,
-          context: lines.slice(startLine, endLine + 1),
-        });
-        this.onResult.fire(this.results);
-      }
-    });
-    let stderr: string | undefined = undefined;
-    child.stderr.on("data", (data) => {
-      if (!stderr) {
-        stderr = data;
-      } else {
-        stderr += data;
-      }
-    });
-    await new Promise<void>((resolve, reject) => {
-      child.on("close", (code) => {
-        if (code !== 0) {
-          if (stderr !== undefined) {
-            reject(new Error(stderr));
-          } else {
-            reject(new Error(`moon-grep exited with ${code}`));
-          }
-        } else {
+  private async getWorker(): Promise<Worker> {
+    if (this.worker) {
+      return this.worker;
+    }
+    const workerUri = vscode.Uri.joinPath(this.extensionUri, GrepPath);
+    const worker = new Worker(workerUri.fsPath);
+    await new Promise<void>((resolve) => {
+      const onMessage = (event: Grep.Response) => {
+        if (event.type === "ready") {
+          worker.removeListener("message", onMessage);
           resolve();
         }
+      };
+      worker.addListener("message", onMessage);
+    });
+    this.worker = worker;
+    return this.worker;
+  }
+  private async searchText(uri: vscode.Uri, content: string): Promise<void> {
+    const worker = await this.getWorker();
+    const id = this.messageId++;
+    const lines = content.split("\n");
+    await new Promise<void>((resolve, reject) => {
+      const onMessage = (event: Grep.Response) => {
+        if (!("id" in event) || event.id !== id) {
+          return;
+        }
+        if (event.type === "found") {
+          const captures = event.captures;
+          for (const [_, nodes] of Object.entries(captures)) {
+            for (const node of nodes) {
+              const startLine = node.range.start.row;
+              const endLine = node.range.end.row;
+              const startPosition = new vscode.Position(startLine, node.range.start.column);
+              const endPosition = new vscode.Position(endLine, node.range.end.column);
+              const range = new vscode.Range(startPosition, endPosition);
+              this.results.push({
+                uri: uri,
+                range: range,
+                context: lines.slice(startLine, endLine + 1),
+              });
+            }
+          }
+          this.onResult.fire(this.results);
+        } else if (event.type === "finish") {
+          worker.removeListener("message", onMessage);
+          resolve();
+        } else if (event.type === "error") {
+          worker.removeListener("message", onMessage);
+          reject(new Error(event.error));
+        }
+      };
+      worker.addListener("message", onMessage);
+      worker.postMessage({
+        type: "search",
+        id: id,
+        content: content,
       });
     });
+  }
+  private async searchFile(uri: vscode.Uri, options: Options): Promise<void> {
+    const bytes = await vscode.workspace.fs.readFile(uri);
+    const text = this.textDecoder.decode(bytes);
+    if (options.includePattern && !uri.fsPath.match(options.includePattern)) {
+      return;
+    }
+    if (options.excludePattern && uri.fsPath.match(options.excludePattern)) {
+      return;
+    }
+    await this.searchText(uri, text);
+  }
+  private async searchDirectory(uri: vscode.Uri, options: Options): Promise<void> {
+    const files = await vscode.workspace.fs.readDirectory(uri);
+    for (const [name, type] of files) {
+      const fileUri = vscode.Uri.joinPath(uri, name);
+      if (type === vscode.FileType.Directory) {
+        await this.searchDirectory(fileUri, options);
+      } else if (type === vscode.FileType.File) {
+        await this.searchFile(fileUri, options);
+      }
+    }
+  }
+  private async compileQuery(query: string): Promise<void> {
+    const worker = await this.getWorker();
+    return new Promise<void>((resolve, reject) => {
+      const onMessage = (event: Grep.Response) => {
+        if (event.type === "finish") {
+          worker.removeListener("message", onMessage);
+          resolve();
+        } else if (event.type === "error") {
+          worker.removeListener("message", onMessage);
+          reject(new Error(event.error));
+        }
+      };
+      worker.addListener("message", onMessage);
+      worker.postMessage({
+        type: "compile",
+        id: this.messageId++,
+        query: query,
+      });
+    });
+  }
+  public async search(uri: vscode.Uri, options: Options): Promise<void> {
+    this.clear();
+    await this.compileQuery(options.query);
+    const stat = await vscode.workspace.fs.stat(uri);
+    switch (stat.type) {
+      case vscode.FileType.Directory:
+        this.searchDirectory(uri, options);
+        break;
+      case vscode.FileType.File:
+        this.searchFile(uri, options);
+        break;
+    }
   }
   public clear() {
     this.results = [];
