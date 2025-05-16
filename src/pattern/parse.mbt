@@ -554,7 +554,7 @@ fn Query::new(
 pub fn Query::search(
   self : Query,
   source : @string.View
-) -> Array[Map[String, Array[@tree_sitter.Node]]]! {
+) -> Iter[Map[String, Array[@tree_sitter.Node]]]! {
   let node = self.parser.parse_string!(source).root_node()
   self.matches(node)
 }
@@ -563,46 +563,51 @@ pub fn Query::search(
 pub fn Query::matches(
   self : Query,
   node : @tree_sitter.Node
-) -> Array[Map[String, Array[@tree_sitter.Node]]] {
-  let matches = []
-  matches~: for matched in self.query.matches(node) {
-    let captures : Map[String, Array[@tree_sitter.Node]] = Map::new()
-    for capture in matched.captures() {
-      let name = capture.name().to_string()
-      let node = capture.node()
-      match captures.get(name) {
-        Some(nodes) => nodes.push(node)
-        None => captures[name] = [node]
-      }
-    }
-    for predicate in matched.predicates() {
-      match predicate {
-        [String("eq?"), a, b] => {
-          fn read {
-            @tree_sitter.String(string) => [string]
-            Capture(name) =>
-              match captures.get(name) {
-                None => []
-                Some(nodes) => nodes.map(fn(node) { node.text().to_string() })
-              }
-          }
-
-          let a = read(a)
-          let b = read(b)
-          if a != b {
-            continue matches~
-          }
+) -> Iter[Map[String, Array[@tree_sitter.Node]]] {
+  Iter::new(fn(yield_) {
+    matches~: for matched in self.query.matches(node) {
+      let captures : Map[String, Array[@tree_sitter.Node]] = Map::new()
+      for capture in matched.captures() {
+        let name = capture.name().to_string()
+        let node = capture.node()
+        match captures.get(name) {
+          Some(nodes) => nodes.push(node)
+          None => captures[name] = [node]
         }
-        _ => ()
       }
+      for predicate in matched.predicates() {
+        match predicate {
+          [String("eq?"), a, b] => {
+            fn read {
+              @tree_sitter.String(string) => [string]
+              Capture(name) =>
+                match captures.get(name) {
+                  None => []
+                  Some(nodes) => nodes.map(fn(node) { node.text().to_string() })
+                }
+            }
+
+            let a = read(a)
+            let b = read(b)
+            if a != b {
+              continue matches~
+            }
+          }
+          _ => ()
+        }
+      }
+      let captures = captures
+        .iter()
+        .filter(fn { (key, _) => not(key.char_at(0) == '_') })
+        |> Map::from_iter()
+      match yield_(captures) {
+        IterEnd => break matches~ IterEnd
+        IterContinue => continue matches~
+      }
+    } else {
+      IterContinue
     }
-    let captures = captures
-      .iter()
-      .filter(fn { (key, _) => not(key.char_at(0) == '_') })
-      |> Map::from_iter()
-    matches.push(captures)
-  }
-  matches
+  })
 }
 
 ///|
