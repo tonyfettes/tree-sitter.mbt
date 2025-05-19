@@ -38,27 +38,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const searchControls = (
     <>
       <ControlButton
-        id="caseSensitiveButton"
-        icon="case-sensitive"
-        title="Match Case (Alt+C)"
-        active={options.caseSensitive}
-        onClick={() => toggleOption("caseSensitive")}
-      />
-      <ControlButton
-        id="wholeWordButton"
-        icon="whole-word"
-        title="Match Whole Word (Alt+W)"
-        active={options.wholeWord}
-        onClick={() => toggleOption("wholeWord")}
-      />
-      <ControlButton
-        id="regexButton"
-        icon="regex"
-        title="Use Regular Expression (Alt+R)"
-        active={options.regex}
-        onClick={() => toggleOption("regex")}
-      />
-      <ControlButton
         id="moreOptionsButton"
         icon="ellipsis"
         title="More Options"
