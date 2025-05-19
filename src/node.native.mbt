@@ -808,6 +808,22 @@ pub fn Node::symbols(self : Node) -> Iter[Symbol] {
 }
 
 ///|
+pub fn Node::symbol_names(self : Node) -> Iter[String] {
+  let language = self.language()
+  Iter::new(fn(yield_) {
+    for symbol in self.symbols() {
+      guard language.symbol_name(symbol) is Some(name) else { continue }
+      match yield_(name) {
+        IterContinue => continue
+        IterEnd => break IterEnd
+      }
+    } else {
+      IterContinue
+    }
+  })
+}
+
+///|
 pub fn Node::next_symbols(self : Node) -> Iter[Symbol] {
   let iterator = LookaheadIterator::new(
     self.language(),
