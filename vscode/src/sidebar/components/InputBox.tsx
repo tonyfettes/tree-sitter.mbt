@@ -22,7 +22,6 @@ export const InputBox: React.FC<InputBoxProps> = ({
   onKeyDown,
   controls,
 }) => {
-  const baseClassName = className.includes("replace") ? "replace-input-box" : "search-input-box";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Function to adjust textarea height based on content
@@ -43,7 +42,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [value]);
 
   return (
-    <div className={`${baseClassName} ${className}`}>
+    <div className={`input-box ${className}`}>
       <textarea
         ref={textareaRef}
         className={className.includes("replace") ? "replace-input" : "search-input"}

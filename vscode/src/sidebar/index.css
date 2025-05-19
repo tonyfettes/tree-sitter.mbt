@@ -80,8 +80,7 @@ body {
   flex-shrink: 0;
 }
 
-.search-input-box,
-.replace-input-box {
+.input-box {
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -114,8 +113,7 @@ body {
   color: var(--vscode-input-placeholderForeground);
 }
 
-.search-input-box:focus-within,
-.replace-input-box:focus-within {
+.input-box:focus-within {
   border-color: var(--vscode-focusBorder);
 }
 
