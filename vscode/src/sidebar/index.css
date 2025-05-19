@@ -201,58 +201,6 @@ input[type="checkbox"] {
   margin-bottom: 2px;
 }
 
-.file-pattern-input-container {
-  display: flex;
-  align-items: center;
-  background-color: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border);
-  border-radius: var(--border-radius);
-}
-
-.file-pattern-input {
-  flex: 1;
-  background: none;
-  border: none;
-  color: var(--vscode-input-foreground);
-  padding: 2px 4px;
-  font-family: var(--vscode-font-family);
-  font-size: 11px;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.file-pattern-input::placeholder {
-  color: var(--vscode-input-placeholderForeground);
-}
-
-.file-pattern-input-container:focus-within {
-  border-color: var(--vscode-focusBorder);
-}
-
-.file-pattern-browse-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--vscode-icon-foreground);
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.8;
-}
-
-.file-pattern-browse-button:hover {
-  opacity: 1;
-}
-
-.file-pattern-browse-button.active {
-  background-color: var(--vscode-editor-findMatchHighlightBackground);
-  color: var(--vscode-editor-findMatchHighlightForeground);
-  opacity: 1;
-}
-
 .search-results {
   flex: 1;
   overflow-y: auto;

@@ -1,5 +1,6 @@
 import React from "react";
 import InputBox from "./InputBox";
+import IconButton from "./IconButton";
 
 interface SearchOptionsProps {
   includeIgnored: boolean;
@@ -19,19 +20,20 @@ export const SearchOptions: React.FC<SearchOptionsProps> = ({
   onExcludePatternChange,
 }) => {
   const includeControls = (
-    <button className="file-pattern-browse-button">
-      <span className="codicon codicon-file-directory"></span>
-    </button>
+    <IconButton
+      icon="book"
+      title="Search only in Open Editors"
+      onClick={() => {}}
+    />
   );
 
   const excludeControls = (
-    <button
-      className={`file-pattern-browse-button ${includeIgnored ? "active" : ""}`}
+    <IconButton
+      icon="gear"
+      className={includeIgnored ? "active" : ""}
       onClick={() => onIncludeIgnoredChange(!includeIgnored)}
       title={includeIgnored ? "Exclude Ignored Files" : "Include Ignored Files"}
-    >
-      <span className="codicon codicon-gear"></span>
-    </button>
+    />
   );
 
   return (
