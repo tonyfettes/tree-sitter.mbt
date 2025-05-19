@@ -67,7 +67,8 @@ fn moonbit() -> @pattern.Language!Error {
   }
   let entries : Map[String, @pattern.Entry] = {
     "exp": @pattern.Entry::new(
-      matches=
+      name="exp",
+      selector=
         #|[
         #|  (expression)
         #|  (pipeline_expression)
@@ -82,7 +83,8 @@ fn moonbit() -> @pattern.Language!Error {
       placeholder="{...}",
     ),
     "top": @pattern.Entry::new(
-      matches=
+      name="top",
+      selector=
         #|[
         #|  (structure_item)
         #|] @top
@@ -92,7 +94,8 @@ fn moonbit() -> @pattern.Language!Error {
       ,
     ),
     "pat": @pattern.Entry::new(
-      matches=
+      name="pat",
+      selector=
         #|[
         #|  (pattern)
         #|  (simple_pattern)
@@ -101,7 +104,8 @@ fn moonbit() -> @pattern.Language!Error {
       placeholder="_",
     ),
     "id": @pattern.Entry::new(
-      matches=
+      name="id",
+      selector=
         #|[
         #|  (identifier)
         #|  (lowercase_identifier)
@@ -113,7 +117,8 @@ fn moonbit() -> @pattern.Language!Error {
       placeholder="id",
     ),
     "ty": @pattern.Entry::new(
-      matches=
+      name="ty",
+      selector=
         #|[
         #|  (type)
         #|  (return_type)
@@ -122,7 +127,7 @@ fn moonbit() -> @pattern.Language!Error {
       placeholder="A",
     ),
   }
-  let extras = ["semicolon"]
+  let extras = ["semicolon", "comment"]
   let language = @tree_sitter_moonbit.language()
   @pattern.Language::new!(language, contexts~, entries~, extras~)
 }

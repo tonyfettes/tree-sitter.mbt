@@ -51,7 +51,7 @@ type! ParseError {
 ///|
 priv enum Quote {
   Group(range~ : Range, quantifier~ : Quantifier, Array[Quote])
-  Match(name~ : String, range~ : Range, query~ : @string.View)
+  Match(name~ : String, range~ : Range, entry~ : Entry)
 } derive(Show, ToJson)
 
 ///|
@@ -176,33 +176,37 @@ pub impl @json.FromJson for Context with from_json(
 
 ///|
 struct Entry {
-  query : @string.View
+  name : @string.View
+  selector : @string.View
   placeholder : @string.View
-}
+} derive(Show, ToJson)
 
 ///|
 pub impl @json.FromJson for Entry with from_json(
   json : Json,
   path : @json.JsonPath
 ) {
-  guard json is Object(dict) else {
-    raise @json.JsonDecodeError((path, "Expected object"))
+  match json {
+    {
+      "name": String(name),
+      "selector": String(selector),
+      "placeholder": String(placeholder),
+      ..
+    } => return Entry::new(name~, selector~, placeholder~)
+    _ => {
+      let message = "Expected { \"name\": string, \"selector\": string, \"placeholder\": string }"
+      raise (path, message) |> @json.JsonDecodeError
+    }
   }
-  guard dict.get("matches") is Some(String(matches)) else {
-    raise @json.JsonDecodeError((path, "Expect \"matches\": string"))
-  }
-  guard dict.get("placeholder") is Some(String(placeholder)) else {
-    raise @json.JsonDecodeError((path, "Expect \"placeholder\": string"))
-  }
-  Entry::new(matches~, placeholder~)
 }
 
 ///|
 pub fn Entry::new(
-  matches~ : @string.View,
+  name~ : @string.View,
+  selector~ : @string.View,
   placeholder~ : @string.View
 ) -> Entry {
-  Entry::{ query: matches, placeholder }
+  Entry::{ name, selector, placeholder }
 }
 
 ///|
@@ -293,17 +297,17 @@ fn generate_capture(
 ///|
 fn generate_captures(
   node~ : @tree_sitter.Node,
-  captures~ : Array[String],
+  captures~ : Array[Capture],
   buffer~ : StringBuilder,
   extras~ : Array[String]
 ) -> Unit {
   match captures {
     [] => abort("Empty replacement")
-    [replace] => generate_capture(node~, name=replace, buffer~, extras~)
-    replaces => {
+    [capture] => generate_capture(node~, name=capture.name, buffer~, extras~)
+    captures => {
       buffer.write_char('[')
-      for replace in replaces {
-        generate_capture(node~, name=replace, buffer~, extras~)
+      for capture in captures {
+        generate_capture(node~, name=capture.name, buffer~, extras~)
       }
       buffer.write_char(']')
     }
@@ -311,11 +315,22 @@ fn generate_captures(
 }
 
 ///|
+priv struct Capture {
+  name : String
+  entry : Entry
+}
+
+///|
+fn Capture::new(name~ : String, entry~ : Entry) -> Capture {
+  Capture::{ name, entry }
+}
+
+///|
 fn generate_query_for_children(
   self : Language,
   children : Array[@tree_sitter.Node],
   quotes~ : Array[Quote],
-  captures~ : Map[@tree_sitter.Node, Array[String]],
+  captures~ : Map[@tree_sitter.Node, Array[Capture]],
   annotate? : String,
   offset~ : Int,
   buffer~ : StringBuilder
@@ -349,20 +364,20 @@ fn generate_query_for_children(
     let quotes_queue_next = @deque.new()
     while quotes_queue.pop_front() is Some(quote) {
       match quote {
-        Match(range~, name~, query~) =>
+        Match(range~, name~, entry~) =>
           if range.covers(child, offset~) {
             let cursor = try {
-              @tree_sitter.Query::new!(self.language, "\{query} @\{name}")
+              @tree_sitter.Query::new!(self.language, entry.selector)
             } catch {
               e => raise QueryError(e)
             }
             for capture in cursor.captures(child) {
-              if capture.name() != name {
+              if capture.name().view() != entry.name {
                 continue
               }
               match captures.get(capture.node()) {
-                Some(captures) => captures.push(name)
-                None => captures[capture.node()] = [name]
+                Some(captures) => captures.push(Capture::new(name~, entry~))
+                None => captures[capture.node()] = [Capture::new(name~, entry~)]
               }
             }
           } else if range.covered_by(child, offset~) {
@@ -464,7 +479,7 @@ fn generate_query(
   self : Language,
   node : @tree_sitter.Node,
   quotes~ : Array[Quote],
-  captures~ : Map[@tree_sitter.Node, Array[String]],
+  captures~ : Map[@tree_sitter.Node, Array[Capture]],
   offset~ : Int,
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
@@ -806,11 +821,7 @@ fn Language::parse(
       state
       .children()
       .push(
-        Match(
-          name=ident,
-          range=Range::{ start, end: query.length() },
-          query=entry.query,
-        ),
+        Match(name=ident, range=Range::{ start, end: query.length() }, entry~),
       )
       continue state.to_parse_state(), offset, source
     }
@@ -823,11 +834,11 @@ fn Language::parse(
       continue Group(state~, children~, start~), offset + 2, source
     }
     Group(state~, children~, start~), offset, ['}', .. source] => {
-      let (quantifier, source) = match source {
-        ['*', .. source] => (ZeroOrMore, source)
-        ['+', .. source] => (OneOrMore, source)
-        ['?', .. source] => (ZeroOrOne, source)
-        [.. source] => (One, source)
+      let (quantifier, offset, source) = match source {
+        ['*', .. source] => (ZeroOrMore, offset + 2, source)
+        ['+', .. source] => (OneOrMore, offset + 2, source)
+        ['?', .. source] => (ZeroOrOne, offset + 2, source)
+        [.. source] => (One, offset + 1, source)
       }
       state
       .children()
@@ -838,7 +849,7 @@ fn Language::parse(
           children,
         ),
       )
-      continue state.to_parse_state(), offset + 2, source
+      continue state.to_parse_state(), offset, source
     }
     Group(state~, children~, start~), offset, ['$', '{', .. source] =>
       continue Group(

@@ -68,7 +68,8 @@ fn moonbit() -> @pattern.Language! {
   }
   let entries : Map[String, @pattern.Entry] = {
     "exp": @pattern.Entry::new(
-      matches=
+      name="exp",
+      selector=
         #|[
         #|  (expression)
         #|  (pipeline_expression)
@@ -83,7 +84,8 @@ fn moonbit() -> @pattern.Language! {
       placeholder="{...}",
     ),
     "top": @pattern.Entry::new(
-      matches=
+      name="top",
+      selector=
         #|[
         #|  (structure_item)
         #|] @top
@@ -93,7 +95,8 @@ fn moonbit() -> @pattern.Language! {
       ,
     ),
     "pat": @pattern.Entry::new(
-      matches=
+      name="pat",
+      selector=
         #|[
         #|  (pattern)
         #|  (simple_pattern)
@@ -102,7 +105,8 @@ fn moonbit() -> @pattern.Language! {
       placeholder="_",
     ),
     "id": @pattern.Entry::new(
-      matches=
+      name="id",
+      selector=
         #|[
         #|  (identifier)
         #|  (lowercase_identifier)
@@ -114,7 +118,8 @@ fn moonbit() -> @pattern.Language! {
       placeholder="id",
     ),
     "ty": @pattern.Entry::new(
-      matches=
+      name="ty",
+      selector=
         #|[
         #|  (type)
         #|  (return_type)
@@ -1129,4 +1134,73 @@ test "loop_expression" {
     ,
   )
   @json.inspect!(matches.collect(), content=[])
+}
+
+///|
+test "single_expression" {
+  let query =
+    #|$exp:a
+  let query = moonbit!().compile!(query)
+  let matches = query.search!(
+    #|fn main {
+    #|  println("Hello, world!")
+    #|}
+    ,
+  )
+  @json.inspect!(matches.collect(), content=[])
+}
+
+///|
+test "positional_or_labelled" {
+  let query =
+    #|f($id:arg ${~}?)
+  let query = moonbit!().compile!(query)
+  let matches = query.search!(
+    #|fn main {
+    #|  f(a)
+    #|  f(b~)
+    #|}
+    ,
+  )
+  @json.inspect!(matches.collect(), content=[
+    {
+      "range": {
+        "start": { "row": 2, "column": 2 },
+        "end": { "row": 2, "column": 7 },
+      },
+      "captures": {
+        "arg": [
+          {
+            "node": "(lowercase_identifier)",
+            "text": "b",
+            "range": {
+              "start": { "row": 2, "column": 4 },
+              "end": { "row": 2, "column": 5 },
+            },
+          },
+        ],
+      },
+    },
+  ])
+}
+
+///|
+test "comment" {
+  let query =
+    #|[1, 2, 3, 4]
+  let query = moonbit!().compile!(query)
+  let source =
+    #|fn main {
+    #|  [1, 2, 3, 4]
+    #|}
+  let matches = query.search!(source)
+  @json.inspect!(matches.collect(), content=[
+    {
+      "range": {
+        "start": { "row": 1, "column": 2 },
+        "end": { "row": 1, "column": 14 },
+      },
+      "captures": {},
+    },
+  ])
 }
