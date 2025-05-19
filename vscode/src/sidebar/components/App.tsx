@@ -9,6 +9,7 @@ import { SearchOptions as SearchOptionsType, Result } from "../types";
 
 const App: React.FC = () => {
   const vscode = useVSCode();
+  const [initialized, setInitialized] = useState(false);
   const [searchPattern, setSearchPattern] = useState("");
   const [replacePattern, setReplacePattern] = useState("");
   const [searchOptions, setSearchOptions] = useState<SearchOptionsType>({
@@ -54,6 +55,7 @@ const App: React.FC = () => {
 
   // Save state when inputs or collapsed state changes
   useEffect(() => {
+    if (!initialized) return;
     vscode.setState({
       searchPattern,
       replacePattern,
@@ -79,6 +81,7 @@ const App: React.FC = () => {
         setCollapsedFiles(state.collapsedFiles);
       }
     }
+    setInitialized(true);
   }, []);
 
   const performSearch = () => {
