@@ -1,6 +1,6 @@
 import React from "react";
 import InputBox from "./InputBox";
-import IconButton from "./IconButton";
+import ControlButton from "./ControlButton";
 
 interface SearchOptionsProps {
   includeIgnored: boolean;
@@ -20,15 +20,11 @@ export const SearchOptions: React.FC<SearchOptionsProps> = ({
   onExcludePatternChange,
 }) => {
   const includeControls = (
-    <IconButton
-      icon="book"
-      title="Search only in Open Editors"
-      onClick={() => {}}
-    />
+    <ControlButton icon="book" title="Search only in Open Editors" onClick={() => {}} />
   );
 
   const excludeControls = (
-    <IconButton
+    <ControlButton
       icon="gear"
       className={includeIgnored ? "active" : ""}
       onClick={() => onIncludeIgnoredChange(!includeIgnored)}
