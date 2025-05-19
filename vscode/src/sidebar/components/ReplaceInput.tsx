@@ -9,9 +9,6 @@ interface ReplaceInputProps {
   searchPattern?: string;
   filePattern?: string;
   searchOptions?: {
-    caseSensitive: boolean;
-    wholeWord: boolean;
-    regex: boolean;
     includeIgnored: boolean;
   };
 }

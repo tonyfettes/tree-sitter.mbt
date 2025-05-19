@@ -12,9 +12,6 @@ const App: React.FC = () => {
   const [searchPattern, setSearchPattern] = useState("");
   const [replacePattern, setReplacePattern] = useState("");
   const [searchOptions, setSearchOptions] = useState<SearchOptionsType>({
-    caseSensitive: false,
-    wholeWord: false,
-    regex: true,
     includeIgnored: false,
     includePattern: "",
     excludePattern: "node_modules",
@@ -72,9 +69,6 @@ const App: React.FC = () => {
       setSearchPattern(state.searchPattern || "");
       setReplacePattern(state.replacePattern || "");
       setSearchOptions({
-        caseSensitive: !!state.caseSensitive,
-        wholeWord: !!state.wholeWord,
-        regex: state.regex !== false, // Default to true
         includeIgnored: !!state.includeIgnored,
         includePattern: state.includePattern || "",
         excludePattern: state.excludePattern || "node_modules",

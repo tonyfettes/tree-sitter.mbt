@@ -15,9 +15,6 @@ export interface Result {
 }
 
 export interface SearchOptions {
-  caseSensitive: boolean;
-  wholeWord: boolean;
-  regex: boolean;
   includeIgnored: boolean;
   includePattern: string;
   excludePattern: string;
