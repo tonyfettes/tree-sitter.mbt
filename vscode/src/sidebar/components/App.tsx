@@ -3,7 +3,7 @@ import { useVSCode } from "../hooks/useVSCode";
 import SearchHeader from "./SearchHeader";
 import SearchInput from "./SearchInput";
 import ReplaceInput from "./ReplaceInput";
-import SearchOptions from "./SearchOptions";
+import SearchDetails from "./SearchDetails";
 import SearchResults from "./SearchResults";
 import { SearchOptions as SearchOptionsType, Result } from "../types";
 
@@ -164,13 +164,7 @@ const App: React.FC = () => {
       />
 
       <div className="search-container">
-        <SearchInput
-          value={searchPattern}
-          onChange={setSearchPattern}
-          options={searchOptions}
-          onOptionsChange={setSearchOptions}
-          onSearch={performSearch}
-        />
+        <SearchInput value={searchPattern} onChange={setSearchPattern} onSearch={performSearch} />
 
         <ReplaceInput
           value={replacePattern}
@@ -179,7 +173,7 @@ const App: React.FC = () => {
           searchOptions={searchOptions}
         />
 
-        <SearchOptions
+        <SearchDetails
           includeIgnored={searchOptions.includeIgnored}
           onIncludeIgnoredChange={(value) =>
             setSearchOptions({ ...searchOptions, includeIgnored: value })

@@ -123,8 +123,8 @@ body {
   align-self: flex-start;
 }
 
-/* Styling for InputBox when used in SearchOptions */
-.search-options .search-input-box {
+/* Styling for InputBox when used in SearchDetails */
+.search-details .search-input-box {
   background-color: var(--vscode-input-background);
   border: 1px solid var(--vscode-input-border);
   border-radius: var(--border-radius);
@@ -132,12 +132,12 @@ body {
   margin: 0;
 }
 
-.search-options .search-input {
+.search-details .search-input {
   padding: 2px 4px;
   font-size: 11px;
 }
 
-.search-options .search-controls {
+.search-details .search-controls {
   padding-left: 0;
   gap: 0;
 }
@@ -168,7 +168,7 @@ body {
   opacity: 1;
 }
 
-.search-options {
+.search-details {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -186,11 +186,41 @@ input[type="checkbox"] {
   margin: 0;
 }
 
-.file-pattern-section {
+.search-details-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  cursor: pointer;
+  justify-content: flex-end;
+}
+
+.search-details-toggle {
+  padding: 0;
+  margin: 0;
+}
+
+.search-details-label {
+  font-size: 11px;
+  color: var(--vscode-foreground);
+  font-weight: 600;
+}
+
+.search-details-section {
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-top: 4px;
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+  max-height: 200px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.search-details-section.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
 }
 
 .input-box-label {

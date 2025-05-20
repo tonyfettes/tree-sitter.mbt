@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import InputBox from "./InputBox";
 import ControlButton from "./ControlButton";
+import IconButton from "./IconButton";
 
-interface SearchOptionsProps {
+interface SearchDetailsProps {
   includeIgnored: boolean;
   onIncludeIgnoredChange: (value: boolean) => void;
   includePattern: string;
@@ -11,7 +12,7 @@ interface SearchOptionsProps {
   onExcludePatternChange: (value: string) => void;
 }
 
-export const SearchOptions: React.FC<SearchOptionsProps> = ({
+export const SearchDetails: React.FC<SearchDetailsProps> = ({
   includeIgnored,
   onIncludeIgnoredChange,
   includePattern,
@@ -32,9 +33,23 @@ export const SearchOptions: React.FC<SearchOptionsProps> = ({
     />
   );
 
+  const [isSearchDetailsExpanded, setIsSearchDetailsExpanded] = useState(true);
+
+  const toggleSearchDetails = () => {
+    setIsSearchDetailsExpanded(!isSearchDetailsExpanded);
+  };
+
   return (
-    <div className="search-options">
-      <div className="file-pattern-section">
+    <div className="search-details">
+      <div className="search-details-header">
+        <IconButton
+          icon="ellipsis"
+          title="Toggle Search Details"
+          onClick={toggleSearchDetails}
+          className="search-details-toggle"
+        />
+      </div>
+      <div className={`search-details-section ${isSearchDetailsExpanded ? "" : "collapsed"}`}>
         <InputBox
           value={includePattern}
           onChange={onIncludePatternChange}
@@ -55,4 +70,4 @@ export const SearchOptions: React.FC<SearchOptionsProps> = ({
   );
 };
 
-export default SearchOptions;
+export default SearchDetails;
