@@ -5,17 +5,17 @@ import SearchInput from "./SearchInput";
 import ReplaceInput from "./ReplaceInput";
 import SearchDetails from "./SearchDetails";
 import SearchResults from "./SearchResults";
-import { SearchOptions as SearchOptionsType, Result } from "../types";
+import { SearchOptions, Result } from "../types";
 
 const App: React.FC = () => {
   const vscode = useVSCode();
   const [initialized, setInitialized] = useState(false);
   const [searchPattern, setSearchPattern] = useState("");
   const [replacePattern, setReplacePattern] = useState("");
-  const [searchOptions, setSearchOptions] = useState<SearchOptionsType>({
+  const [searchOptions, setSearchOptions] = useState<SearchOptions>({
     includeIgnored: false,
     includePattern: "",
-    excludePattern: "node_modules",
+    excludePattern: "",
   });
   const [results, setResults] = useState<Result[]>([]);
   const [stats, setStats] = useState({ matchCount: 0, fileCount: 0 });
@@ -73,7 +73,7 @@ const App: React.FC = () => {
       setSearchOptions({
         includeIgnored: !!state.includeIgnored,
         includePattern: state.includePattern || "",
-        excludePattern: state.excludePattern || "node_modules",
+        excludePattern: state.excludePattern || "",
       });
 
       // Restore collapsed state if it exists
