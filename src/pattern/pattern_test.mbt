@@ -1204,3 +1204,63 @@ test "comment" {
     },
   ])
 }
+
+///|
+test "replace" {
+  let query =
+    #|$exp:a + $exp:b
+  let query = moonbit!().compile!(query)
+  let source =
+    #|fn main {
+    #|  1 + 2
+    #|}
+  let matches = query.search!(source)
+  @json.inspect!(matches.collect(), content=[
+    {
+      "range": {
+        "start": { "row": 1, "column": 2 },
+        "end": { "row": 1, "column": 7 },
+      },
+      "captures": {
+        "a": [
+          {
+            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+            "text": "1",
+            "range": {
+              "start": { "row": 1, "column": 2 },
+              "end": { "row": 1, "column": 3 },
+            },
+          },
+        ],
+        "b": [
+          {
+            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
+            "text": "2",
+            "range": {
+              "start": { "row": 1, "column": 6 },
+              "end": { "row": 1, "column": 7 },
+            },
+          },
+        ],
+      },
+    },
+  ])
+  let replaces = []
+  for matched in matches {
+    replaces.push(
+      matched.replace!(
+        #|$b + $a
+        ,
+      ),
+    )
+  }
+  @json.inspect!(replaces, content=[
+    {
+      "range": {
+        "start": { "row": 1, "column": 2 },
+        "end": { "row": 1, "column": 7 },
+      },
+      "text": "2 + 1",
+    },
+  ])
+}

@@ -884,3 +884,118 @@ pub fn Language::compile(
   let quotes = self.parse!(source, query)
   self.compile_quotes!(quotes, query)
 }
+
+///|
+priv enum Replace {
+  Quote(String)
+  Subst(String)
+}
+
+///|
+fn Replace::parse_identifier(
+  source : @string.View,
+  buffer : StringBuilder
+) -> @string.View {
+  loop source {
+    ['a'..='z' | 'A'..='Z' | '_' | '0'..='9' as char, .. source] => {
+      buffer.write_char(char)
+      continue source
+    }
+    source => return source
+  }
+}
+
+///|
+fn Replace::parse_replaces(
+  source : @string.View,
+  replaces : Array[Replace]
+) -> Unit {
+  let buffer = StringBuilder::new()
+  loop source {
+    ['$', .. source] => {
+      if not(buffer.is_empty()) {
+        replaces.push(Replace::Quote(buffer.to_string()))
+        buffer.reset()
+      }
+      let identifier = StringBuilder::new()
+      let source = Replace::parse_identifier(source, identifier)
+      replaces.push(Replace::Subst(identifier.to_string()))
+      continue source
+    }
+    ['\\', '$', .. source] => {
+      buffer.write_char('$')
+      continue source
+    }
+    [char, .. source] => {
+      buffer.write_char(char)
+      continue source
+    }
+    [] => {
+      if not(buffer.is_empty()) {
+        replaces.push(Replace::Quote(buffer.to_string()))
+        buffer.reset()
+      }
+      return
+    }
+  }
+}
+
+///|
+fn Replace::parse(string : @string.View) -> Array[Replace] {
+  let replaces = []
+  Replace::parse_replaces(string, replaces)
+  return replaces
+}
+
+///|
+struct Edit {
+  range : @tree_sitter.Range
+  text : @string.View
+}
+
+///|
+pub impl ToJson for Edit with to_json(self : Edit) -> Json {
+  {
+    "range": {
+      "start": {
+        "row": self.range.start_point().row().to_json(),
+        "column": self.range.start_point().column().to_json(),
+      },
+      "end": {
+        "row": self.range.end_point().row().to_json(),
+        "column": self.range.end_point().column().to_json(),
+      },
+    },
+    "text": self.text.to_json(),
+  }
+}
+
+///|
+type! ReplaceError {
+  VariableNotFound(String)
+  MismatchedType(expect~ : String, actual~ : String)
+} derive(Show)
+
+///|
+pub fn Match::replace(self : Match, source : @string.View) -> Edit!ReplaceError {
+  let replaces = Replace::parse(source)
+  let replaced = StringBuilder::new()
+  for replace in replaces {
+    match replace {
+      Quote(string) => replaced.write_string(string)
+      Subst(name) =>
+        match self.captures.get(name) {
+          None => raise VariableNotFound(name)
+          Some([node]) => {
+            let text = node.text()
+            for char in text {
+              replaced.write_char(char)
+            }
+          }
+          Some(_) =>
+            raise MismatchedType(expect="single node", actual="multiple nodes")
+        }
+    }
+  }
+  Edit::{ range: self.range, text: replaced.to_string() }
+}
