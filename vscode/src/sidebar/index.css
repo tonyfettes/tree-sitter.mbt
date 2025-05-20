@@ -185,6 +185,8 @@ input[type="checkbox"] {
 }
 
 .search-details-header {
+  position: absolute;
+  right: 8px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -193,7 +195,7 @@ input[type="checkbox"] {
 }
 
 .search-details-header > .icon-button {
-  height: 1em;
+  height: 10px;
 }
 
 .search-details-toggle {
@@ -210,6 +212,7 @@ input[type="checkbox"] {
 .search-details-section {
   display: flex;
   flex-direction: column;
+  margin-top: 2px;
   transition:
     max-height 0.2s ease-out,
     opacity 0.2s ease-out;
