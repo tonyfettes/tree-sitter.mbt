@@ -36,7 +36,6 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
             onClick={onExpandAll}
           />
         )}
-        <IconButton id="showMenu" icon="ellipsis" title="More Actions" onClick={() => {}} />
       </div>
     </div>
   );
