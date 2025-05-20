@@ -8,10 +8,19 @@ interface InputBoxProps {
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   controls?: ReactNode;
+  label?: string;
 }
 
 /**
- * A reusable input box component with optional controls
+ * A reusable input box component with optional controls and label
+ * @param value - The current value of the input
+ * @param onChange - Function to call when the value changes
+ * @param placeholder - Placeholder text for the input
+ * @param id - Optional ID for the textarea element
+ * @param className - Optional additional CSS class names
+ * @param onKeyDown - Optional function to handle key down events
+ * @param controls - Optional React node to render as controls
+ * @param label - Optional label text to display above the input
  */
 export const InputBox: React.FC<InputBoxProps> = ({
   value,
@@ -21,6 +30,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   className = "",
   onKeyDown,
   controls,
+  label,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -42,22 +52,25 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [value]);
 
   return (
-    <div className={`input-box ${className}`}>
-      <textarea
-        ref={textareaRef}
-        className={className.includes("replace") ? "replace-input" : "search-input"}
-        id={id}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          // Height will be adjusted in the useEffect
-        }}
-        onKeyDown={onKeyDown}
-        rows={1}
-        style={{ resize: "none", overflow: "hidden" }} // Changed to hidden to prevent scrollbar
-      />
-      {controls && <div className="search-controls">{controls}</div>}
+    <div>
+      {label && <label className="input-box-label">{label}</label>}
+      <div className={`input-box ${className}`}>
+        <textarea
+          ref={textareaRef}
+          className="input-box-textarea"
+          id={id}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            // Height will be adjusted in the useEffect
+          }}
+          onKeyDown={onKeyDown}
+          rows={1}
+          style={{ resize: "none", overflow: "hidden" }} // Changed to hidden to prevent scrollbar
+        />
+        {controls && <div className="search-controls">{controls}</div>}
+      </div>
     </div>
   );
 };

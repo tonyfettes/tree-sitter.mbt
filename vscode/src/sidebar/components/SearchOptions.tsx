@@ -35,20 +35,20 @@ export const SearchOptions: React.FC<SearchOptionsProps> = ({
   return (
     <div className="search-options">
       <div className="file-pattern-section">
-        <div className="file-pattern-label">files to include</div>
         <InputBox
           value={includePattern}
           onChange={onIncludePatternChange}
           placeholder=""
           controls={includeControls}
+          label="files to include"
         />
 
-        <div className="file-pattern-label">files to exclude</div>
         <InputBox
           value={excludePattern}
           onChange={onExcludePatternChange}
           placeholder=""
           controls={excludeControls}
+          label="files to exclude"
         />
       </div>
     </div>

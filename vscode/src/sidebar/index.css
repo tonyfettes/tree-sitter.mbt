@@ -90,8 +90,7 @@ body {
   margin: var(--input-margin);
 }
 
-.search-input,
-.replace-input {
+.input-box-textarea {
   flex: 1;
   background: none;
   border: none;
@@ -108,8 +107,7 @@ body {
   line-height: 16px;
 }
 
-.search-input::placeholder,
-.replace-input::placeholder {
+.input-box-textarea::placeholder {
   color: var(--vscode-input-placeholderForeground);
 }
 
@@ -195,7 +193,7 @@ input[type="checkbox"] {
   margin-top: 4px;
 }
 
-.file-pattern-label {
+.input-box-label {
   font-size: 11px;
   color: var(--vscode-descriptionForeground);
   margin-bottom: 2px;
