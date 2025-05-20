@@ -6,6 +6,7 @@ import ControlButton from "./ControlButton";
 interface ReplaceInputProps {
   value: string;
   onChange: (value: string) => void;
+  onSearch: () => void;
   searchPattern?: string;
   filePattern?: string;
   searchOptions?: {
@@ -16,6 +17,7 @@ interface ReplaceInputProps {
 export const ReplaceInput: React.FC<ReplaceInputProps> = ({
   value,
   onChange,
+  onSearch,
   searchPattern,
   filePattern,
   searchOptions,
@@ -64,6 +66,8 @@ export const ReplaceInput: React.FC<ReplaceInputProps> = ({
       placeholder="Replace"
       value={value}
       onChange={onChange}
+      multiline={true}
+      onSubmit={onSearch}
       className="replace"
       controls={replaceControls}
     />

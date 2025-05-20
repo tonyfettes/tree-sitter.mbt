@@ -6,7 +6,8 @@ interface InputBoxProps {
   placeholder: string;
   id?: string;
   className?: string;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSubmit?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  multiline?: boolean;
   controls?: ReactNode;
   label?: string;
 }
@@ -18,7 +19,8 @@ interface InputBoxProps {
  * @param placeholder - Placeholder text for the input
  * @param id - Optional ID for the textarea element
  * @param className - Optional additional CSS class names
- * @param onKeyDown - Optional function to handle key down events
+ * @param onSubmit - Optional function to submit event
+ * @param multiline - Optional flag to enable multiline input
  * @param controls - Optional React node to render as controls
  * @param label - Optional label text to display above the input
  */
@@ -28,7 +30,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
   placeholder,
   id,
   className = "",
-  onKeyDown,
+  onSubmit,
+  multiline = false,
   controls,
   label,
 }) => {
@@ -65,7 +68,16 @@ export const InputBox: React.FC<InputBoxProps> = ({
             onChange(e.target.value);
             // Height will be adjusted in the useEffect
           }}
-          onKeyDown={onKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (!e.shiftKey || !multiline) {
+                e.preventDefault();
+              }
+              if (!e.shiftKey) {
+                onSubmit?.(e);
+              }
+            }
+          }}
           rows={1}
           style={{ resize: "none", overflow: "hidden" }} // Changed to hidden to prevent scrollbar
         />

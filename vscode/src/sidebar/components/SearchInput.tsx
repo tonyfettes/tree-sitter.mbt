@@ -8,23 +8,14 @@ interface SearchInputProps {
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({ value, onChange, onSearch }) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      // If Shift+Enter is pressed, let the default behavior happen (new line)
-      if (!e.shiftKey) {
-        e.preventDefault();
-        onSearch();
-      }
-    }
-  };
-
   return (
     <InputBox
       id="searchInput"
       placeholder="Search"
       value={value}
       onChange={onChange}
-      onKeyDown={handleKeyDown}
+      multiline={true}
+      onSubmit={onSearch}
     />
   );
 };

@@ -84,7 +84,7 @@ const App: React.FC = () => {
     setInitialized(true);
   }, []);
 
-  const performSearch = () => {
+  const performSearch = (searchPattern: string) => {
     if (!searchPattern.trim()) return;
 
     vscode.postMessage({
@@ -157,18 +157,32 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <SearchHeader
-        onRefresh={performSearch}
+        onRefresh={() => {
+          performSearch(searchPattern);
+        }}
         onClear={clearSearch}
         onCollapseAll={collapseAll}
         onExpandAll={expandAll}
       />
 
       <div className="search-container">
-        <SearchInput value={searchPattern} onChange={setSearchPattern} onSearch={performSearch} />
+        <SearchInput
+          value={searchPattern}
+          onChange={(value) => {
+            setSearchPattern(value);
+            performSearch(value);
+          }}
+          onSearch={() => {
+            performSearch(searchPattern);
+          }}
+        />
 
         <ReplaceInput
           value={replacePattern}
           onChange={setReplacePattern}
+          onSearch={() => {
+            performSearch(searchPattern);
+          }}
           searchPattern={searchPattern}
           searchOptions={searchOptions}
         />

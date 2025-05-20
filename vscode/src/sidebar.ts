@@ -68,51 +68,42 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
 
   private async _performSearch(options: Search.Options) {
     try {
-      vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Searching with Ripgrep...",
-          cancellable: false,
-        },
-        async (_) => {
-          const workspaceFolders = vscode.workspace.workspaceFolders;
-          if (!workspaceFolders) {
-            vscode.window.showErrorMessage(`Search failed: no workspace folder available`);
-            return;
-          }
-          this.service.onResult.event((results) => {
-            if (this.view) {
-              this.view.webview.postMessage({
-                type: "results",
-                results: results.map((result) => {
-                  return {
-                    uri: vscode.workspace.asRelativePath(result.uri),
-                    range: {
-                      start: {
-                        line: result.range.start.line,
-                        character: result.range.start.character,
-                      },
-                      end: {
-                        line: result.range.end.line,
-                        character: result.range.end.character,
-                      },
-                    },
-                    lines: result.context,
-                  };
-                }),
-                stats: {
-                  matchCount: results.length,
-                  fileCount: new Set(results.map((result) => result.uri)).size,
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) {
+        vscode.window.showErrorMessage(`Search failed: no workspace folder available`);
+        return;
+      }
+      this.service.onResult.event((results) => {
+        if (this.view) {
+          this.view.webview.postMessage({
+            type: "results",
+            results: results.map((result) => {
+              return {
+                uri: vscode.workspace.asRelativePath(result.uri),
+                range: {
+                  start: {
+                    line: result.range.start.line,
+                    character: result.range.start.character,
+                  },
+                  end: {
+                    line: result.range.end.line,
+                    character: result.range.end.character,
+                  },
                 },
-              });
-            }
+                lines: result.context,
+              };
+            }),
+            stats: {
+              matchCount: results.length,
+              fileCount: new Set(results.map((result) => result.uri)).size,
+            },
           });
-          const promises = workspaceFolders.map((folder) => {
-            return this.service.search(folder.uri, options);
-          });
-          await Promise.all(promises);
         }
-      );
+      });
+      const promises = workspaceFolders.map((folder) => {
+        return this.service.search(folder.uri, options);
+      });
+      await Promise.all(promises);
     } catch (error: any) {
       vscode.window.showErrorMessage(`Search failed: ${error.message || "Unknown error"}`);
       if (this.view) {

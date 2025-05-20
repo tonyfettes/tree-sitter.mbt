@@ -110,6 +110,12 @@ export class Service {
     await this.searchText(uri, options, text);
   }
   private async searchDirectory(uri: vscode.Uri, options: Options): Promise<void> {
+    if (options.includePattern && !uri.fsPath.match(options.includePattern)) {
+      return;
+    }
+    if (options.excludePattern && uri.fsPath.match(options.excludePattern)) {
+      return;
+    }
     const files = await vscode.workspace.fs.readDirectory(uri);
     for (const [name, type] of files) {
       const fileUri = vscode.Uri.joinPath(uri, name);
