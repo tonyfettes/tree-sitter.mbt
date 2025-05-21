@@ -42,7 +42,6 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     this.onDidReceiveMessage(async (message) => {
-      console.log("Received message from webview:", message);
       switch (message.type) {
         case "search": {
           await this.search(message.value);
@@ -106,7 +105,6 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async postMessage(message: Sidebar.Response) {
-    console.log("Posting message to webview:", message);
     this.view?.webview.postMessage(message);
   }
 

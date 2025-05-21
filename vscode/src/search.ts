@@ -166,14 +166,12 @@ export class Service {
   }
   public async replace(resultId: string, replace: string): Promise<void> {
     try {
-      console.log("Replace result:", resultId, replace);
       const wasm = await this.getWasm();
       const result = this.results.get(resultId);
       if (!result) {
         vscode.window.showErrorMessage(`Result not found: ${resultId}`);
         return;
       }
-      console.log("Replacing result:", result);
       const request = {
         id: crypto.randomUUID(),
         method: "replace",
@@ -195,17 +193,13 @@ export class Service {
       if (!child.stdin) {
         throw new Error("Child process stdin is not available");
       }
-      console.log("Writing request to child process:", request);
-      console.log("Writing request to child process:", JSON.stringify(request));
       await child.stdin.write(JSON.stringify(request) + "\n");
       if (!child.stdout) {
         throw new Error("Child process stdout is not available");
       }
       let buffer = "";
       child.stdout.onData(async (data) => {
-        console.log("Received data:", data);
         buffer += this.textDecoder.decode(data);
-        console.log("Buffer:", buffer);
         const stdoutLines = buffer.split("\n");
         if (stdoutLines.length < 2) {
           return;
@@ -231,9 +225,7 @@ export class Service {
             console.error('Missing "result" in JSON:', json);
             continue;
           }
-          console.log("Replaced:", json);
           const replaced = json.result;
-          console.log("Replaced result:", replaced);
           const editBuilder = new vscode.WorkspaceEdit();
           editBuilder.replace(result.uri, result.range, replaced);
           this.results.delete(resultId);
