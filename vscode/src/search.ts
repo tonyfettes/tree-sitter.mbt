@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
+import * as vscodeUri from "vscode-uri";
 import * as Wasm from "@vscode/wasm-wasi/v1";
+import ignore, { Ignore } from "ignore";
 
 export interface Result {
   id: string;
@@ -19,6 +21,7 @@ export interface Options {
   query: string;
   includePattern?: string;
   excludePattern?: string;
+  includeIgnored?: boolean;
 }
 
 export class Service {
@@ -29,12 +32,14 @@ export class Service {
   public readonly onInsert: vscode.EventEmitter<Result>;
   public readonly onRemove: vscode.EventEmitter<{ id: string; uri: vscode.Uri }>;
   public readonly onClear: vscode.EventEmitter<void>;
+  public readonly ignore: Ignore;
   constructor(extensionUri: vscode.Uri) {
     this.extensionUri = extensionUri;
     this.results = new Map();
     this.onInsert = new vscode.EventEmitter();
     this.onRemove = new vscode.EventEmitter();
     this.onClear = new vscode.EventEmitter();
+    this.ignore = ignore();
   }
   private async getWasm(): Promise<Wasm.Wasm> {
     if (this.wasm) {
@@ -129,15 +134,29 @@ export class Service {
     if (options.excludePattern && uri.fsPath.match(options.excludePattern)) {
       return;
     }
+    if (options.includeIgnored === true && this.ignore.ignores(uri.fsPath)) {
+      return;
+    }
     const bytes = await vscode.workspace.fs.readFile(uri);
     const text = this.textDecoder.decode(bytes);
     await this.searchText(uri, options, text);
   }
   private async searchDirectory(uri: vscode.Uri, options: Options): Promise<void> {
+    const gitignoreUri = vscode.Uri.joinPath(uri, ".gitignore");
+    try {
+      const bytes = await vscode.workspace.fs.readFile(gitignoreUri);
+      const text = this.textDecoder.decode(bytes);
+      this.ignore.add(text.split("\n"));
+    } catch (e) {
+      // Ignore error
+    }
     if (options.includePattern && !uri.fsPath.match(options.includePattern)) {
       return;
     }
     if (options.excludePattern && uri.fsPath.match(options.excludePattern)) {
+      return;
+    }
+    if (options.includeIgnored === true && this.ignore.ignores(uri.fsPath)) {
       return;
     }
     const files = await vscode.workspace.fs.readDirectory(uri);
