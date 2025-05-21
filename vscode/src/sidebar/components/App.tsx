@@ -127,7 +127,7 @@ const App: React.FC = () => {
     vscode.postMessage({
       type: "search",
       value: {
-        language: "javascript",
+        language: "moonbit",
         query: searchPattern,
         includePattern: searchOptions.includePattern,
         excludePattern: searchOptions.excludePattern,

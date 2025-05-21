@@ -3,6 +3,10 @@
   "displayName": "moon-grep",
   "description": "",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tonyfettes/tree-sitter.mbt.git"
+  },
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -46,7 +50,6 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
     "compile": "npm run check-types && npm run lint && node --experimental-transform-types esbuild.mts",
     "watch": "npm-run-all -p watch:*",
     "watch:build": "node --experimental-transform-types esbuild.mts --watch",
@@ -73,16 +76,14 @@
     "@vscode/codicons": "^0.0.36",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/test-web": "^0.0.69",
+    "@vscode/wasm-wasi": "^1.0.1",
     "esbuild": "^0.25.4",
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.5.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "typescript": "^5.8.3"
-  },
-  "dependencies": {
-    "@vscode/wasm-wasi": "^1.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
   }
 }
