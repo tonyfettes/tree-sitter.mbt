@@ -163,6 +163,11 @@ pub fn search(
 }
 
 ///|
+pub fn replace(matched : @pattern.Match, replace : String) -> @pattern.Edit! {
+  matched.replace!(replace)
+}
+
+///|
 extern "c" fn getchar() -> Int = "getchar"
 
 ///|
@@ -186,6 +191,26 @@ fn main {
           for result in search!(language, query, content) {
             jsonrpc_result(id~, result)
           }
+        {
+          "id": id,
+          "method": "replace",
+          "params": {
+            "captures": Object(captures_json),
+            "replace": String(replace),
+            ..
+          },
+          ..
+        } => {
+          let captures = {}
+          for name, capture_json in captures_json {
+            captures[name.view()] = @json.from_json!(capture_json)
+          }
+          try {
+            jsonrpc_result(id~, @pattern.replace!(captures, replace))
+          } catch {
+            error => jsonrpc_error(id~, error.to_string())
+          }
+        }
         { "id": id, .. } => jsonrpc_error(id~, "Invalid request")
         _ => jsonrpc_error(id=Json::null(), "Invalid request")
       }
