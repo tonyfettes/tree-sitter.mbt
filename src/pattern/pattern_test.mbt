@@ -148,56 +148,52 @@ test "exp" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 1, "column": 8 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 1, "column": 8, "byte": 18 },
       },
       "captures": {
         "a": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "1",
             "range": {
-              "start": { "row": 1, "column": 2 },
-              "end": { "row": 1, "column": 3 },
+              "start": { "row": 1, "column": 2, "byte": 12 },
+              "end": { "row": 1, "column": 3, "byte": 13 },
             },
+            "text": "1",
           },
         ],
         "b": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "2",
             "range": {
-              "start": { "row": 1, "column": 7 },
-              "end": { "row": 1, "column": 8 },
+              "start": { "row": 1, "column": 7, "byte": 17 },
+              "end": { "row": 1, "column": 8, "byte": 18 },
             },
+            "text": "2",
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 4, "column": 15 },
-        "end": { "row": 4, "column": 21 },
+        "start": { "row": 4, "column": 15, "byte": 37 },
+        "end": { "row": 4, "column": 21, "byte": 43 },
       },
       "captures": {
         "a": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "3",
             "range": {
-              "start": { "row": 4, "column": 15 },
-              "end": { "row": 4, "column": 16 },
+              "start": { "row": 4, "column": 15, "byte": 37 },
+              "end": { "row": 4, "column": 16, "byte": 38 },
             },
+            "text": "3",
           },
         ],
         "b": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "4",
             "range": {
-              "start": { "row": 4, "column": 20 },
-              "end": { "row": 4, "column": 21 },
+              "start": { "row": 4, "column": 20, "byte": 42 },
+              "end": { "row": 4, "column": 21, "byte": 43 },
             },
+            "text": "4",
           },
         ],
       },
@@ -225,18 +221,17 @@ test "top" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 0, "column": 0 },
-        "end": { "row": 2, "column": 1 },
+        "start": { "row": 0, "column": 0, "byte": 0 },
+        "end": { "row": 2, "column": 1, "byte": 38 },
       },
       "captures": {
         "a": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment)))))))))",
-            "text": "\"Hello, world!\"",
             "range": {
-              "start": { "row": 1, "column": 10 },
-              "end": { "row": 1, "column": 25 },
+              "start": { "row": 1, "column": 10, "byte": 20 },
+              "end": { "row": 1, "column": 25, "byte": 35 },
             },
+            "text": "\"Hello, world!\"",
           },
         ],
       },
@@ -267,54 +262,51 @@ test "fn_ambiguity" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 2, "column": 3 },
+        "start": { "row": 1, "column": 2, "byte": 26 },
+        "end": { "row": 2, "column": 3, "byte": 37 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
+            "range": {
+              "start": { "row": 1, "column": 5, "byte": 29 },
+              "end": { "row": 1, "column": 7, "byte": 31 },
+            },
             "text": "fx",
-            "range": {
-              "start": { "row": 1, "column": 5 },
-              "end": { "row": 1, "column": 7 },
-            },
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 6, "column": 2 },
-        "end": { "row": 7, "column": 3 },
+        "start": { "row": 6, "column": 2, "byte": 59 },
+        "end": { "row": 7, "column": 3, "byte": 70 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
+            "range": {
+              "start": { "row": 6, "column": 5, "byte": 62 },
+              "end": { "row": 6, "column": 7, "byte": 64 },
+            },
             "text": "fa",
-            "range": {
-              "start": { "row": 6, "column": 5 },
-              "end": { "row": 6, "column": 7 },
-            },
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 10, "column": 0 },
-        "end": { "row": 11, "column": 1 },
+        "start": { "row": 10, "column": 0, "byte": 74 },
+        "end": { "row": 11, "column": 1, "byte": 85 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
-            "text": "main",
             "range": {
-              "start": { "row": 10, "column": 3 },
-              "end": { "row": 10, "column": 7 },
+              "start": { "row": 10, "column": 3, "byte": 77 },
+              "end": { "row": 10, "column": 7, "byte": 81 },
             },
+            "text": "main",
           },
         ],
       },
@@ -344,58 +336,53 @@ test "concat" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 5, "column": 10 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 5, "column": 10, "byte": 62 },
       },
       "captures": {
         "a": [
           {
-            "node": "(compound_expression (simple_expression (qualified_identifier (lowercase_identifier))))",
-            "text": "x",
             "range": {
-              "start": { "row": 1, "column": 8 },
-              "end": { "row": 1, "column": 9 },
+              "start": { "row": 1, "column": 8, "byte": 18 },
+              "end": { "row": 1, "column": 9, "byte": 19 },
             },
+            "text": "x",
           },
         ],
         "b": [
           {
-            "node": "(pattern (simple_pattern (lowercase_identifier)))",
-            "text": "y",
             "range": {
-              "start": { "row": 2, "column": 4 },
-              "end": { "row": 2, "column": 5 },
+              "start": { "row": 2, "column": 4, "byte": 26 },
+              "end": { "row": 2, "column": 5, "byte": 27 },
             },
+            "text": "y",
           },
         ],
         "c": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))))))",
-            "text": "z",
             "range": {
-              "start": { "row": 2, "column": 9 },
-              "end": { "row": 2, "column": 10 },
+              "start": { "row": 2, "column": 9, "byte": 31 },
+              "end": { "row": 2, "column": 10, "byte": 32 },
             },
+            "text": "z",
           },
         ],
         "d": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"a\")",
             "range": {
-              "start": { "row": 4, "column": 2 },
-              "end": { "row": 4, "column": 14 },
+              "start": { "row": 4, "column": 2, "byte": 39 },
+              "end": { "row": 4, "column": 14, "byte": 51 },
             },
+            "text": "println(\"a\")",
           },
         ],
         "f": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "3",
             "range": {
-              "start": { "row": 5, "column": 9 },
-              "end": { "row": 5, "column": 10 },
+              "start": { "row": 5, "column": 9, "byte": 61 },
+              "end": { "row": 5, "column": 10, "byte": 62 },
             },
+            "text": "3",
           },
         ],
       },
@@ -419,76 +406,70 @@ test "ty" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 0, "column": 0 },
-        "end": { "row": 0, "column": 16 },
+        "start": { "row": 0, "column": 0, "byte": 0 },
+        "end": { "row": 0, "column": 16, "byte": 16 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
-            "text": "a",
             "range": {
-              "start": { "row": 0, "column": 4 },
-              "end": { "row": 0, "column": 5 },
+              "start": { "row": 0, "column": 4, "byte": 4 },
+              "end": { "row": 0, "column": 5, "byte": 5 },
             },
+            "text": "a",
           },
         ],
         "b": [
           {
-            "node": "(type (apply_type (qualified_type_identifier (identifier (uppercase_identifier)))))",
-            "text": "Int",
             "range": {
-              "start": { "row": 0, "column": 8 },
-              "end": { "row": 0, "column": 11 },
+              "start": { "row": 0, "column": 8, "byte": 8 },
+              "end": { "row": 0, "column": 11, "byte": 11 },
             },
+            "text": "Int",
           },
         ],
         "c": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "42",
             "range": {
-              "start": { "row": 0, "column": 14 },
-              "end": { "row": 0, "column": 16 },
+              "start": { "row": 0, "column": 14, "byte": 14 },
+              "end": { "row": 0, "column": 16, "byte": 16 },
             },
+            "text": "42",
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 3, "column": 2 },
-        "end": { "row": 3, "column": 21 },
+        "start": { "row": 3, "column": 2, "byte": 30 },
+        "end": { "row": 3, "column": 21, "byte": 49 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
-            "text": "b",
             "range": {
-              "start": { "row": 3, "column": 6 },
-              "end": { "row": 3, "column": 7 },
+              "start": { "row": 3, "column": 6, "byte": 34 },
+              "end": { "row": 3, "column": 7, "byte": 35 },
             },
+            "text": "b",
           },
         ],
         "b": [
           {
-            "node": "(type (apply_type (qualified_type_identifier (identifier (uppercase_identifier)))))",
-            "text": "Bool",
             "range": {
-              "start": { "row": 3, "column": 10 },
-              "end": { "row": 3, "column": 14 },
+              "start": { "row": 3, "column": 10, "byte": 38 },
+              "end": { "row": 3, "column": 14, "byte": 42 },
             },
+            "text": "Bool",
           },
         ],
         "c": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (boolean_literal)))))))",
-            "text": "true",
             "range": {
-              "start": { "row": 3, "column": 17 },
-              "end": { "row": 3, "column": 21 },
+              "start": { "row": 3, "column": 17, "byte": 45 },
+              "end": { "row": 3, "column": 21, "byte": 49 },
             },
+            "text": "true",
           },
         ],
       },
@@ -517,28 +498,26 @@ test "id" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 4, "column": 2 },
-        "end": { "row": 6, "column": 3 },
+        "start": { "row": 4, "column": 2, "byte": 39 },
+        "end": { "row": 6, "column": 3, "byte": 63 },
       },
       "captures": {
         "a": [
           {
-            "node": "(lowercase_identifier)",
-            "text": "a",
             "range": {
-              "start": { "row": 5, "column": 4 },
-              "end": { "row": 5, "column": 5 },
+              "start": { "row": 5, "column": 4, "byte": 53 },
+              "end": { "row": 5, "column": 5, "byte": 54 },
             },
+            "text": "a",
           },
         ],
         "b": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
-            "text": "2",
             "range": {
-              "start": { "row": 5, "column": 9 },
-              "end": { "row": 5, "column": 10 },
+              "start": { "row": 5, "column": 9, "byte": 58 },
+              "end": { "row": 5, "column": 10, "byte": 59 },
             },
+            "text": "2",
           },
         ],
       },
@@ -576,142 +555,130 @@ test "quantifier" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 3, "column": 3 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 3, "column": 3, "byte": 51 },
       },
       "captures": {
         "a": [
           {
-            "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
-            "text": "a",
             "range": {
-              "start": { "row": 1, "column": 8 },
-              "end": { "row": 1, "column": 9 },
+              "start": { "row": 1, "column": 8, "byte": 18 },
+              "end": { "row": 1, "column": 9, "byte": 19 },
             },
+            "text": "a",
           },
         ],
         "b": [
           {
-            "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
+            "range": {
+              "start": { "row": 1, "column": 13, "byte": 23 },
+              "end": { "row": 1, "column": 17, "byte": 27 },
+            },
             "text": "None",
-            "range": {
-              "start": { "row": 1, "column": 13 },
-              "end": { "row": 1, "column": 17 },
-            },
           },
         ],
         "d": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+            "range": {
+              "start": { "row": 2, "column": 11, "byte": 46 },
+              "end": { "row": 2, "column": 12, "byte": 47 },
+            },
             "text": "3",
-            "range": {
-              "start": { "row": 2, "column": 11 },
-              "end": { "row": 2, "column": 12 },
-            },
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 4, "column": 2 },
-        "end": { "row": 7, "column": 3 },
+        "start": { "row": 4, "column": 2, "byte": 54 },
+        "end": { "row": 7, "column": 3, "byte": 110 },
       },
       "captures": {
         "a": [
           {
-            "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
-            "text": "a",
             "range": {
-              "start": { "row": 4, "column": 8 },
-              "end": { "row": 4, "column": 9 },
+              "start": { "row": 4, "column": 8, "byte": 60 },
+              "end": { "row": 4, "column": 9, "byte": 61 },
             },
+            "text": "a",
           },
         ],
         "b": [
           {
-            "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
-            "text": "Some",
             "range": {
-              "start": { "row": 4, "column": 13 },
-              "end": { "row": 4, "column": 17 },
+              "start": { "row": 4, "column": 13, "byte": 65 },
+              "end": { "row": 4, "column": 17, "byte": 69 },
             },
+            "text": "Some",
           },
         ],
         "c": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"a\")",
             "range": {
-              "start": { "row": 5, "column": 4 },
-              "end": { "row": 5, "column": 16 },
+              "start": { "row": 5, "column": 4, "byte": 81 },
+              "end": { "row": 5, "column": 16, "byte": 93 },
             },
+            "text": "println(\"a\")",
           },
         ],
         "d": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+            "range": {
+              "start": { "row": 6, "column": 11, "byte": 105 },
+              "end": { "row": 6, "column": 12, "byte": 106 },
+            },
             "text": "4",
-            "range": {
-              "start": { "row": 6, "column": 11 },
-              "end": { "row": 6, "column": 12 },
-            },
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 8, "column": 2 },
-        "end": { "row": 12, "column": 3 },
+        "start": { "row": 8, "column": 2, "byte": 113 },
+        "end": { "row": 12, "column": 3, "byte": 186 },
       },
       "captures": {
         "a": [
           {
-            "node": "(simple_expression (qualified_identifier (lowercase_identifier)))",
-            "text": "a",
             "range": {
-              "start": { "row": 8, "column": 8 },
-              "end": { "row": 8, "column": 9 },
+              "start": { "row": 8, "column": 8, "byte": 119 },
+              "end": { "row": 8, "column": 9, "byte": 120 },
             },
+            "text": "a",
           },
         ],
         "b": [
           {
-            "node": "(simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier))))",
-            "text": "Some",
             "range": {
-              "start": { "row": 8, "column": 13 },
-              "end": { "row": 8, "column": 17 },
+              "start": { "row": 8, "column": 13, "byte": 124 },
+              "end": { "row": 8, "column": 17, "byte": 128 },
             },
+            "text": "Some",
           },
         ],
         "c": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"a\")",
             "range": {
-              "start": { "row": 9, "column": 4 },
-              "end": { "row": 9, "column": 16 },
+              "start": { "row": 9, "column": 4, "byte": 140 },
+              "end": { "row": 9, "column": 16, "byte": 152 },
             },
+            "text": "println(\"a\")",
           },
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"b\")",
             "range": {
-              "start": { "row": 10, "column": 4 },
-              "end": { "row": 10, "column": 16 },
+              "start": { "row": 10, "column": 4, "byte": 157 },
+              "end": { "row": 10, "column": 16, "byte": 169 },
             },
+            "text": "println(\"b\")",
           },
         ],
         "d": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "5",
             "range": {
-              "start": { "row": 11, "column": 11 },
-              "end": { "row": 11, "column": 12 },
+              "start": { "row": 11, "column": 11, "byte": 181 },
+              "end": { "row": 11, "column": 12, "byte": 182 },
             },
+            "text": "5",
           },
         ],
       },
@@ -735,60 +702,55 @@ test "group" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 2, "column": 2 },
-        "end": { "row": 2, "column": 8 },
+        "start": { "row": 2, "column": 2, "byte": 18 },
+        "end": { "row": 2, "column": 8, "byte": 24 },
       },
       "captures": {
         "x": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "0",
             "range": {
-              "start": { "row": 2, "column": 3 },
-              "end": { "row": 2, "column": 4 },
+              "start": { "row": 2, "column": 3, "byte": 19 },
+              "end": { "row": 2, "column": 4, "byte": 20 },
             },
+            "text": "0",
           },
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "1",
             "range": {
-              "start": { "row": 2, "column": 6 },
-              "end": { "row": 2, "column": 7 },
+              "start": { "row": 2, "column": 6, "byte": 22 },
+              "end": { "row": 2, "column": 7, "byte": 23 },
             },
+            "text": "1",
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 3, "column": 2 },
-        "end": { "row": 3, "column": 11 },
+        "start": { "row": 3, "column": 2, "byte": 27 },
+        "end": { "row": 3, "column": 11, "byte": 36 },
       },
       "captures": {
         "x": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+            "range": {
+              "start": { "row": 3, "column": 3, "byte": 28 },
+              "end": { "row": 3, "column": 4, "byte": 29 },
+            },
             "text": "0",
-            "range": {
-              "start": { "row": 3, "column": 3 },
-              "end": { "row": 3, "column": 4 },
-            },
           },
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
+            "range": {
+              "start": { "row": 3, "column": 6, "byte": 31 },
+              "end": { "row": 3, "column": 7, "byte": 32 },
+            },
             "text": "1",
-            "range": {
-              "start": { "row": 3, "column": 6 },
-              "end": { "row": 3, "column": 7 },
-            },
           },
           {
-            "node": "(expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))",
-            "text": "2",
             "range": {
-              "start": { "row": 3, "column": 9 },
-              "end": { "row": 3, "column": 10 },
+              "start": { "row": 3, "column": 9, "byte": 34 },
+              "end": { "row": 3, "column": 10, "byte": 35 },
             },
+            "text": "2",
           },
         ],
       },
@@ -818,64 +780,59 @@ test "case" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 5, "column": 4 },
-        "end": { "row": 5, "column": 10 },
+        "start": { "row": 5, "column": 4, "byte": 50 },
+        "end": { "row": 5, "column": 10, "byte": 56 },
       },
       "captures": {
         "a": [
           {
-            "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
-            "text": "B",
             "range": {
-              "start": { "row": 5, "column": 4 },
-              "end": { "row": 5, "column": 5 },
+              "start": { "row": 5, "column": 4, "byte": 50 },
+              "end": { "row": 5, "column": 5, "byte": 51 },
             },
+            "text": "B",
           },
         ],
         "b": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
-            "text": "2",
             "range": {
-              "start": { "row": 5, "column": 9 },
-              "end": { "row": 5, "column": 10 },
+              "start": { "row": 5, "column": 9, "byte": 55 },
+              "end": { "row": 5, "column": 10, "byte": 56 },
             },
+            "text": "2",
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 8, "column": 4 },
-        "end": { "row": 8, "column": 13 },
+        "start": { "row": 8, "column": 4, "byte": 79 },
+        "end": { "row": 8, "column": 13, "byte": 88 },
       },
       "captures": {
         "a": [
           {
-            "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
-            "text": "C",
             "range": {
-              "start": { "row": 8, "column": 4 },
-              "end": { "row": 8, "column": 5 },
+              "start": { "row": 8, "column": 4, "byte": 79 },
+              "end": { "row": 8, "column": 5, "byte": 80 },
             },
+            "text": "C",
           },
           {
-            "node": "(pattern (simple_pattern (constructor_pattern (constructor_expression (uppercase_identifier)))))",
-            "text": "D",
             "range": {
-              "start": { "row": 8, "column": 7 },
-              "end": { "row": 8, "column": 8 },
+              "start": { "row": 8, "column": 7, "byte": 82 },
+              "end": { "row": 8, "column": 8, "byte": 83 },
             },
+            "text": "D",
           },
         ],
         "b": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
-            "text": "3",
             "range": {
-              "start": { "row": 8, "column": 12 },
-              "end": { "row": 8, "column": 13 },
+              "start": { "row": 8, "column": 12, "byte": 87 },
+              "end": { "row": 8, "column": 13, "byte": 88 },
             },
+            "text": "3",
           },
         ],
       },
@@ -908,44 +865,41 @@ test "escape" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 0, "column": 0 },
-        "end": { "row": 2, "column": 1 },
+        "start": { "row": 0, "column": 0, "byte": 0 },
+        "end": { "row": 2, "column": 1, "byte": 30 },
       },
       "captures": {
         "a": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"Hello\")",
             "range": {
-              "start": { "row": 1, "column": 2 },
-              "end": { "row": 1, "column": 18 },
+              "start": { "row": 1, "column": 2, "byte": 12 },
+              "end": { "row": 1, "column": 18, "byte": 28 },
             },
+            "text": "println(\"Hello\")",
           },
         ],
       },
     },
     {
       "range": {
-        "start": { "row": 4, "column": 0 },
-        "end": { "row": 7, "column": 1 },
+        "start": { "row": 4, "column": 0, "byte": 32 },
+        "end": { "row": 7, "column": 1, "byte": 77 },
       },
       "captures": {
         "a": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"World\")",
             "range": {
-              "start": { "row": 5, "column": 2 },
-              "end": { "row": 5, "column": 18 },
+              "start": { "row": 5, "column": 2, "byte": 44 },
+              "end": { "row": 5, "column": 18, "byte": 60 },
             },
+            "text": "println(\"World\")",
           },
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (apply_expression (simple_expression (qualified_identifier (lowercase_identifier))) (argument (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))))))))",
-            "text": "println(\"!\")",
             "range": {
-              "start": { "row": 6, "column": 2 },
-              "end": { "row": 6, "column": 14 },
+              "start": { "row": 6, "column": 2, "byte": 63 },
+              "end": { "row": 6, "column": 14, "byte": 75 },
             },
+            "text": "println(\"!\")",
           },
         ],
       },
@@ -974,28 +928,26 @@ test "match_id" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 3, "column": 3 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 3, "column": 3, "byte": 36 },
       },
       "captures": {
         "p": [
           {
-            "node": "(pattern (simple_pattern))",
-            "text": "_",
             "range": {
-              "start": { "row": 2, "column": 4 },
-              "end": { "row": 2, "column": 5 },
+              "start": { "row": 2, "column": 4, "byte": 26 },
+              "end": { "row": 2, "column": 5, "byte": 27 },
             },
+            "text": "_",
           },
         ],
         "e": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (integer_literal))))))))",
-            "text": "1",
             "range": {
-              "start": { "row": 2, "column": 9 },
-              "end": { "row": 2, "column": 10 },
+              "start": { "row": 2, "column": 9, "byte": 31 },
+              "end": { "row": 2, "column": 10, "byte": 32 },
             },
+            "text": "1",
           },
         ],
       },
@@ -1021,38 +973,35 @@ test "multiple_patterns" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 3, "column": 3 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 3, "column": 3, "byte": 47 },
       },
       "captures": {
         "p1": [
           {
-            "node": "(pattern (simple_pattern (literal (integer_literal))))",
-            "text": "1",
             "range": {
-              "start": { "row": 2, "column": 4 },
-              "end": { "row": 2, "column": 5 },
+              "start": { "row": 2, "column": 4, "byte": 26 },
+              "end": { "row": 2, "column": 5, "byte": 27 },
             },
+            "text": "1",
           },
         ],
         "p2": [
           {
-            "node": "(pattern (simple_pattern (literal (integer_literal))))",
-            "text": "2",
             "range": {
-              "start": { "row": 2, "column": 8 },
-              "end": { "row": 2, "column": 9 },
+              "start": { "row": 2, "column": 8, "byte": 30 },
+              "end": { "row": 2, "column": 9, "byte": 31 },
             },
+            "text": "2",
           },
         ],
         "e": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))",
-            "text": "\"number\"",
             "range": {
-              "start": { "row": 2, "column": 13 },
-              "end": { "row": 2, "column": 21 },
+              "start": { "row": 2, "column": 13, "byte": 35 },
+              "end": { "row": 2, "column": 21, "byte": 43 },
             },
+            "text": "\"number\"",
           },
         ],
       },
@@ -1078,38 +1027,35 @@ test "guard_condition" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 3, "column": 3 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 3, "column": 3, "byte": 54 },
       },
       "captures": {
         "p": [
           {
-            "node": "(pattern (simple_pattern (lowercase_identifier)))",
-            "text": "x",
             "range": {
-              "start": { "row": 2, "column": 4 },
-              "end": { "row": 2, "column": 5 },
+              "start": { "row": 2, "column": 4, "byte": 26 },
+              "end": { "row": 2, "column": 5, "byte": 27 },
             },
+            "text": "x",
           },
         ],
         "condition": [
           {
-            "node": "(expression (pipeline_expression (compound_expression (binary_expression (compound_expression (simple_expression (qualified_identifier (lowercase_identifier)))) (compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))))))",
-            "text": "x > 0",
             "range": {
-              "start": { "row": 2, "column": 9 },
-              "end": { "row": 2, "column": 14 },
+              "start": { "row": 2, "column": 9, "byte": 31 },
+              "end": { "row": 2, "column": 14, "byte": 36 },
             },
+            "text": "x > 0",
           },
         ],
         "e": [
           {
-            "node": "(statement_expression (expression (pipeline_expression (compound_expression (simple_expression (atomic_expression (literal (string_literal (string_fragment (unescaped_string_fragment))))))))))",
-            "text": "\"positive\"",
             "range": {
-              "start": { "row": 2, "column": 18 },
-              "end": { "row": 2, "column": 28 },
+              "start": { "row": 2, "column": 18, "byte": 40 },
+              "end": { "row": 2, "column": 28, "byte": 50 },
             },
+            "text": "\"positive\"",
           },
         ],
       },
@@ -1165,18 +1111,17 @@ test "positional_or_labelled" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 2, "column": 2 },
-        "end": { "row": 2, "column": 7 },
+        "start": { "row": 2, "column": 2, "byte": 19 },
+        "end": { "row": 2, "column": 7, "byte": 24 },
       },
       "captures": {
         "arg": [
           {
-            "node": "(lowercase_identifier)",
-            "text": "b",
             "range": {
-              "start": { "row": 2, "column": 4 },
-              "end": { "row": 2, "column": 5 },
+              "start": { "row": 2, "column": 4, "byte": 21 },
+              "end": { "row": 2, "column": 5, "byte": 22 },
             },
+            "text": "b",
           },
         ],
       },
@@ -1197,8 +1142,8 @@ test "comment" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 1, "column": 14 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 1, "column": 14, "byte": 24 },
       },
       "captures": {},
     },
@@ -1218,28 +1163,26 @@ test "replace" {
   @json.inspect!(matches.collect(), content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 1, "column": 7 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 1, "column": 7, "byte": 17 },
       },
       "captures": {
         "a": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "1",
             "range": {
-              "start": { "row": 1, "column": 2 },
-              "end": { "row": 1, "column": 3 },
+              "start": { "row": 1, "column": 2, "byte": 12 },
+              "end": { "row": 1, "column": 3, "byte": 13 },
             },
+            "text": "1",
           },
         ],
         "b": [
           {
-            "node": "(compound_expression (simple_expression (atomic_expression (literal (integer_literal)))))",
-            "text": "2",
             "range": {
-              "start": { "row": 1, "column": 6 },
-              "end": { "row": 1, "column": 7 },
+              "start": { "row": 1, "column": 6, "byte": 16 },
+              "end": { "row": 1, "column": 7, "byte": 17 },
             },
+            "text": "2",
           },
         ],
       },
@@ -1257,8 +1200,8 @@ test "replace" {
   @json.inspect!(replaces, content=[
     {
       "range": {
-        "start": { "row": 1, "column": 2 },
-        "end": { "row": 1, "column": 7 },
+        "start": { "row": 1, "column": 2, "byte": 12 },
+        "end": { "row": 1, "column": 7, "byte": 17 },
       },
       "text": "2 + 1",
     },

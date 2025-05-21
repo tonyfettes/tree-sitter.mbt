@@ -1,17 +1,17 @@
 ///|
-priv struct Range {
+priv struct ByteRange {
   start : Int
   end : Int
 } derive(Show, ToJson)
 
 ///|
-fn Range::new(start : Int, end : Int) -> Range {
-  Range::{ start, end }
+fn ByteRange::new(start : Int, end : Int) -> ByteRange {
+  ByteRange::{ start, end }
 }
 
 ///|
-fn Range::covers(
-  self : Range,
+fn ByteRange::covers(
+  self : ByteRange,
   node : @tree_sitter.Node,
   offset~ : Int = 0
 ) -> Bool {
@@ -20,8 +20,8 @@ fn Range::covers(
 }
 
 ///|
-fn Range::covered_by(
-  self : Range,
+fn ByteRange::covered_by(
+  self : ByteRange,
   node : @tree_sitter.Node,
   offset~ : Int = 0
 ) -> Bool {
@@ -30,8 +30,8 @@ fn Range::covered_by(
 }
 
 ///|
-fn Range::intersects_with(
-  self : Range,
+fn ByteRange::intersects_with(
+  self : ByteRange,
   node : @tree_sitter.Node,
   offset~ : Int = 0
 ) -> Bool {
@@ -42,21 +42,21 @@ fn Range::intersects_with(
 type! ParseError {
   ParseError(Array[@tree_sitter.ParseError])
   QueryError(@tree_sitter.QueryError)
-  UnrecognizedCharacter(Range, Char)
-  UnterminatedGroup(Range)
-  MissingColon(Range)
-  UnrecognizedEntry(Range, String)
+  UnrecognizedCharacter(ByteRange, Char)
+  UnterminatedGroup(ByteRange)
+  MissingColon(ByteRange)
+  UnrecognizedEntry(ByteRange, String)
 } derive(Show)
 
 ///|
 priv enum Quote {
-  Group(range~ : Range, quantifier~ : Quantifier, Array[Quote])
-  Match(name~ : String, range~ : Range, entry~ : Entry)
+  Group(range~ : ByteRange, quantifier~ : Quantifier, Array[Quote])
+  Match(name~ : String, range~ : ByteRange, entry~ : Entry)
 } derive(Show, ToJson)
 
 ///|
 fn Quote::group(
-  range~ : Range,
+  range~ : ByteRange,
   quantifier~ : Quantifier,
   children~ : Array[Quote]
 ) -> Quote {
@@ -64,7 +64,7 @@ fn Quote::group(
 }
 
 ///|
-fn Quote::range(self : Quote) -> Range {
+fn Quote::range(self : Quote) -> ByteRange {
   match self {
     Group(range~, _, ..) => range
     Match(range~, ..) => range
@@ -336,7 +336,7 @@ fn generate_query_for_children(
   buffer~ : StringBuilder
 ) -> Unit!ParseError {
   struct Group {
-    range : Range
+    range : ByteRange
     quantifier : Quantifier
     mut closed : Bool
   } derive(Show, ToJson)
@@ -581,7 +581,7 @@ pub fn Query::search(
 ///|
 struct Match {
   range : @tree_sitter.Range
-  captures : Map[String, Array[@tree_sitter.Node]]
+  captures : Map[String, Array[Text]]
 }
 
 ///|
@@ -591,13 +591,130 @@ pub impl ToJson for Match with to_json(self : Match) -> Json {
       "start": {
         "row": self.range.start_point().row().to_json(),
         "column": self.range.start_point().column().to_json(),
+        "byte": self.range.start_byte().to_json(),
       },
       "end": {
         "row": self.range.end_point().row().to_json(),
         "column": self.range.end_point().column().to_json(),
+        "byte": self.range.end_byte().to_json(),
       },
     },
     "captures": self.captures.to_json(),
+  }
+}
+
+///|
+pub impl @json.FromJson for Match with from_json(
+  self : Json,
+  path : @json.JsonPath
+) -> Match!@json.JsonDecodeError {
+  match self {
+    {
+      "range": {
+        "start": {
+          "row": Number(start_row),
+          "column": Number(start_column),
+          "byte": Number(start_byte),
+          ..
+        },
+        "end": {
+          "row": Number(end_row),
+          "column": Number(end_column),
+          "byte": Number(end_byte),
+          ..
+        },
+        ..
+      },
+      "captures": Object(captures_json),
+      ..
+    } => {
+      let captures = {}
+      for name, capture_json in captures_json {
+        match capture_json {
+          Array(texts_json) => {
+            let texts = []
+            for text_json in texts_json {
+              texts.push(@json.from_json!(text_json))
+            }
+            captures[name] = texts
+          }
+          _ => raise @json.JsonDecodeError((path, "Invalid capture"))
+        }
+      }
+      Match::{
+        range: @tree_sitter.Range::new(
+          @tree_sitter.Point::new(start_row.to_int(), start_column.to_int()),
+          @tree_sitter.Point::new(end_row.to_int(), end_column.to_int()),
+          start_byte.to_int(),
+          end_byte.to_int(),
+        ),
+        captures,
+      }
+    }
+    _ => raise @json.JsonDecodeError((path, "Invalid match"))
+  }
+}
+
+///|
+struct Text {
+  range : @tree_sitter.Range
+  text : @string.View
+}
+
+///|
+pub impl ToJson for Text with to_json(self : Text) -> Json {
+  {
+    "range": {
+      "start": {
+        "row": self.range.start_point().row().to_json(),
+        "column": self.range.start_point().column().to_json(),
+        "byte": self.range.start_byte().to_json(),
+      },
+      "end": {
+        "row": self.range.end_point().row().to_json(),
+        "column": self.range.end_point().column().to_json(),
+        "byte": self.range.end_byte().to_json(),
+      },
+    },
+    "text": self.text.to_json(),
+  }
+}
+
+///|
+pub impl @json.FromJson for Text with from_json(
+  self : Json,
+  path : @json.JsonPath
+) -> Text!@json.JsonDecodeError {
+  match self {
+    {
+      "range": {
+        "start": {
+          "row": Number(start_row),
+          "column": Number(start_column),
+          "byte": Number(start_byte),
+          ..
+        },
+        "end": {
+          "row": Number(end_row),
+          "column": Number(end_column),
+          "byte": Number(end_byte),
+          ..
+        },
+        ..
+      },
+      "text": String(text),
+      ..
+    } =>
+      Text::{
+        range: @tree_sitter.Range::new(
+          @tree_sitter.Point::new(start_row.to_int(), start_column.to_int()),
+          @tree_sitter.Point::new(end_row.to_int(), end_column.to_int()),
+          start_byte.to_int(),
+          end_byte.to_int(),
+        ),
+        text,
+      }
+    _ => raise @json.JsonDecodeError((path, "Invalid text"))
   }
 }
 
@@ -648,7 +765,16 @@ pub fn Query::matches(self : Query, node : @tree_sitter.Node) -> Iter[Match] {
       )
       let captures = captures
         .iter()
-        .filter(fn { (name, _) => not(name.has_prefix("_")) })
+        .filter_map(fn {
+          (name, nodes) => {
+            guard not(name.has_prefix("_")) else { None }
+            let texts = []
+            for node in nodes {
+              texts.push(Text::{ range: node.range(), text: node.text() })
+            }
+            Some((name, texts))
+          }
+        })
         |> Map::from_iter()
       match yield_({ range: query_range, captures }) {
         IterEnd => break matches~ IterEnd
@@ -785,7 +911,7 @@ fn Language::parse(
       buffer.reset()
       guard self.entries.get(entry) is Some(entry) else {
         raise UnrecognizedEntry(
-          Range::new(offset - entry.length(), offset),
+          ByteRange::new(offset - entry.length(), offset),
           entry,
         )
       }
@@ -797,7 +923,7 @@ fn Language::parse(
           continue Match(state~, entry~, start~, buffer~), offset + 1, source
         }
         char =>
-          raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
+          raise UnrecognizedCharacter(ByteRange::new(offset, offset + 1), char)
       }
     }
     Entry(state~, buffer~),
@@ -807,8 +933,9 @@ fn Language::parse(
       continue Entry(state~, buffer~), offset + 1, source
     }
     Entry(..), offset, [char, ..] =>
-      raise UnrecognizedCharacter(Range::new(offset, offset + 1), char)
-    Entry(..), offset, [] => raise MissingColon(Range::new(offset, offset + 1))
+      raise UnrecognizedCharacter(ByteRange::new(offset, offset + 1), char)
+    Entry(..), offset, [] =>
+      raise MissingColon(ByteRange::new(offset, offset + 1))
     Match(state~, entry~, start~, buffer~),
     offset,
     ['a'..='z' | 'A'..='Z' | '_' | '0'..='9' as char, .. source] => {
@@ -821,7 +948,11 @@ fn Language::parse(
       state
       .children()
       .push(
-        Match(name=ident, range=Range::{ start, end: query.length() }, entry~),
+        Match(
+          name=ident,
+          range=ByteRange::{ start, end: query.length() },
+          entry~,
+        ),
       )
       continue state.to_parse_state(), offset, source
     }
@@ -844,7 +975,7 @@ fn Language::parse(
       .children()
       .push(
         Group(
-          range=Range::{ start, end: query.length() },
+          range=ByteRange::{ start, end: query.length() },
           quantifier~,
           children,
         ),
@@ -871,7 +1002,7 @@ fn Language::parse(
       continue Group(state~, children~, start~), offset + 1, source
     }
     Group(start~, ..), offset, [] =>
-      raise UnterminatedGroup(Range::new(start, offset))
+      raise UnterminatedGroup(ByteRange::new(start, offset))
   }
 }
 
@@ -960,10 +1091,12 @@ pub impl ToJson for Edit with to_json(self : Edit) -> Json {
       "start": {
         "row": self.range.start_point().row().to_json(),
         "column": self.range.start_point().column().to_json(),
+        "byte": self.range.start_byte().to_json(),
       },
       "end": {
         "row": self.range.end_point().row().to_json(),
         "column": self.range.end_point().column().to_json(),
+        "byte": self.range.end_byte().to_json(),
       },
     },
     "text": self.text.to_json(),
@@ -987,7 +1120,7 @@ pub fn Match::replace(self : Match, source : @string.View) -> Edit!ReplaceError 
         match self.captures.get(name) {
           None => raise VariableNotFound(name)
           Some([node]) => {
-            let text = node.text()
+            let text = node.text
             for char in text {
               replaced.write_char(char)
             }
@@ -998,4 +1131,29 @@ pub fn Match::replace(self : Match, source : @string.View) -> Edit!ReplaceError 
     }
   }
   Edit::{ range: self.range, text: replaced.to_string() }
+}
+
+///|
+pub fn replace(
+  captures : Map[@string.View, Array[@string.View]],
+  replace : @string.View
+) -> @string.View!ReplaceError {
+  let replaces = Replace::parse(replace)
+  let replaced = StringBuilder::new()
+  for replace in replaces {
+    match replace {
+      Quote(string) => replaced.write_string(string)
+      Subst(name) =>
+        match captures.get(name) {
+          None => raise VariableNotFound(name)
+          Some([text]) =>
+            for char in text {
+              replaced.write_char(char)
+            }
+          Some(_) =>
+            raise MismatchedType(expect="single node", actual="multiple nodes")
+        }
+    }
+  }
+  replaced.to_string()
 }
