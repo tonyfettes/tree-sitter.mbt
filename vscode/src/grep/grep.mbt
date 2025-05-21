@@ -127,7 +127,7 @@ fn moonbit() -> @pattern.Language!Error {
       placeholder="A",
     ),
   }
-  let extras = ["semicolon", "comment"]
+  let extras = ["semicolon"]
   let language = @tree_sitter_moonbit.language()
   @pattern.Language::new!(language, contexts~, entries~, extras~)
 }
