@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type * as Search from "./search";
-import { MatchRange } from "./sidebar/types";
+import * as Sidebar from "./sidebar/types";
 
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "moon-grep-search";
@@ -23,6 +23,10 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     return text;
   }
 
+  private onDidReceiveMessage(listener: (message: Sidebar.Request) => Promise<void> | void) {
+    this.view?.webview.onDidReceiveMessage(listener);
+  }
+
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -35,88 +39,94 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.extensionUri],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (data) => {
-      switch (data.type) {
+    this.onDidReceiveMessage(async (message) => {
+      console.log("Received message from webview:", message);
+      switch (message.type) {
         case "search": {
-          await this._performSearch(data.value);
+          await this.search(message.value);
           break;
         }
         case "clear": {
           this.service.clear();
-          if (this.view) {
-            this.view.webview.postMessage({
-              type: "results",
-              results: [],
-              stats: { matchCount: 0, fileCount: 0 },
-            });
-          }
+          break;
+        }
+        case "dismissMatch": {
+          this.service.dismiss(message.value.id);
+          break;
+        }
+        case "replaceMatch": {
+          this.service.replace(message.value.id, message.value.replace);
           break;
         }
         case "openMatch": {
-          this._openMatch(data.uri, data.range);
-          break;
-        }
-        case "openInEditor": {
-          this._openInEditor(data.value.results);
+          this._openMatch(message.value.uri, message.value.range);
           break;
         }
       }
     });
+
+    this.service.onInsert.event((result) => {
+      this.postMessage({
+        type: "insert",
+        result: {
+          id: result.id,
+          uri: vscode.workspace.asRelativePath(result.uri),
+          range: {
+            start: {
+              line: result.range.start.line,
+              character: result.range.start.character,
+            },
+            end: {
+              line: result.range.end.line,
+              character: result.range.end.character,
+            },
+          },
+          lines: result.context,
+        },
+      });
+    });
+
+    this.service.onRemove.event(({ id, uri }) => {
+      this.postMessage({
+        type: "remove",
+        result: {
+          id,
+          uri: vscode.workspace.asRelativePath(uri),
+        },
+      });
+    });
+
+    this.service.onClear.event(() => {
+      this.postMessage({
+        type: "clear",
+      });
+    });
   }
 
-  private async _performSearch(options: Search.Options) {
+  private async postMessage(message: Sidebar.Response) {
+    console.log("Posting message to webview:", message);
+    this.view?.webview.postMessage(message);
+  }
+
+  private async search(options: Search.Options) {
     try {
       const workspaceFolders = vscode.workspace.workspaceFolders;
       if (!workspaceFolders) {
         vscode.window.showErrorMessage(`Search failed: no workspace folder available`);
         return;
       }
-      this.service.onResult.event((results) => {
-        if (this.view) {
-          this.view.webview.postMessage({
-            type: "results",
-            results: results.map((result) => {
-              return {
-                uri: vscode.workspace.asRelativePath(result.uri),
-                range: {
-                  start: {
-                    line: result.range.start.line,
-                    character: result.range.start.character,
-                  },
-                  end: {
-                    line: result.range.end.line,
-                    character: result.range.end.character,
-                  },
-                },
-                lines: result.context,
-              };
-            }),
-            stats: {
-              matchCount: results.length,
-              fileCount: new Set(results.map((result) => result.uri)).size,
-            },
-          });
-        }
-      });
       const promises = workspaceFolders.map((folder) => {
         return this.service.search(folder.uri, options);
       });
       await Promise.all(promises);
     } catch (error: any) {
       vscode.window.showErrorMessage(`Search failed: ${error.message || "Unknown error"}`);
-      if (this.view) {
-        this.view.webview.postMessage({
-          type: "results",
-          results: [],
-          stats: { matchCount: 0, fileCount: 0 },
-        });
-      }
     }
   }
 
-  private _openMatch(file: string, range: MatchRange) {
+  private _openMatch(file: string, range: Sidebar.Range) {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       return;
@@ -131,13 +141,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _openInEditor(results: Search.Result[]) {
-    // This would open the search results in the editor
-    // For now, we'll just show a message
-    vscode.window.showInformationMessage("Open in editor functionality is coming soon.");
-  }
-
-  private _getHtmlForWebview(webview: vscode.Webview): string {
+  private getHtmlForWebview(webview: vscode.Webview): string {
     const nonce = WebviewViewProvider.getNonce();
 
     const scriptUri = webview.asWebviewUri(

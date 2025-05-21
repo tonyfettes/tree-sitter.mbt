@@ -300,6 +300,7 @@ input[type="checkbox"] {
   padding: 2px var(--container-padding) 2px 24px;
   cursor: pointer;
   line-height: 1.4;
+  position: relative;
 }
 
 .match-item:hover {
@@ -312,6 +313,28 @@ input[type="checkbox"] {
   font-size: var(--vscode-editor-font-size);
   white-space: pre;
   width: 100%;
+}
+
+.match-item-actions {
+  position: absolute;
+  right: 8px;
+  top: 0;
+  display: none;
+  z-index: 1;
+}
+
+.match-item:hover .match-item-actions {
+  display: flex;
+}
+
+.match-item-actions .icon-button {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
+
+.match-item-actions .icon-button:hover {
+  opacity: 1;
 }
 
 .match-line {

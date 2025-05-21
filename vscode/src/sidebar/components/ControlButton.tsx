@@ -4,7 +4,7 @@ import Codicon from "./Codicon";
 interface ControlButtonProps {
   icon: string;
   title: string;
-  onClick: () => void;
+  onClick?: () => void;
   active?: boolean;
   id?: string;
   className?: string;

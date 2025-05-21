@@ -8,6 +8,8 @@ interface FileItemProps {
   matches: Result[];
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onReplaceMatch?: (id: string) => void;
+  onDismissMatch?: (id: string) => void;
 }
 
 export const FileItem: React.FC<FileItemProps> = ({
@@ -15,6 +17,8 @@ export const FileItem: React.FC<FileItemProps> = ({
   matches,
   collapsed,
   onToggleCollapse,
+  onReplaceMatch,
+  onDismissMatch,
 }) => {
   return (
     <div className={`file-item ${collapsed ? "collapsed" : ""}`}>
@@ -26,12 +30,15 @@ export const FileItem: React.FC<FileItemProps> = ({
         <span className="match-count">{matches.length}</span>
       </div>
       <div className="match-list">
-        {matches.map((match, index) => (
+        {matches.map((match) => (
           <MatchItem
-            key={`${match.uri}-${index}`}
+            key={`${match.uri}-${match.id}`}
+            id={match.id}
             uri={match.uri}
             range={match.range}
             lines={match.lines}
+            onReplace={onReplaceMatch}
+            onDismiss={onDismissMatch}
           />
         ))}
       </div>

@@ -1135,7 +1135,7 @@ pub fn Match::replace(self : Match, source : @string.View) -> Edit!ReplaceError 
 
 ///|
 pub fn replace(
-  captures : Map[@string.View, Array[@string.View]],
+  captures : Map[@string.View, Array[Text]],
   replace : @string.View
 ) -> @string.View!ReplaceError {
   let replaces = Replace::parse(replace)
@@ -1147,7 +1147,7 @@ pub fn replace(
         match captures.get(name) {
           None => raise VariableNotFound(name)
           Some([text]) =>
-            for char in text {
+            for char in text.text {
               replaced.write_char(char)
             }
           Some(_) =>

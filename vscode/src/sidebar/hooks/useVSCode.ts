@@ -1,6 +1,8 @@
+import { Request } from "../types";
+
 // Declare the vscode API
 declare const acquireVsCodeApi: () => {
-  postMessage: (message: any) => void;
+  postMessage: (message: Request) => void;
   getState: () => any;
   setState: (state: any) => void;
 };

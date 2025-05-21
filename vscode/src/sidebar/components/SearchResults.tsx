@@ -1,13 +1,14 @@
 import React from "react";
 import { Result, SearchStats } from "../types";
 import FileItem from "./FileItem";
-import { useVSCode } from "../hooks/useVSCode";
 
 interface SearchResultsProps {
-  results: Result[];
+  results: Record<string, Result[]>;
   stats: SearchStats;
   collapsedFiles: Record<string, boolean>;
   onToggleCollapse: (fileUri: string) => void;
+  onReplaceMatch?: (id: string) => void;
+  onDismissMatch?: (id: string) => void;
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -15,28 +16,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   stats,
   collapsedFiles,
   onToggleCollapse,
+  onReplaceMatch,
+  onDismissMatch,
 }) => {
-  const vscode = useVSCode();
-
-  // Group results by file
-  const fileGroups: Record<string, Result[]> = {};
-  results.forEach((result) => {
-    if (!fileGroups[result.uri]) {
-      fileGroups[result.uri] = [];
-    }
-    fileGroups[result.uri].push(result);
-  });
-
-  const handleOpenInEditor = () => {
-    vscode.postMessage({
-      type: "openInEditor",
-      value: {
-        results,
-      },
-    });
-  };
-
-  if (results.length === 0) {
+  if (Object.keys(results).length === 0) {
     return (
       <div className="no-results" id="noResultsMessage">
         No results found yet. Try searching for something.
@@ -50,18 +33,17 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         <span>
           {stats.matchCount} results in {stats.fileCount} files
         </span>
-        <a className="open-editor" onClick={handleOpenInEditor}>
-          Open in editor
-        </a>
       </div>
 
-      {Object.entries(fileGroups).map(([file, matches]) => (
+      {Object.entries(results).map(([file, matches]) => (
         <FileItem
           key={file}
           file={file}
           matches={matches}
           collapsed={!!collapsedFiles[file]}
           onToggleCollapse={() => onToggleCollapse(file)}
+          onReplaceMatch={onReplaceMatch}
+          onDismissMatch={onDismissMatch}
         />
       ))}
     </div>

@@ -1,7 +1,3 @@
 {
-  "test-import": [
-    "tonyfettes/uv",
-    "tonyfettes/uv/async",
-    "tonyfettes/encoding"
-  ]
+  "test-import": ["tonyfettes/uv/async", "tonyfettes/encoding"]
 }

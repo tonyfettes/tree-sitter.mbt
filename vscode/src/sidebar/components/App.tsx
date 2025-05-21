@@ -5,7 +5,7 @@ import SearchInput from "./SearchInput";
 import ReplaceInput from "./ReplaceInput";
 import SearchDetails from "./SearchDetails";
 import SearchResults from "./SearchResults";
-import { SearchOptions, Result } from "../types";
+import { SearchOptions, Result, Response } from "../types";
 
 const App: React.FC = () => {
   const vscode = useVSCode();
@@ -17,34 +17,66 @@ const App: React.FC = () => {
     includePattern: "",
     excludePattern: "",
   });
-  const [results, setResults] = useState<Result[]>([]);
+  const [results, setResults] = useState<Record<string, Result[]>>({});
   const [stats, setStats] = useState({ matchCount: 0, fileCount: 0 });
   const [collapsedFiles, setCollapsedFiles] = useState<Record<string, boolean>>({});
 
   // Handle messages from extension
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent<Response>) => {
+      console.log("Received message from extension:", event.data);
       const message = event.data;
       switch (message.type) {
-        case "results":
-          setResults(message.results);
-          setStats(message.stats);
-
-          // Reset collapsed state for all files when new results come in
-          const newCollapsedState: Record<string, boolean> = {};
-
-          // Get unique file URIs from results
-          const fileUris = new Set<string>();
-          message.results.forEach((result: Result) => {
-            fileUris.add(result.uri);
+        case "insert": {
+          setResults((results) => {
+            const newResults = {};
+            for (const [uri, resultsByUri] of Object.entries(results)) {
+              if (uri === message.result.uri) {
+                newResults[uri] = [...resultsByUri, message.result];
+              } else {
+                newResults[uri] = resultsByUri;
+              }
+            }
+            if (!newResults[message.result.uri]) {
+              newResults[message.result.uri] = [message.result];
+            }
+            return newResults;
           });
-
-          // Set all files to expanded by default
-          fileUris.forEach((uri) => {
-            newCollapsedState[uri] = false;
+          setStats((stats) => ({
+            matchCount: stats.matchCount + 1,
+            fileCount: Object.keys(results).length,
+          }));
+          setCollapsedFiles((collapsedFiles) => {
+            const newCollapsedFiles = { ...collapsedFiles };
+            if (!collapsedFiles[message.result.uri]) {
+              newCollapsedFiles[message.result.uri] = false;
+            }
+            return newCollapsedFiles;
           });
-
-          setCollapsedFiles(newCollapsedState);
+          break;
+        }
+        case "remove": {
+          setResults((results) => {
+            const newResults = {};
+            for (const [uri, resultsByUri] of Object.entries(results)) {
+              if (uri === message.result.uri) {
+                const newResultsByUri = resultsByUri.filter(
+                  (result) => result.id !== message.result.id
+                );
+                if (newResultsByUri.length > 0) {
+                  newResults[uri] = newResultsByUri;
+                }
+              } else {
+                newResults[uri] = resultsByUri;
+              }
+            }
+            return newResults;
+          });
+          break;
+        }
+        case "clear":
+          setResults({});
+          setCollapsedFiles({});
           break;
       }
     };
@@ -53,16 +85,26 @@ const App: React.FC = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  useEffect(() => {
+    let matchCount = 0;
+    for (const resultsByUri of Object.values(results)) {
+      matchCount += resultsByUri.length;
+    }
+    setStats({
+      fileCount: Object.keys(results).length,
+      matchCount,
+    });
+  }, [results]);
+
   // Save state when inputs or collapsed state changes
   useEffect(() => {
     if (!initialized) return;
     vscode.setState({
       searchPattern,
       replacePattern,
-      collapsedFiles,
       ...searchOptions,
     });
-  }, [searchPattern, replacePattern, searchOptions, collapsedFiles]);
+  }, [searchPattern, replacePattern, searchOptions]);
 
   // Restore state when component mounts
   useEffect(() => {
@@ -75,11 +117,6 @@ const App: React.FC = () => {
         includePattern: state.includePattern || "",
         excludePattern: state.excludePattern || "",
       });
-
-      // Restore collapsed state if it exists
-      if (state.collapsedFiles) {
-        setCollapsedFiles(state.collapsedFiles);
-      }
     }
     setInitialized(true);
   }, []);
@@ -101,7 +138,7 @@ const App: React.FC = () => {
   const clearSearch = () => {
     setSearchPattern("");
     setReplacePattern("");
-    setResults([]);
+    setResults({});
     setStats({ matchCount: 0, fileCount: 0 });
     setCollapsedFiles({}); // Clear collapsed state when search is cleared
 
@@ -111,39 +148,23 @@ const App: React.FC = () => {
   };
 
   const collapseAll = () => {
-    // Create a new object with all files set to collapsed
-    const newCollapsedState: Record<string, boolean> = {};
-
-    // Get unique file URIs from results
-    const fileUris = new Set<string>();
-    results.forEach((result) => {
-      fileUris.add(result.uri);
+    setCollapsedFiles((collapsedFiles) => {
+      const newCollapsedFiles = {};
+      for (const uri of Object.keys(collapsedFiles)) {
+        newCollapsedFiles[uri] = true; // Collapse all files
+      }
+      return newCollapsedFiles;
     });
-
-    // Set all files to collapsed
-    fileUris.forEach((uri) => {
-      newCollapsedState[uri] = true;
-    });
-
-    setCollapsedFiles(newCollapsedState);
   };
 
   const expandAll = () => {
-    // Create a new object with all files set to expanded
-    const newCollapsedState: Record<string, boolean> = {};
-
-    // Get unique file URIs from results
-    const fileUris = new Set<string>();
-    results.forEach((result) => {
-      fileUris.add(result.uri);
+    setCollapsedFiles((collapsedFiles) => {
+      const newCollapsedFiles = {};
+      for (const uri of Object.keys(collapsedFiles)) {
+        newCollapsedFiles[uri] = false; // Expand all files
+      }
+      return newCollapsedFiles;
     });
-
-    // Set all files to expanded
-    fileUris.forEach((uri) => {
-      newCollapsedState[uri] = false;
-    });
-
-    setCollapsedFiles(newCollapsedState);
   };
 
   // Function to toggle collapse state for a specific file
@@ -152,6 +173,21 @@ const App: React.FC = () => {
       ...prev,
       [fileUri]: !prev[fileUri],
     }));
+  };
+
+  const handleReplaceMatch = (id: string) => {
+    vscode.postMessage({
+      type: "replaceMatch",
+      value: { id, replace: replacePattern },
+    });
+  };
+
+  // Function to dismiss a match
+  const handleDismissMatch = (id: string) => {
+    vscode.postMessage({
+      type: "dismissMatch",
+      value: { id },
+    });
   };
 
   return (
@@ -183,8 +219,6 @@ const App: React.FC = () => {
           onSearch={() => {
             performSearch(searchPattern);
           }}
-          searchPattern={searchPattern}
-          searchOptions={searchOptions}
         />
 
         <SearchDetails
@@ -208,6 +242,8 @@ const App: React.FC = () => {
         stats={stats}
         collapsedFiles={collapsedFiles}
         onToggleCollapse={toggleFileCollapse}
+        onReplaceMatch={handleReplaceMatch}
+        onDismissMatch={handleDismissMatch}
       />
     </div>
   );

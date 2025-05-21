@@ -201,7 +201,7 @@ fn main {
           },
           ..
         } => {
-          let captures = {}
+          let captures : Map[@string.View, Array[@pattern.Text]] = {}
           for name, capture_json in captures_json {
             captures[name.view()] = @json.from_json!(capture_json)
           }

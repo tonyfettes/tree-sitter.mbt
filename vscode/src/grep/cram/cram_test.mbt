@@ -15,7 +15,29 @@ test "grep" {
     {
       "jsonrpc": "2.0",
       "method": "replace",
-      "params": { "captures": { "a": ["1"], "b": ["2"] }, "replace": "$b + $a" },
+      "params": {
+        "captures": {
+          "a": [
+            {
+              "range": {
+                "start": { "row": 1, "column": 2, "byte": 12 },
+                "end": { "row": 1, "column": 3, "byte": 13 },
+              },
+              "text": "1",
+            },
+          ],
+          "b": [
+            {
+              "range": {
+                "start": { "row": 1, "column": 6, "byte": 16 },
+                "end": { "row": 1, "column": 7, "byte": 17 },
+              },
+              "text": "2",
+            },
+          ],
+        },
+        "replace": "$b + $a",
+      },
     },
   ]
   let id_ref = Ref::new(0)
