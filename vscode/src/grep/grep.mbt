@@ -171,6 +171,9 @@ fn main {
   try {
     let language = moonbit!()
     fn on_submit!() {
+      if buffer.is_empty() {
+        return
+      }
       let content = @encoding.decode!(buffer.contents(), encoding=UTF8)
       let json = @json.parse!(content)
       match json {
