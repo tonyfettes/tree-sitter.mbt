@@ -51,6 +51,18 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           this.service.clear();
           break;
         }
+        case "refresh": {
+          // The webview will handle the refresh based on the current search pattern
+          break;
+        }
+        case "collapseAll": {
+          // The webview will handle collapsing all items
+          break;
+        }
+        case "expandAll": {
+          // The webview will handle expanding all items
+          break;
+        }
         case "dismissMatch": {
           this.service.dismiss(message.value.id);
           break;
@@ -104,7 +116,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private async postMessage(message: Sidebar.Response) {
+  public async postMessage(message: Sidebar.Response) {
     this.view?.webview.postMessage(message);
   }
 

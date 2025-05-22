@@ -35,6 +35,15 @@ export type Response =
       type: "clear";
     }
   | {
+      type: "refresh";
+    }
+  | {
+      type: "collapseAll";
+    }
+  | {
+      type: "expandAll";
+    }
+  | {
       type: "remove";
       result: {
         uri: string;
@@ -53,6 +62,9 @@ export type Request =
       };
     }
   | { type: "clear" }
+  | { type: "refresh" }
+  | { type: "collapseAll" }
+  | { type: "expandAll" }
   | { type: "dismissMatch"; value: { id: string } }
   | { type: "replaceMatch"; value: { id: string, replace: string } }
   | { type: "openMatch"; value: { uri: string; range: Range } };

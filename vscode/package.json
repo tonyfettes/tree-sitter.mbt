@@ -27,6 +27,26 @@
       {
         "command": "moon-grep.search",
         "title": "Moon Grep: Search"
+      },
+      {
+        "command": "moon-grep.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "moon-grep.clear",
+        "title": "Clear",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "moon-grep.collapseAll",
+        "title": "Collapse All",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "moon-grep.expandAll",
+        "title": "Expand All",
+        "icon": "$(expand-all)"
       }
     ],
     "viewsContainers": {
@@ -45,6 +65,30 @@
           "id": "moon-grep-search",
           "name": "Search",
           "icon": "$(search)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "moon-grep.refresh",
+          "when": "view == moon-grep-search",
+          "group": "navigation"
+        },
+        {
+          "command": "moon-grep.clear",
+          "when": "view == moon-grep-search",
+          "group": "navigation"
+        },
+        {
+          "command": "moon-grep.collapseAll",
+          "when": "view == moon-grep-search",
+          "group": "navigation"
+        },
+        {
+          "command": "moon-grep.expandAll",
+          "when": "view == moon-grep-search",
+          "group": "navigation"
         }
       ]
     }

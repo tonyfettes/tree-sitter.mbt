@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useVSCode } from "../hooks/useVSCode";
-import SearchHeader from "./SearchHeader";
 import SearchInput from "./SearchInput";
 import ReplaceInput from "./ReplaceInput";
 import SearchDetails from "./SearchDetails";
@@ -78,12 +77,21 @@ const App: React.FC = () => {
           setResults({});
           setCollapsedFiles({});
           break;
+        case "refresh":
+          performSearch(searchPattern);
+          break;
+        case "collapseAll":
+          collapseAll();
+          break;
+        case "expandAll":
+          expandAll();
+          break;
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [searchPattern]); // Added searchPattern as dependency for performSearch
 
   useEffect(() => {
     let matchCount = 0;
@@ -192,15 +200,6 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <SearchHeader
-        onRefresh={() => {
-          performSearch(searchPattern);
-        }}
-        onClear={clearSearch}
-        onCollapseAll={collapseAll}
-        onExpandAll={expandAll}
-      />
-
       <div className="search-container">
         <SearchInput
           value={searchPattern}
