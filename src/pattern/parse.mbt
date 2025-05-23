@@ -317,12 +317,11 @@ fn generate_captures(
 ///|
 priv struct Capture {
   name : String
-  entry : Entry
 }
 
 ///|
-fn Capture::new(name~ : String, entry~ : Entry) -> Capture {
-  Capture::{ name, entry }
+fn Capture::new(name~ : String) -> Capture {
+  Capture::{ name }
 }
 
 ///|
@@ -376,8 +375,8 @@ fn generate_query_for_children(
                 continue
               }
               match captures.get(capture.node()) {
-                Some(captures) => captures.push(Capture::new(name~, entry~))
-                None => captures[capture.node()] = [Capture::new(name~, entry~)]
+                Some(captures) => captures.push(Capture::new(name~))
+                None => captures[capture.node()] = [Capture::new(name~)]
               }
             }
           } else if range.covered_by(child, offset~) {
