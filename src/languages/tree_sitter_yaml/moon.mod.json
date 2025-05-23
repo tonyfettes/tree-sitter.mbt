@@ -13,6 +13,7 @@
     "scanner.c",
     "schema.core.c",
     "schema.json.c",
+    "schema.legacy.c",
     "tree_sitter",
     "binding.mbt",
     "moon.pkg.json",

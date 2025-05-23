@@ -4,4 +4,5 @@ parser.c
 scanner.c
 schema.core.c
 schema.json.c
+schema.legacy.c
 tree_sitter
