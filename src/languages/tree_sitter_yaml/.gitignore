@@ -1,0 +1,7 @@
+grammar.json
+node-types.json
+parser.c
+scanner.c
+schema.core.c
+schema.json.c
+tree_sitter
