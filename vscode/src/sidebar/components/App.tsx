@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useVSCode } from "../hooks/useVSCode";
-import SearchInput from "./SearchInput";
-import ReplaceInput from "./ReplaceInput";
+import SearchReplaceGroup from "./SearchReplaceGroup";
 import SearchDetails from "./SearchDetails";
 import SearchResults from "./SearchResults";
 import { SearchOptions, Result, Response } from "../types";
@@ -201,20 +200,14 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <div className="search-container">
-        <SearchInput
-          value={searchPattern}
-          onChange={(value) => {
+        <SearchReplaceGroup
+          searchValue={searchPattern}
+          replaceValue={replacePattern}
+          onSearchChange={(value) => {
             setSearchPattern(value);
             performSearch(value);
           }}
-          onSearch={() => {
-            performSearch(searchPattern);
-          }}
-        />
-
-        <ReplaceInput
-          value={replacePattern}
-          onChange={setReplacePattern}
+          onReplaceChange={setReplacePattern}
           onSearch={() => {
             performSearch(searchPattern);
           }}

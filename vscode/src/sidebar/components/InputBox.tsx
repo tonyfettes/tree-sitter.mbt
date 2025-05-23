@@ -55,7 +55,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   }, [value]);
 
   return (
-    <div>
+    <>
       {label && <label className="input-box-label">{label}</label>}
       <div className={`input-box ${className}`}>
         <textarea
@@ -83,7 +83,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
         />
         {controls && <div className="search-controls">{controls}</div>}
       </div>
-    </div>
+    </>
   );
 };
 
