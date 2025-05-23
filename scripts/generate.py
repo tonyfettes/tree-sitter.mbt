@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 import subprocess
 import shutil
-import semver
 import os
 import re
 import argparse
@@ -27,7 +26,7 @@ include_directories = [
 
 
 class Metadata:
-    version: semver.Version
+    version: str
     license: str
     description: str
     repository: str
@@ -35,7 +34,7 @@ class Metadata:
 
     def __init__(
         self,
-        version: semver.Version,
+        version: str,
         license: str,
         description: str,
         repository: str,
@@ -204,20 +203,12 @@ pub extern "c" fn language() -> @tree_sitter_language.Language = "{function_name
 
     def generate_binding_to(self, destination: Path):
         self.tree_sitter_generate()
-        version = VERSION
+        version: str = VERSION
         if destination.exists():
             if (destination / "moon.mod.json").exists():
                 moon_mod_json = json.loads((destination / "moon.mod.json").read_text())
                 if "version" in moon_mod_json:
                     version = moon_mod_json["version"]
-                    if "repository" in moon_mod_json:
-                        repository = moon_mod_json["repository"]
-                        if repository != self.metadata.repository:
-                            version = semver.bump_patch(version)
-                    else:
-                        version = semver.bump_patch(version)
-                    if semver.compare(version, VERSION) < 0:
-                        version = VERSION
             shutil.rmtree(destination)
         shutil.copytree(self.path / "src", destination)
         relocations = {}
@@ -288,7 +279,7 @@ def generate_binding(project: Path, bindings: Path):
     metadata_links_dict = metadata_dict["links"]
     submodule_commit = git_submodule_commit(project)
     metadata = Metadata(
-        version=semver.Version.parse(metadata_dict["version"]),
+        version=metadata_dict["version"],
         license=metadata_dict["license"],
         description=metadata_dict["description"],
         repository=metadata_links_dict["repository"],
